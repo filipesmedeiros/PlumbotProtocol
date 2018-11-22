@@ -11,10 +11,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.DatagramChannel;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
@@ -29,7 +26,7 @@ public class UDP implements UDPInterface {
     private BlockingQueue<MessageRequest> requests;
 
     public UDP(InetSocketAddress address, int numTypes, int msgSize)
-            throws IOException, InterruptedException {
+            throws IOException {
 
         channel = DatagramChannel.open();
         channel.configureBlocking(false);
@@ -40,9 +37,9 @@ public class UDP implements UDPInterface {
         selector = Selector.open();
         channel.register(selector, SelectionKey.OP_READ);
 
-        requests = new ArrayBlockingQueue<MessageRequest>(10);
+        requests = new ArrayBlockingQueue<>(10);
 
-        listeners = new ArrayList<List<MessageListener>>(numTypes);
+        listeners = new ArrayList<>(numTypes);
         for(int i = 0; i < numTypes; i++)
             listeners.add(new LinkedList<>());
 
@@ -58,7 +55,7 @@ public class UDP implements UDPInterface {
 
     @Override
     public void send(ByteBuffer bytes, InetSocketAddress to)
-            throws IOException, InterruptedException, IllegalArgumentException {
+            throws InterruptedException, IllegalArgumentException {
 
         if(bytes.capacity() > msgSize)
             throw new IllegalArgumentException();
@@ -89,23 +86,76 @@ public class UDP implements UDPInterface {
     }
 
     @Override
+    public UDPInterface setRequestQueueSize(int size) throws CantResizeQueueException {
+        if(size < requests.size())
+            throw new CantResizeQueueException();
+
+        BlockingQueue<MessageRequest> newQ = new ArrayBlockingQueue<>(size);
+        newQ.addAll(requests);
+        requests = newQ;
+
+        return this;
+    }
+
+    @Override
     public void init()
-            throws IOException, InterruptedException, NotReadyForInitException {
+            throws IOException, NotReadyForInitException {
 
         if(msgSize == 0 || listeners == null || listeners.isEmpty())
             throw new NotReadyForInitException();
 
         new Thread(() -> {
+            try {
+                receive();
+            } catch (IOException e) {
+                // TODO
+                e.printStackTrace();
+            }
+        }, RECEIVE_THREAD + address).start();
 
-        });
-
-        new Thread(() -> {
-
-        });
+        fulfill();
     }
 
-    @Override
-    public UDPInterface setRequestQueueSize(int size) throws CantResizeQueueException {
-        return null;
+    private void receive()
+        throws IOException {
+
+        while(true) {
+            selector.select();
+            Set<SelectionKey> keys = selector.selectedKeys();
+
+            for(SelectionKey key : keys) {
+                if(key.isReadable()) {
+                    ByteBuffer buffer = ByteBuffer.allocate(msgSize);
+                    channel.receive(buffer);
+                    buffer.flip();
+
+                    short type = buffer.getShort(0);
+
+                    for(MessageListener msgListener : listeners.get(type))
+                        msgListener.notifyMessage(buffer);
+                }
+            }
+        }
+    }
+
+    private void fulfill()
+        throws IOException {
+
+        // System.out.println("Fulfilling message " + request.type());
+
+        while(true) {
+            MessageRequest request;
+            try {
+                request = requests.take();
+
+                channel.send(request.message(), request.to());
+            } catch(IOException e) {
+                // TODO
+                e.printStackTrace();
+            } catch(InterruptedException e) {
+                // TODO
+                e.printStackTrace();
+            }
+        }
     }
 }

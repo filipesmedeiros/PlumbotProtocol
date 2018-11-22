@@ -4,7 +4,6 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
-import java.nio.channels.ClosedByInterruptException;
 
 public abstract class ControlMessage implements Message {
 
@@ -22,8 +21,8 @@ public abstract class ControlMessage implements Message {
     }
 
     @Override
-    public short messageType() {
-        return type;
+    public int size() {
+        return 2 + sender().toString().length() * 2 + 1;
     }
 
     // Will not work in the real world(?)
@@ -57,5 +56,21 @@ public abstract class ControlMessage implements Message {
         }
 
         return new InetSocketAddress(host, port);
+    }
+
+    public ByteBuffer putSenderInBuffer() {
+
+        ByteBuffer buffer = ByteBuffer.allocate(size());
+
+        buffer.putShort(messageType());
+
+        char[] senderChars = sender().toString().toCharArray();
+        for(int i = 0; i < senderChars.length; i++) {
+            buffer.putChar(senderChars[i]);
+        }
+
+        buffer.putChar(EOS);
+
+        return buffer;
     }
 }
