@@ -41,9 +41,10 @@ public class ReplaceMessage extends ControlMessage {
 
     @Override
     public int size() {
-        return 2 + sender().toString().length() * 2 + 2
+        return super.size()
                 + init.toString().length() * 2 + 2
-                + old.toString().length() * 2 + 2 + 8 + 8 + 1;
+                + old.toString().length() * 2 + 2
+                + 8 + 8 + 1;
     }
 
     public InetSocketAddress init() {

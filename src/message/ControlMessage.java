@@ -67,7 +67,7 @@ public abstract class ControlMessage implements Message {
 
         ByteBuffer buffer = ByteBuffer.allocate(size());
 
-        buffer.putShort(messageType());
+        buffer.putShort(type);
 
         char[] senderChars = sender().toString().toCharArray();
         for(int i = 0; i < senderChars.length; i++) {

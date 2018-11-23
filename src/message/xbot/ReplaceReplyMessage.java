@@ -5,13 +5,13 @@ import message.ControlMessage;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 
-public class OptimizationReplyMessage extends ControlMessage {
+public class ReplaceReplyMessage extends ControlMessage {
 
     public final static short TYPE = 8;
 
     private boolean accept;
 
-    public OptimizationReplyMessage(InetSocketAddress sender, boolean accept) {
+    public ReplaceReplyMessage(InetSocketAddress sender, boolean accept) {
         super(sender, TYPE);
         this.accept = accept;
     }
@@ -32,11 +32,11 @@ public class OptimizationReplyMessage extends ControlMessage {
         return super.size() + 1;
     }
 
-    public static OptimizationReplyMessage parse(ByteBuffer bytes) {
+    public static ReplaceReplyMessage parse(ByteBuffer bytes) {
         InetSocketAddress sender = parseAddress(bytes);
 
         boolean accept = bytes.get() == 1;
 
-        return new OptimizationReplyMessage(sender, accept);
+        return new ReplaceReplyMessage(sender, accept);
     }
 }
