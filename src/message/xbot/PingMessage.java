@@ -5,11 +5,11 @@ import message.ControlMessage;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 
-public class JoinMessage extends ControlMessage {
+public class PingMessage extends ControlMessage {
 
-    public final static short TYPE = 1;
+    public static final short TYPE = 4;
 
-    public JoinMessage(InetSocketAddress sender) {
+    public PingMessage(InetSocketAddress sender) {
         super(sender, TYPE);
     }
 
@@ -29,11 +29,9 @@ public class JoinMessage extends ControlMessage {
         return TYPE;
     }
 
-    public static JoinMessage parse(ByteBuffer bytes) {
+    public static PingMessage parse(ByteBuffer bytes) {
         InetSocketAddress sender = parseAddress(bytes);
 
-        return new JoinMessage(sender);
+        return new PingMessage(sender);
     }
-
-
 }

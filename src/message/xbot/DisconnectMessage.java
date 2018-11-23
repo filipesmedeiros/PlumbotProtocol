@@ -5,11 +5,11 @@ import message.ControlMessage;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 
-public class JoinMessage extends ControlMessage {
+public class DisconnectMessage extends ControlMessage {
 
-    public final static short TYPE = 1;
+    public static final short TYPE = 7;
 
-    public JoinMessage(InetSocketAddress sender) {
+    public DisconnectMessage(InetSocketAddress sender) {
         super(sender, TYPE);
     }
 
@@ -29,11 +29,9 @@ public class JoinMessage extends ControlMessage {
         return TYPE;
     }
 
-    public static JoinMessage parse(ByteBuffer bytes) {
+    public static DisconnectMessage parse(ByteBuffer bytes) {
         InetSocketAddress sender = parseAddress(bytes);
 
-        return new JoinMessage(sender);
+        return new DisconnectMessage(sender);
     }
-
-
 }

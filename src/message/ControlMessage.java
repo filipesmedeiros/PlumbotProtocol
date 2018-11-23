@@ -73,4 +73,14 @@ public abstract class ControlMessage implements Message {
 
         return buffer;
     }
+
+    public ByteBuffer putAddressInBuffer(ByteBuffer buffer, InetSocketAddress address) {
+        char[] chars = address.toString().toCharArray();
+        for(int i = 0; i < chars.length; i++)
+            buffer.putChar(chars[i]);
+
+        buffer.putChar(EOS);
+
+        return buffer;
+    }
 }
