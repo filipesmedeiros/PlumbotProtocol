@@ -27,16 +27,9 @@ public class ForwardJoinMessage extends ControlMessage {
 
         buffer.getInt(ttl);
 
-        buffer.put(EOT);
-
-        buffer.flip();
+        buffer.put(EOT).flip();
 
         return buffer;
-    }
-
-    @Override
-    public short messageType() {
-        return TYPE;
     }
 
     public ForwardJoinMessage next(InetSocketAddress sender) {

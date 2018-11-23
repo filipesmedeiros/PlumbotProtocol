@@ -28,9 +28,7 @@ public class OptimizationMessage extends ControlMessage {
         buffer.putLong(itoo);
         buffer.putLong(itoc);
 
-        buffer.put(EOT);
-
-        buffer.flip();
+        buffer.put(EOT).flip();
 
         return buffer;
     }
@@ -38,11 +36,6 @@ public class OptimizationMessage extends ControlMessage {
     @Override
     public int size() {
         return 4 + sender().toString().length() * 2 + 2 + old.toString().length() * 2 + 8 + 8 + 1;
-    }
-
-    @Override
-    public short messageType() {
-        return TYPE;
     }
 
     public static OptimizationMessage parse(ByteBuffer bytes) {

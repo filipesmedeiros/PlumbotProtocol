@@ -17,16 +17,9 @@ public class JoinMessage extends ControlMessage {
     public ByteBuffer bytes() {
         ByteBuffer buffer = putSenderInBuffer();
 
-        buffer.put(EOT);
-
-        buffer.flip();
+        buffer.put(EOT).flip();
 
         return buffer;
-    }
-
-    @Override
-    public short messageType() {
-        return TYPE;
     }
 
     public static JoinMessage parse(ByteBuffer bytes) {

@@ -25,6 +25,11 @@ public abstract class ControlMessage implements Message {
         return 2 + sender().toString().length() * 2 + 1;
     }
 
+    @Override
+    public short messageType() {
+        return type;
+    }
+
     // Will not work in the real world(?)
     public static InetSocketAddress parseAddress(ByteBuffer bytes) {
         StringBuilder hostStr = new StringBuilder();

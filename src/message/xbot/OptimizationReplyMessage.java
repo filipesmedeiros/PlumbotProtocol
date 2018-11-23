@@ -22,16 +22,9 @@ public class OptimizationReplyMessage extends ControlMessage {
 
         buffer.put(accept ? (byte) 1 : (byte) 0);
 
-        buffer.put(EOT);
-
-        buffer.flip();
+        buffer.put(EOT).flip();
 
         return buffer;
-    }
-
-    @Override
-    public short messageType() {
-        return TYPE;
     }
 
     public static OptimizationReplyMessage parse(ByteBuffer bytes) {

@@ -24,11 +24,6 @@ public class DisconnectMessage extends ControlMessage {
         return buffer;
     }
 
-    @Override
-    public short messageType() {
-        return TYPE;
-    }
-
     public static DisconnectMessage parse(ByteBuffer bytes) {
         InetSocketAddress sender = parseAddress(bytes);
 
