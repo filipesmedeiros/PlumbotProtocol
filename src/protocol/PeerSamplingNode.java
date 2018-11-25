@@ -4,11 +4,12 @@ import exceptions.NotReadyForInitException;
 import interfaces.MessageListener;
 import interfaces.NeighbourhoodListener;
 import interfaces.Node;
+import network.UDPInterface;
 
 import java.net.InetSocketAddress;
 import java.util.Set;
 
-public interface PeerSamplingNode extends MessageListener, Node {
+public interface PeerSamplingNode extends MessageListener, Node  {
 
     Set<InetSocketAddress> activeView();
 
@@ -19,6 +20,8 @@ public interface PeerSamplingNode extends MessageListener, Node {
     int setAViewSize(int size) throws IllegalArgumentException;
 
     int setPViewSize(int size) throws IllegalArgumentException;
+
+    boolean setUDP(UDPInterface udp) throws IllegalArgumentException;
 
     boolean setNeighbourhoodListener(NeighbourhoodListener listener)
         throws IllegalArgumentException;
