@@ -120,7 +120,14 @@ public class TimeCostOracle implements Oracle {
             Set<InetSocketAddress> set = costs.keySet();
             costs.remove(random.fromSet(set));
             costs.put(sender, new CostWithTTL(dif));
+        }
 
+        try {
+            replies.put(new CostNotification(sender, dif));
+        } catch(InterruptedException e) {
+            // TODO
+            // Annoying to user the user, but will only delay, probably
+            e.printStackTrace();
         }
     }
 

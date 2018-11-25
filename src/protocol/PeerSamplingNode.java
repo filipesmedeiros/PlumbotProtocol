@@ -2,11 +2,13 @@ package protocol;
 
 import exceptions.NotReadyForInitException;
 import interfaces.MessageListener;
+import interfaces.NeighbourhoodListener;
+import interfaces.Node;
 
 import java.net.InetSocketAddress;
 import java.util.Set;
 
-public interface PeerSamplingNode extends MessageListener {
+public interface PeerSamplingNode extends MessageListener, Node {
 
     Set<InetSocketAddress> activeView();
 
