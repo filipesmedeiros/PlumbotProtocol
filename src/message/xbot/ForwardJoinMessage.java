@@ -36,6 +36,14 @@ public class ForwardJoinMessage extends ControlMessage {
         return new ForwardJoinMessage(sender, joiner, ttl - 1);
     }
 
+    public int ttl() {
+        return ttl;
+    }
+
+    public InetSocketAddress joiner() {
+        return joiner;
+    }
+
     public static ForwardJoinMessage parse(ByteBuffer bytes) {
         InetSocketAddress sender = parseAddress(bytes);
         InetSocketAddress joiner = parseAddress(bytes);

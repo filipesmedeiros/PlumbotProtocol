@@ -5,7 +5,7 @@ import protocol.oracle.Oracle;
 
 public interface OptimizerNode extends OracleUser, PeerSamplingNode {
 
-    void setOracle(Oracle oracle);
+    void setOracle(Oracle oracle) throws IllegalArgumentException;
 
-    void setInterval(long interval);
+    void setPeriod(long period) throws IllegalArgumentException;
 }

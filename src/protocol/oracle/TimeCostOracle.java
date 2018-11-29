@@ -158,8 +158,8 @@ public class TimeCostOracle implements Oracle {
     }
 
     public static class CostNotification {
-        private InetSocketAddress sender;
-        private long cost;
+        public InetSocketAddress sender;
+        public long cost;
 
         private CostNotification(InetSocketAddress sender, long cost) {
             this.sender = sender;
