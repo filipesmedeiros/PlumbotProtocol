@@ -354,12 +354,14 @@ public class XBotNode implements OptimizerNode {
     }
 
     @Override
-    public boolean setNeighbourhoodListener(NeighbourhoodListener listener) throws IllegalArgumentException {
+    public boolean setNeighbourhoodListener(NeighbourhoodListener listener)
+            throws IllegalArgumentException {
         return false;
     }
 
     @Override
-    public boolean setNeighbourhoodListeners(Set<NeighbourhoodListener> listeners) throws IllegalArgumentException {
+    public boolean setNeighbourhoodListeners(Set<NeighbourhoodListener> listeners)
+            throws IllegalArgumentException {
         return false;
     }
 
