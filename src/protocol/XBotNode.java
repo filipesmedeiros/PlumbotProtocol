@@ -233,7 +233,14 @@ public class XBotNode implements OptimizerNode {
     private void handleOptimization(ByteBuffer bytes) {
         OptimizationMessage msg = OptimizationMessage.parse(bytes);
 
-        Message replace = new ReplaceMessage(id, msg.sender(), msg.old(), msg.itoo(), msg.itoc());
+        optimizing = true;
+
+        init = msg.sender();
+        old = msg.old();
+        itoo = msg.itoo();
+        itoc = msg.itoc();
+
+        Message replace = new ReplaceMessage(id, init, old, itoo, itoc);
 
         try {
             udp.send(replace.bytes(), biasedActiveView.last().address);
@@ -246,13 +253,14 @@ public class XBotNode implements OptimizerNode {
     private void handleReplace(ByteBuffer bytes) {
         ReplaceMessage msg = ReplaceMessage.parse(bytes);
 
-        init = msg.init();
+        init = msg.sender();
+        old = msg.old();
+        itoo = msg.itoo();
+        itoc = msg.itoc();
 
         try {
             oracle.getCost(msg.old());
             costsWaiting.put(msg.old(), DTOO);
-
-            old = msg.old();
 
             oracle.getCost(msg.sender());
             costsWaiting.put(msg.sender(), CTOD);
@@ -350,26 +358,27 @@ public class XBotNode implements OptimizerNode {
 
     @Override
     public boolean setUDP(UDPInterface udp) throws IllegalArgumentException {
-        return false;
+        // TODO does this screw something? something should be checked?
+        this.udp = udp;
+        return true;
     }
 
     @Override
     public boolean setNeighbourhoodListener(NeighbourhoodListener listener)
             throws IllegalArgumentException {
-        return false;
+        return neighbourhoodListeners.add(listener);
     }
 
     @Override
     public boolean setNeighbourhoodListeners(Set<NeighbourhoodListener> listeners)
             throws IllegalArgumentException {
-        return false;
+        return neighbourhoodListeners.addAll(listeners);
     }
 
     @Override
     public boolean removeNeighbourboodListener(NeighbourhoodListener listener)
             throws IllegalArgumentException {
-
-        return false;
+        return neighbourhoodListeners.remove(listener);
     }
 
     @Override
@@ -449,7 +458,7 @@ public class XBotNode implements OptimizerNode {
         BiasedInetAddress old = biasedActiveView.last();
 
         this.itoo = old.cost;
-        costsWaiting.remove(old);
+        costsWaiting.remove(old.address);
         this.old = old.address;
 
         Message msg = new OptimizationMessage(id, old.address, itoo, itoc);
