@@ -418,8 +418,11 @@ public class XBotNode implements OptimizerNode {
                 else if(code == ITOC)
                     optimizeStep2(notification.sender, notification.cost);
 
+                else if(code == DTOO)
+                    optimizeStep3_1(notification.sender, notification.cost);
 
-
+                else if(code == CTOD)
+                    optimizeStep3_2(notification.sender, notification.cost);
             } catch(InterruptedException e) {
                 // TODO
                 e.printStackTrace();
@@ -468,6 +471,15 @@ public class XBotNode implements OptimizerNode {
             // TODO
             e.printStackTrace();
         }
+    }
+
+    private void optimizeStep3_1(InetSocketAddress old, long dtoo) {
+        this.dtoo = dtoo;
+
+    }
+
+    private void optimizeStep3_2(InetSocketAddress cand, long ctod) {
+
     }
 
     private void addPeerToActiveView(InetSocketAddress peer) {
