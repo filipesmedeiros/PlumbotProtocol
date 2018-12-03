@@ -22,7 +22,7 @@ public abstract class ControlMessage implements Message {
 
     @Override
     public int size() {
-        return 2 + sender().toString().length() * 2 + 1;
+        return 2 + sender().toString().length() * 2 + 2 + 1;
     }
 
     @Override
@@ -64,7 +64,6 @@ public abstract class ControlMessage implements Message {
     }
 
     public ByteBuffer putSenderInBuffer() {
-
         ByteBuffer buffer = ByteBuffer.allocate(size());
 
         buffer.putShort(type);

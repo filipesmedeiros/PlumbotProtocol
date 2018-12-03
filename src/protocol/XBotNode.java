@@ -184,6 +184,8 @@ public class XBotNode implements OptimizerNode {
         JoinMessage msg = JoinMessage.parse(bytes);
 
         addPeerToActiveView(msg.sender());
+
+        System.out.println(msg.sender());
         try {
             Message acceptMsg = new AcceptJoinMessage(id);
             udp.send(acceptMsg.bytes(), msg.sender());
@@ -580,10 +582,10 @@ public class XBotNode implements OptimizerNode {
     }
 
     private void addPeerToActiveView(InetSocketAddress peer) {
-        if(activeView.size() > activeViewMaxSize)
+        if(activeView.size() == activeViewMaxSize)
             removeRandomFromActive();
 
-        if(unbiasedActiveView.size() > unbiasedViewMaxSize) {
+        if(unbiasedActiveView.size() < unbiasedViewMaxSize) {
             unbiasedActiveView.add(peer);
             activeView.add(peer);
         } else

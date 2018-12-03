@@ -25,11 +25,16 @@ public class ForwardJoinMessage extends ControlMessage {
         ByteBuffer buffer = putSenderInBuffer();
         putAddressInBuffer(buffer, joiner);
 
-        buffer.getInt(ttl);
+        buffer.putInt(ttl);
 
         buffer.put(EOT).flip();
 
         return buffer;
+    }
+
+    @Override
+    public int size() {
+        return super.size() + joiner.toString().length() * 2 + 2 + 4;
     }
 
     public ForwardJoinMessage next(InetSocketAddress sender) {
