@@ -161,8 +161,14 @@ public class XBotNode implements OptimizerNode {
             case OptimizationMessage.TYPE:
                 handleOptimization(msg);
                 break;
+            case OptimizationReplyMessage.TYPE:
+                handleOptimizationReply(msg);
+                break;
             case ReplaceMessage.TYPE:
                 handleReplace(msg);
+                break;
+            case ReplaceReplyMessage.TYPE:
+                handleReplaceReply(msg);
                 break;
             case PingMessage.TYPE:
                 handlePing(msg);
@@ -250,6 +256,16 @@ public class XBotNode implements OptimizerNode {
         }
     }
 
+    private void handleOptimizationReply(ByteBuffer bytes) {
+        OptimizationReplyMessage msg = OptimizationReplyMessage.parse(bytes);
+
+        Message reply;
+
+        if(msg.removed()) {
+            reply = new DisconnectWaitMessage();
+        }
+    }
+
     private void handleReplace(ByteBuffer bytes) {
         ReplaceMessage msg = ReplaceMessage.parse(bytes);
 
@@ -268,6 +284,26 @@ public class XBotNode implements OptimizerNode {
             // TODO
             e.printStackTrace();
         }
+    }
+
+    private void handleReplaceReply(ByteBuffer bytes) {
+        ReplaceReplyMessage msg = ReplaceReplyMessage.parse(bytes);
+
+        boolean removed = removeFromBiased(msg.sender());
+
+        activeView.add(init);
+        biasedActiveView.add(new BiasedInetAddress(init, itoc));
+
+        try {
+            Message optimizationReply = new OptimizationReplyMessage(id, msg.accept(), removed);
+
+            udp.send(optimizationReply.bytes(), init);
+        } catch(IOException | InterruptedException e) {
+            // TODO
+            e.printStackTrace();
+        }
+
+        optimizing = false;
     }
 
     private void handlePing(ByteBuffer bytes) {
@@ -366,18 +402,27 @@ public class XBotNode implements OptimizerNode {
     @Override
     public boolean setNeighbourhoodListener(NeighbourhoodListener listener)
             throws IllegalArgumentException {
+        if(listener == null)
+            throw new IllegalArgumentException();
+
         return neighbourhoodListeners.add(listener);
     }
 
     @Override
     public boolean setNeighbourhoodListeners(Set<NeighbourhoodListener> listeners)
             throws IllegalArgumentException {
+        if(listeners == null || listeners.isEmpty())
+            throw new IllegalArgumentException();
+
         return neighbourhoodListeners.addAll(listeners);
     }
 
     @Override
     public boolean removeNeighbourboodListener(NeighbourhoodListener listener)
             throws IllegalArgumentException {
+        if(listener == null)
+            throw new IllegalArgumentException();
+
         return neighbourhoodListeners.remove(listener);
     }
 
@@ -423,6 +468,9 @@ public class XBotNode implements OptimizerNode {
 
                 else if(code == CTOD)
                     optimizeStep3_2(notification.sender, notification.cost);
+
+                else
+                    System.out.println("???");
             } catch(InterruptedException e) {
                 // TODO
                 e.printStackTrace();
@@ -465,6 +513,7 @@ public class XBotNode implements OptimizerNode {
         this.old = old.address;
 
         Message msg = new OptimizationMessage(id, old.address, itoo, itoc);
+
         try {
             udp.send(msg.bytes(), cand);
         } catch(IllegalArgumentException | IOException | InterruptedException e) {
@@ -475,11 +524,49 @@ public class XBotNode implements OptimizerNode {
 
     private void optimizeStep3_1(InetSocketAddress old, long dtoo) {
         this.dtoo = dtoo;
+        this.old = old;
 
+        if(ctod != 0)
+            optimizeStep3_3();
     }
 
     private void optimizeStep3_2(InetSocketAddress cand, long ctod) {
+        this.ctod = ctod;
+        this.cand = cand;
 
+        if(dtoo != 0)
+            optimizeStep3_3();
+
+    }
+
+    private void optimizeStep3_3() {
+        try {
+            if(itsWorthOptimizing((long itoo, long itoc, long ctod, long dtoo) -> itoc + dtoo < itoo + ctod,
+                    itoo, itoc, ctod, dtoo)) {
+
+                ReplaceReplyMessage replaceReply = new ReplaceReplyMessage(id, true);
+                SwitchMessage switchMessage = new SwitchMessage(id, init);
+
+                udp.send(replaceReply.bytes(), cand);
+                udp.send(switchMessage.bytes(), old);
+
+                removeFromBiased(cand);
+
+                activeView.add(old);
+                biasedActiveView.add(new BiasedInetAddress(old, dtoo));
+
+                optimizing = false;
+            } else {
+                ReplaceReplyMessage replaceReply = new ReplaceReplyMessage(id, false);
+
+                udp.send(replaceReply.bytes(), cand);
+
+                optimizing = false;
+            }
+        } catch(IllegalArgumentException | IOException | InterruptedException e) {
+            // TODO
+            e.printStackTrace();
+        }
     }
 
     private void addPeerToActiveView(InetSocketAddress peer) {
@@ -540,6 +627,18 @@ public class XBotNode implements OptimizerNode {
 
     private void removeRandomFromPassiveView() {
         random.removeFromSet(passiveView);
+    }
+
+    private boolean removeFromBiased(InetSocketAddress peer) {
+        activeView.remove(peer);
+
+        for(BiasedInetAddress aPeer : biasedActiveView) {
+            if(aPeer.address.equals(peer)) {
+                return biasedActiveView.remove(aPeer);
+            }
+        }
+
+        return false;
     }
 
     private static class BiasedInetAddress implements Comparable<BiasedInetAddress> {

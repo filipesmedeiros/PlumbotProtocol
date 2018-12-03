@@ -7,7 +7,7 @@ import java.nio.ByteBuffer;
 
 public class ReplaceReplyMessage extends ControlMessage {
 
-    public final static short TYPE = 8;
+    public final static short TYPE = 10;
 
     private boolean accept;
 
@@ -25,6 +25,10 @@ public class ReplaceReplyMessage extends ControlMessage {
         buffer.put(EOT).flip();
 
         return buffer;
+    }
+
+    public boolean accept() {
+        return accept;
     }
 
     @Override
