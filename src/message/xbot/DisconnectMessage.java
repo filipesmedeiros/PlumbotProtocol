@@ -9,22 +9,34 @@ public class DisconnectMessage extends ControlMessage {
 
     public static final short TYPE = 7;
 
-    public DisconnectMessage(InetSocketAddress sender) {
+    private boolean wait;
+
+    public DisconnectMessage(InetSocketAddress sender, boolean wait) {
         super(sender, TYPE);
+
+        this.wait = wait;
     }
 
     @Override
     public ByteBuffer bytes() {
         ByteBuffer buffer = putSenderInBuffer();
 
+        buffer.put(wait ? (byte) 1 : (byte) 0);
+
         buffer.put(EOT).flip();
 
         return buffer;
     }
 
+    public boolean hasToWait() {
+        return wait;
+    }
+
     public static DisconnectMessage parse(ByteBuffer bytes) {
         InetSocketAddress sender = parseAddress(bytes);
 
-        return new DisconnectMessage(sender);
+        boolean wait = bytes.get() == 1;
+
+        return new DisconnectMessage(sender, wait);
     }
 }

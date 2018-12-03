@@ -259,11 +259,21 @@ public class XBotNode implements OptimizerNode {
     private void handleOptimizationReply(ByteBuffer bytes) {
         OptimizationReplyMessage msg = OptimizationReplyMessage.parse(bytes);
 
-        Message reply;
+        try {
+            if(msg.accept()) {
+                removeFromBiased(old);
+                addPeerToActiveView(cand);
 
-        if(msg.removed()) {
-            reply = new DisconnectWaitMessage();
+                Message reply = new DisconnectMessage(id, msg.removed());
+
+                udp.send(reply.bytes(), old);
+            }
+        } catch(IOException | InterruptedException e) {
+            // TODO
+            e.printStackTrace();
         }
+
+        optimizing = false;
     }
 
     private void handleReplace(ByteBuffer bytes) {
@@ -594,7 +604,7 @@ public class XBotNode implements OptimizerNode {
                 removeRandomFromUnbiased()
                 : removeWorstActivePeer();
 
-        Message msg = new DisconnectMessage(id);
+        Message msg = new DisconnectMessage(id, false);
 
         try {
             udp.send(msg.bytes(), disconnect);
