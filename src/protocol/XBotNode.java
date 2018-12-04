@@ -52,14 +52,14 @@ public class XBotNode implements OptimizerNode {
     private InetSocketAddress init;
     private InetSocketAddress cand;
     private InetSocketAddress old;
-    private InetSocketAddress disc;
+    // private InetSocketAddress disc;
     private long itoo;
     private long itoc;
     private long ctod;
     private long dtoo;
 
     // Each constant integer is a code for what has to be done
-    private static final int ITOO = 1;
+    // private static final int ITOO = 1;
     private static final int ITOC = 2;
     private static final int CTOD = 3;
     private static final int DTOO = 4;
@@ -76,9 +76,9 @@ public class XBotNode implements OptimizerNode {
     // when answering pings
     private long pingWaitTime;
 
-    public XBotNode(InetSocketAddress id, int activeViewMaxSize,
-                    int unbiasedViewMaxSize, int passiveViewMaxSize,
-                    int optimizationPeriod, int attl, int pttl)
+    XBotNode(InetSocketAddress id, int activeViewMaxSize,
+             int unbiasedViewMaxSize, int passiveViewMaxSize,
+             int optimizationPeriod, int attl, int pttl)
             throws IllegalArgumentException {
 
         if(activeViewMaxSize <= 0 || id == null)
@@ -97,12 +97,12 @@ public class XBotNode implements OptimizerNode {
         init = null;
         cand = null;
         old = null;
-        disc = null;
+        // disc = null;
 
         this.attl = attl;
         this.pttl = pttl;
 
-        optimizing = false;
+        optimizing = true;
         this.optimizationPeriod = optimizationPeriod;
 
         costsWaiting = new HashMap<>();
@@ -239,6 +239,9 @@ public class XBotNode implements OptimizerNode {
     }
 
     private void handleOptimization(ByteBuffer bytes) {
+        if(optimizing)
+            return;
+
         OptimizationMessage msg = OptimizationMessage.parse(bytes);
 
         optimizing = true;
@@ -276,6 +279,11 @@ public class XBotNode implements OptimizerNode {
         }
 
         optimizing = false;
+
+        itoo = 0;
+        itoc = Long.MAX_VALUE;
+        ctod = 0;
+        dtoo = 0;
     }
 
     private void handleReplace(ByteBuffer bytes) {
@@ -303,8 +311,7 @@ public class XBotNode implements OptimizerNode {
 
         boolean removed = removeFromBiased(msg.sender());
 
-        activeView.add(init);
-        biasedActiveView.add(new BiasedInetAddress(init, itoc));
+        addPeerToBiasedActiveView(init, itoc);
 
         try {
             Message optimizationReply = new OptimizationReplyMessage(id, msg.accept(), removed);
@@ -316,6 +323,11 @@ public class XBotNode implements OptimizerNode {
         }
 
         optimizing = false;
+
+        itoo = 0;
+        itoc = Long.MAX_VALUE;
+        ctod = 0;
+        dtoo = 0;
     }
 
     private void handlePing(ByteBuffer bytes) {
@@ -324,7 +336,7 @@ public class XBotNode implements OptimizerNode {
         Message pingBackMsg = new PingBackMessage(id);
 
         try {
-            Thread.sleep(pingWaitTime * msg.hashCode());
+            Thread.sleep(pingWaitTime);
 
             udp.send(pingBackMsg.bytes(), msg.sender());
         } catch(InterruptedException | IllegalArgumentException | IOException e) {
@@ -334,7 +346,7 @@ public class XBotNode implements OptimizerNode {
     }
 
     @Override
-    public void notifyCost(TimeCostOracle.CostNotification noti) {
+    public void notifyCost(CostNotification noti) {
         try {
             costNotifications.put(noti);
         } catch(InterruptedException e) {
@@ -470,7 +482,7 @@ public class XBotNode implements OptimizerNode {
                 int code = costsWaiting.get(notification.sender);
 
                 if(code == NEW)
-                    biasedActiveView.add(new BiasedInetAddress(notification.sender, notification.cost));
+                    addPeerToBiasedActiveView(notification.sender, notification.cost);
 
                 else if(code == ITOC)
                     optimizeStep2(notification.sender, notification.cost);
@@ -508,15 +520,16 @@ public class XBotNode implements OptimizerNode {
         if(this.cand != null)
             return;
 
-        this.itoc = itoc;
-        costsWaiting.remove(cand);
-        this.cand = cand;
-
         if(biasedActiveView.size() < 1) {
             System.out.println("???");
             optimizing = false;
+
             return;
         }
+
+        this.itoc = itoc;
+        costsWaiting.remove(cand);
+        this.cand = cand;
 
         BiasedInetAddress old = biasedActiveView.last();
 
@@ -564,16 +577,25 @@ public class XBotNode implements OptimizerNode {
 
                 removeFromBiased(cand);
 
-                activeView.add(old);
-                biasedActiveView.add(new BiasedInetAddress(old, dtoo));
+                addPeerToBiasedActiveView(old, dtoo);
 
                 optimizing = false;
+
+                itoo = 0;
+                itoc = Long.MAX_VALUE;
+                dtoo = 0;
+                ctod = 0;
             } else {
                 ReplaceReplyMessage replaceReply = new ReplaceReplyMessage(id, false);
 
                 udp.send(replaceReply.bytes(), cand);
 
                 optimizing = false;
+
+                itoo = 0;
+                itoc = Long.MAX_VALUE;
+                dtoo = 0;
+                ctod = 0;
             }
         } catch(IllegalArgumentException | IOException | InterruptedException e) {
             // TODO
@@ -597,6 +619,11 @@ public class XBotNode implements OptimizerNode {
                 // TODO
                 e.printStackTrace();
             }
+    }
+
+    private void addPeerToBiasedActiveView(InetSocketAddress peer, long cost) {
+        activeView.add(peer);
+        biasedActiveView.add(new BiasedInetAddress(peer, cost));
     }
 
     private void removeRandomFromActive() {
