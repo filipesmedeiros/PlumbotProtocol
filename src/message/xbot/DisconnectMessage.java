@@ -18,6 +18,11 @@ public class DisconnectMessage extends ControlMessage {
     }
 
     @Override
+    public int size() {
+        return super.size() + 1;
+    }
+
+    @Override
     public ByteBuffer bytes() {
         ByteBuffer buffer = putSenderInBuffer();
 

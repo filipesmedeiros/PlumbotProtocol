@@ -184,7 +184,6 @@ public class XBotNode implements OptimizerNode {
 
         addPeerToActiveView(msg.sender());
 
-        System.out.println(msg.sender());
         try {
             Message acceptMsg = new AcceptJoinMessage(id);
             udp.send(acceptMsg.bytes(), msg.sender());
@@ -230,6 +229,8 @@ public class XBotNode implements OptimizerNode {
 
                 while(peer.equals(msg.sender()) || peer.equals(msg.joiner()))
                     peer = random.fromSet(activeView);
+
+                udp.send(msg.next(id).bytes(), peer);
             }
         } catch(IllegalArgumentException | IOException | InterruptedException e) {
             // TODO
