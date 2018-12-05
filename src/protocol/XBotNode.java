@@ -11,7 +11,6 @@ import message.Message;
 import message.xbot.*;
 import network.UDPInterface;
 import protocol.oracle.Oracle;
-import protocol.oracle.TimeCostOracle;
 import protocol.oracle.TimeCostOracle.CostNotification;
 
 import java.io.IOException;
@@ -479,6 +478,7 @@ public class XBotNode implements OptimizerNode {
         while(true)
             try {
                 CostNotification notification = costNotifications.take();
+                System.out.println(notification.sender + " " + notification.cost);
                 int code = costsWaiting.get(notification.sender);
 
                 if(code == NEW)
@@ -512,6 +512,7 @@ public class XBotNode implements OptimizerNode {
             costsWaiting.put(cand, ITOC);
         } catch(IOException | InterruptedException e) {
             // TODO
+            optimizing = false;
             e.printStackTrace();
         }
     }
@@ -614,7 +615,7 @@ public class XBotNode implements OptimizerNode {
             try {
                 oracle.getCost(peer);
 
-                costsWaiting.put(id, NEW);
+                costsWaiting.put(peer, NEW);
             } catch(IOException | InterruptedException e) {
                 // TODO
                 e.printStackTrace();

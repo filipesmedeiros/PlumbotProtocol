@@ -70,7 +70,7 @@ public class TimeCostOracle implements Oracle {
             if (costTTL.isExpired())
                 costs.remove(dest);
             else {
-                for (OracleUser user : users)
+                for(OracleUser user : users)
                     user.notifyCost(new CostNotification(dest, costTTL.cost));
                 return;
             }
@@ -103,7 +103,7 @@ public class TimeCostOracle implements Oracle {
 
     @Override
     public void notifyMessage(ByteBuffer msg) {
-        msg.getShort();
+        // msg.getShort();
         PingBackMessage reply = PingBackMessage.parse(msg);
         InetSocketAddress sender = reply.sender();
 
@@ -112,7 +112,6 @@ public class TimeCostOracle implements Oracle {
             return;
 
         long dif = System.currentTimeMillis() - sendTime;
-        pings.put(sender, dif);
 
         if(costs.size() < costsSize)
             costs.put(sender, new CostWithTTL(dif));
@@ -142,7 +141,7 @@ public class TimeCostOracle implements Oracle {
                 for(OracleUser user : users) {
                     try {
                         user.notifyCost(new CostNotification(sender, cost));
-                    } catch(NullPointerException e) {
+                      } catch(NullPointerException e) {
                         // For certain network sizes, collisions of forward joins might occur
                         // Just ignore it, everything is ok... probably
                     }

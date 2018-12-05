@@ -138,8 +138,7 @@ public class UDP implements UDPInterface {
         }
     }
 
-    private void fulfill()
-        throws IOException {
+    private void fulfill() {
 
         // System.out.println("Fulfilling message " + request.type());
 
@@ -149,10 +148,7 @@ public class UDP implements UDPInterface {
                 request = requests.take();
 
                 channel.send(request.message(), request.to());
-            } catch(IOException e) {
-                // TODO
-                e.printStackTrace();
-            } catch(InterruptedException e) {
+            } catch(IOException | InterruptedException e) {
                 // TODO
                 e.printStackTrace();
             }
