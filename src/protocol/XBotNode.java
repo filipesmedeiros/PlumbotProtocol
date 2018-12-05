@@ -46,6 +46,9 @@ public class XBotNode implements OptimizerNode {
     private long optimizationPeriod;
     private boolean optimizing;
 
+    private boolean waiting;
+    private long waitTimeout;
+
     // All these are for remembering stuff during asynch optimization
     private Map<InetSocketAddress, Integer> costsWaiting;
     private InetSocketAddress init;
@@ -73,11 +76,11 @@ public class XBotNode implements OptimizerNode {
 
     // For testing, every node waits a random (relatively low) amount of time
     // when answering pings
-    private long pingWaitTime;
+    private long pingSleepTime;
 
     XBotNode(InetSocketAddress id, int activeViewMaxSize,
              int unbiasedViewMaxSize, int passiveViewMaxSize,
-             int optimizationPeriod, int attl, int pttl)
+             int optimizationPeriod, long waitTimeOut, int attl, int pttl)
             throws IllegalArgumentException {
 
         if(activeViewMaxSize <= 0 || id == null)
@@ -104,6 +107,9 @@ public class XBotNode implements OptimizerNode {
         optimizing = true;
         this.optimizationPeriod = optimizationPeriod;
 
+        waiting = false;
+        this.waitTimeout = waitTimeOut;
+
         costsWaiting = new HashMap<>();
         timerManager = new MappedTimerManager();
 
@@ -118,7 +124,7 @@ public class XBotNode implements OptimizerNode {
 
         costNotifications = new ArrayBlockingQueue<>(10);
 
-        pingWaitTime = random.integer(3000);
+        pingSleepTime = random.integer(3000);
 
         udp = null;
         oracle = null;
@@ -171,6 +177,9 @@ public class XBotNode implements OptimizerNode {
                 break;
             case PingMessage.TYPE:
                 handlePing(msg);
+                break;
+            case DisconnectMessage.TYPE:
+                handleDisconnect(msg);
                 break;
 
             default:
@@ -336,12 +345,24 @@ public class XBotNode implements OptimizerNode {
         Message pingBackMsg = new PingBackMessage(id);
 
         try {
-            Thread.sleep(pingWaitTime);
+            Thread.sleep(pingSleepTime);
 
             udp.send(pingBackMsg.bytes(), msg.sender());
         } catch(InterruptedException | IllegalArgumentException | IOException e) {
             // TODO
             e.printStackTrace();
+        }
+    }
+
+    private void handleDisconnect(ByteBuffer bytes) {
+        DisconnectMessage msg = DisconnectMessage.parse(bytes);
+
+        if(!removeFromActive(msg.sender()))
+            return;
+
+        if(msg.hasToWait()) {
+            waiting = true;
+            timerManager.addAction(WAIT, () -> this.waiting = false, waitTimeout);
         }
     }
 
@@ -479,7 +500,6 @@ public class XBotNode implements OptimizerNode {
         while(true)
             try {
                 CostNotification notification = costNotifications.take();
-                System.out.println(notification.sender + " " + notification.cost);
                 int code = costsWaiting.get(notification.sender);
 
                 if(code == NEW)
@@ -606,7 +626,10 @@ public class XBotNode implements OptimizerNode {
     }
 
     private void addPeerToActiveView(InetSocketAddress peer) {
-        if(activeView.size() == activeViewMaxSize)
+        if(activeView.size() == activeViewMaxSize - 1 && waiting)
+            removeRandomFromActive();
+
+        else if(activeView.size() == activeViewMaxSize)
             removeRandomFromActive();
 
         if(unbiasedActiveView.size() < unbiasedViewMaxSize) {
@@ -634,6 +657,8 @@ public class XBotNode implements OptimizerNode {
         InetSocketAddress disconnect = choose == 0 ?
                 removeRandomFromUnbiased()
                 : removeWorstActivePeer();
+
+        addPeerToPassiveView(disconnect);
 
         Message msg = new DisconnectMessage(id, false);
 
@@ -668,6 +693,17 @@ public class XBotNode implements OptimizerNode {
 
     private void removeRandomFromPassiveView() {
         random.removeFromSet(passiveView);
+    }
+
+    private boolean removeFromActive(InetSocketAddress peer) {
+        boolean removed = activeView.remove(peer);
+
+        if(removed) {
+            removeFromBiased(peer);
+            unbiasedActiveView.remove(peer);
+        }
+
+        return removed;
     }
 
     private boolean removeFromBiased(InetSocketAddress peer) {
