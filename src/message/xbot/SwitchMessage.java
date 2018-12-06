@@ -10,10 +10,12 @@ public class SwitchMessage extends ControlMessage {
     public static final short TYPE = 11;
 
     private InetSocketAddress init;
+    private long dtoo;
 
-    public SwitchMessage(InetSocketAddress sender, InetSocketAddress init) {
+    public SwitchMessage(InetSocketAddress sender, InetSocketAddress init, long dtoo) {
         super(sender, TYPE);
         this.init = init;
+        this.dtoo = dtoo;
     }
 
     @Override
@@ -29,17 +31,23 @@ public class SwitchMessage extends ControlMessage {
     @Override
     public int size() {
         return super.size() + init.toString().length() * 2 + 2
-                + 1;
+                + 8 + 1;
     }
 
     public InetSocketAddress init() {
         return init;
     }
 
+    public long dtoo() {
+        return dtoo;
+    }
+
     public static SwitchMessage parse(ByteBuffer bytes) {
         InetSocketAddress sender = parseAddress(bytes);
         InetSocketAddress init = parseAddress(bytes);
 
-        return new SwitchMessage(sender, init);
+        long dtoo = bytes.getLong();
+
+        return new SwitchMessage(sender, init, dtoo);
     }
 }

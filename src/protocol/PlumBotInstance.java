@@ -17,7 +17,8 @@ import java.util.Set;
 
 public class PlumBotInstance implements PlumBot {
 
-    private static final int FIVE_MINUTES = 5 * 1000 * 60;
+    private static final int ONE_MINUTE = 1000 * 60;
+    private static final int FIVE_MINUTES = 5 * ONE_MINUTE;
 
     private OptimizerNode xbot;
     private TreeBroadcastNode plum;
@@ -31,7 +32,7 @@ public class PlumBotInstance implements PlumBot {
         try {
             udp = new UDP(local);
 
-            xbot = new XBotNode(local, 5, 1, 10, FIVE_MINUTES, 4, 2);
+            xbot = new XBotNode(local, 5, 1, 10, FIVE_MINUTES, ONE_MINUTE, 4, 2);
 
             plum = new PlumtreeNode();
 

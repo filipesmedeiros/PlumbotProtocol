@@ -104,7 +104,7 @@ public class XBotNode implements OptimizerNode {
         this.attl = attl;
         this.pttl = pttl;
 
-        optimizing = true;
+        optimizing = false;
         this.optimizationPeriod = optimizationPeriod;
 
         waiting = false;
@@ -180,6 +180,9 @@ public class XBotNode implements OptimizerNode {
                 break;
             case DisconnectMessage.TYPE:
                 handleDisconnect(msg);
+                break;
+            case SwitchMessage.TYPE:
+                handleSwitch(msg);
                 break;
 
             default:
@@ -364,6 +367,13 @@ public class XBotNode implements OptimizerNode {
             waiting = true;
             timerManager.addAction(WAIT, () -> this.waiting = false, waitTimeout);
         }
+    }
+
+    private void handleSwitch(ByteBuffer bytes) {
+        SwitchMessage msg = SwitchMessage.parse(bytes);
+
+        addPeerToActiveView(msg.sender(), msg.dtoo());
+        removeFromActive(msg.init());
     }
 
     @Override
@@ -588,11 +598,10 @@ public class XBotNode implements OptimizerNode {
 
     private void optimizeStep3_3() {
         try {
-            if(itsWorthOptimizing((long itoo, long itoc, long ctod, long dtoo) -> itoc + dtoo < itoo + ctod,
-                    itoo, itoc, ctod, dtoo)) {
+            if(itsWorthOptimizing(this::basicComparer, itoo, itoc, ctod, dtoo)) {
 
                 ReplaceReplyMessage replaceReply = new ReplaceReplyMessage(id, true);
-                SwitchMessage switchMessage = new SwitchMessage(id, init);
+                SwitchMessage switchMessage = new SwitchMessage(id, init, dtoo);
 
                 udp.send(replaceReply.bytes(), cand);
                 udp.send(switchMessage.bytes(), old);
@@ -625,7 +634,7 @@ public class XBotNode implements OptimizerNode {
         }
     }
 
-    private void addPeerToActiveView(InetSocketAddress peer) {
+    private void addPeerToActiveView(InetSocketAddress peer, long cost) {
         if(activeView.size() == activeViewMaxSize - 1 && waiting)
             removeRandomFromActive();
 
@@ -636,13 +645,18 @@ public class XBotNode implements OptimizerNode {
             unbiasedActiveView.add(peer);
             activeView.add(peer);
         } else
-            try {
-                oracle.getCost(peer);
+            if(cost == -1)
+                try {
+                    oracle.getCost(peer);
 
-                costsWaiting.put(peer, NEW);
-            } catch(IOException | InterruptedException e) {
+                    costsWaiting.put(peer, NEW);
+                } catch(IOException | InterruptedException e) {
                 // TODO
                 e.printStackTrace();
+            }
+            else {
+                biasedActiveView.add(new BiasedInetAddress(peer, cost));
+                activeView.add(peer);
             }
     }
 
@@ -742,5 +756,9 @@ public class XBotNode implements OptimizerNode {
     private boolean itsWorthOptimizing(CostComparer comparer, long itoo,
                                        long itoc, long ctod, long dtoo) {
         return comparer.compare(itoc, itoo, ctod, dtoo);
+    }
+
+    private boolean basicComparer(long itoo, long itoc, long ctod, long dtoo) {
+        return itoc + dtoo < itoo + ctod;
     }
 }
