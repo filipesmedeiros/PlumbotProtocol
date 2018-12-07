@@ -29,7 +29,7 @@ public interface UDPInterface {
     UDPInterface addMessageListeners(Map<MessageListener, List<Short>> listeners);
 
     void init()
-        throws IOException, InterruptedException, NotReadyForInitException;
+        throws NotReadyForInitException;
 
     UDPInterface setRequestQueueSize(int size)
         throws CantResizeQueueException;

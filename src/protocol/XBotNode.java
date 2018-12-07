@@ -578,6 +578,7 @@ public class XBotNode implements OptimizerNode {
         Message msg = new OptimizationMessage(id, old.address, itoo, itoc);
 
         try {
+            System.out.println("XBOT " + msg.bytes().limit());
             udp.send(msg.bytes(), cand);
         } catch(IllegalArgumentException | IOException | InterruptedException e) {
             // TODO

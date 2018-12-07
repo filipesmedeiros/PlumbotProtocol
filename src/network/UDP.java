@@ -4,6 +4,7 @@ import exceptions.CantResizeQueueException;
 import exceptions.NotReadyForInitException;
 import interfaces.MessageListener;
 import message.Message;
+import message.xbot.OptimizationMessage;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -48,7 +49,7 @@ public class UDP implements UDPInterface {
 
     // Default values, can later be changed
     public UDP(InetSocketAddress address)
-            throws IOException, InterruptedException {
+            throws IOException {
 
         this(address, 30, Message.MSG_SIZE);
     }
@@ -99,7 +100,7 @@ public class UDP implements UDPInterface {
 
     @Override
     public void init()
-            throws IOException, NotReadyForInitException {
+            throws NotReadyForInitException {
 
         if(msgSize == 0 || listeners == null || listeners.isEmpty())
             throw new NotReadyForInitException();
@@ -130,6 +131,9 @@ public class UDP implements UDPInterface {
                     buffer.flip();
 
                     short type = buffer.getShort(0);
+
+                    if(type == OptimizationMessage.TYPE)
+                        System.out.println("UDP " + buffer.limit());
 
                     for(MessageListener msgListener : listeners.get(type))
                         msgListener.notifyMessage(buffer);

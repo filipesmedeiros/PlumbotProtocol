@@ -35,7 +35,7 @@ public class OptimizationMessage extends ControlMessage {
 
     @Override
     public int size() {
-        return super.size() + old.toString().length() * 2 + 2 + 8 + 8 + 1;
+        return super.size() + old.toString().length() * 2 + 2 + 8 + 8;
     }
 
     public InetSocketAddress old() {

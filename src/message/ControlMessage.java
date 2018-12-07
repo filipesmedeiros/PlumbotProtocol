@@ -3,6 +3,7 @@ package message;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
+import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 
 public abstract class ControlMessage implements Message {
@@ -34,11 +35,15 @@ public abstract class ControlMessage implements Message {
     public static InetSocketAddress parseAddress(ByteBuffer bytes) {
         StringBuilder hostStr = new StringBuilder();
 
-        while(true) {
-            char c = bytes.getChar();
-            if(c == ':')
-                break;
-            hostStr.append(c);
+        try {
+            while (true) {
+                char c = bytes.getChar();
+                if (c == ':')
+                    break;
+                hostStr.append(c);
+            }
+        } catch(BufferUnderflowException e) {
+            System.out.println("host + " + hostStr.toString().length());
         }
 
         StringBuilder portStr = new StringBuilder();
