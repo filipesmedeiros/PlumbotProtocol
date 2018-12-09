@@ -65,7 +65,7 @@ public class XBotNode implements OptimizerNode {
     private static final int ITOC = 2;
     private static final int CTOD = 3;
     private static final int DTOO = 4;
-    private static final int NEW = 5;
+    // private static final int NEW = 5;
     private static final int JOIN = 6;
 
     private int attl;
@@ -105,7 +105,7 @@ public class XBotNode implements OptimizerNode {
         this.attl = attl;
         this.pttl = pttl;
 
-        optimizing = false;
+        optimizing = true;
         this.optimizationPeriod = optimizationPeriod;
 
         waiting = false;
@@ -195,8 +195,15 @@ public class XBotNode implements OptimizerNode {
     private void handleJoin(ByteBuffer bytes) {
         JoinMessage msg = JoinMessage.parse(bytes);
 
-        addPeerToActiveView(msg.sender(), -1);
-        costsWaiting.put(msg.sender(), JOIN);
+        if(addPeerToActiveView(msg.sender(), -1)) {
+            AcceptJoinMessage accept = new AcceptJoinMessage(id);
+            try {
+                udp.send(accept.bytes(), msg.sender());
+            } catch(IOException | InterruptedException e) {
+                // TODO
+                e.printStackTrace();
+            }
+        }
 
         try {
             activeView.forEach((peer) -> {
@@ -219,17 +226,23 @@ public class XBotNode implements OptimizerNode {
 
     private void handleAcceptJoin(ByteBuffer bytes) {
         AcceptJoinMessage msg = AcceptJoinMessage.parse(bytes);
-        addPeerToActiveView(msg.sender(), msg.cost());
+        addPeerToActiveView(msg.sender(), -1);
     }
 
     private void handleForwardJoin(ByteBuffer bytes) {
         ForwardJoinMessage msg = ForwardJoinMessage.parse(bytes);
 
         try {
-            if(msg.ttl() == 0 || activeView.size() == 1) {
-                addPeerToActiveView(msg.joiner(), -1);
-
-                costsWaiting.put(msg.joiner(), JOIN);
+            if(msg.ttl() == 0 || activeView.size() <= 1) {
+                if(addPeerToActiveView(msg.joiner(), -1)) {
+                    AcceptJoinMessage accept = new AcceptJoinMessage(id);
+                    try {
+                        udp.send(accept.bytes(), msg.sender());
+                    } catch(IOException | InterruptedException e) {
+                        // TODO
+                        e.printStackTrace();
+                    }
+                }
             } else {
                 if(msg.ttl() == pttl)
                     addPeerToPassiveView(msg.joiner());
@@ -509,12 +522,10 @@ public class XBotNode implements OptimizerNode {
                 CostNotification notification = costNotifications.take();
                 int code = costsWaiting.get(notification.sender);
 
-                if(code == NEW)
-                    addPeerToBiasedActiveView(notification.sender, notification.cost);
-
-                else if(code == JOIN)
+                if(code == JOIN)
                     try {
-                        Message acceptMsg = new AcceptJoinMessage(id, notification.cost);
+                        addPeerToActiveView(notification.sender, notification.cost);
+                        Message acceptMsg = new AcceptJoinMessage(id);
                         udp.send(acceptMsg.bytes(), notification.sender);
                     } catch(IOException | InterruptedException e) {
                         // TODO
@@ -578,7 +589,6 @@ public class XBotNode implements OptimizerNode {
         Message msg = new OptimizationMessage(id, old.address, itoo, itoc);
 
         try {
-            System.out.println("XBOT " + msg.bytes().limit());
             udp.send(msg.bytes(), cand);
         } catch(IllegalArgumentException | IOException | InterruptedException e) {
             // TODO
@@ -641,29 +651,33 @@ public class XBotNode implements OptimizerNode {
         }
     }
 
-    private void addPeerToActiveView(InetSocketAddress peer, long cost) {
-        if(activeView.size() == activeViewMaxSize - 1 && waiting)
-            removeRandomFromActive();
-
-        else if(activeView.size() == activeViewMaxSize)
+    private boolean addPeerToActiveView(InetSocketAddress peer, long cost) {
+        if((activeView.size() == activeViewMaxSize - 1 && waiting) || activeView.size() == activeViewMaxSize)
             removeRandomFromActive();
 
         if(unbiasedActiveView.size() < unbiasedViewMaxSize) {
             unbiasedActiveView.add(peer);
             activeView.add(peer);
-        } else
-        if(cost == -1)
+
+            return true;
+        } else if(cost == -1)
             try {
                 oracle.getCost(peer);
 
-                costsWaiting.put(peer, NEW);
+                costsWaiting.put(peer, JOIN);
+
+                return false;
             } catch(IOException | InterruptedException e) {
                 // TODO
                 e.printStackTrace();
+
+                return false;
             }
         else {
             biasedActiveView.add(new BiasedInetAddress(peer, cost));
             activeView.add(peer);
+
+            return true;
         }
     }
 

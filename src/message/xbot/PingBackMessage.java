@@ -7,7 +7,7 @@ import java.nio.ByteBuffer;
 
 public class PingBackMessage extends ControlMessage {
 
-    public static final short TYPE = 6;
+    public static final short TYPE = 5;
 
     public PingBackMessage(InetSocketAddress sender) {
         super(sender, TYPE);

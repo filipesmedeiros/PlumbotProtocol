@@ -132,9 +132,6 @@ public class UDP implements UDPInterface {
 
                     short type = buffer.getShort(0);
 
-                    if(type == OptimizationMessage.TYPE)
-                        System.out.println("UDP " + buffer.limit());
-
                     for(MessageListener msgListener : listeners.get(type))
                         msgListener.notifyMessage(buffer);
                 }
