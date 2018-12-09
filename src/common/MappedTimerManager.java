@@ -26,7 +26,7 @@ public class MappedTimerManager implements TimerManager {
 
         Timer timer = new Timer(id, true);
         timers.put(id, timer);
-        timer.schedule(tTask, interval);
+        timer.schedule(tTask, 0, interval);
     }
 
     @Override
@@ -40,7 +40,7 @@ public class MappedTimerManager implements TimerManager {
 
         Timer timer = new Timer(id, true);
         timers.put(id, timer);
-        timer.schedule(tTask, interval, delay);
+        timer.schedule(tTask, delay, interval);
     }
 
     @Override

@@ -56,7 +56,7 @@ public class PlumBotInstance implements PlumBot {
             }).start();
 
             try {
-                xbot.init();
+                xbot.initialize();
             } catch(NotReadyForInitException e) {
                 // TODO
                 e.printStackTrace();
@@ -105,6 +105,10 @@ public class PlumBotInstance implements PlumBot {
         list.add(ForwardJoinMessage.TYPE);
         list.add(OptimizationMessage.TYPE);
         list.add(OptimizationReplyMessage.TYPE);
+        list.add(ReplaceMessage.TYPE);
+        list.add(ReplaceReplyMessage.TYPE);
+        list.add(DisconnectMessage.TYPE);
+        list.add(SwitchMessage.TYPE);
         list.add(PingMessage.TYPE);
 
         return list;

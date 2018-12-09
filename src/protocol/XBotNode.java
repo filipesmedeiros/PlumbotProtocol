@@ -105,7 +105,7 @@ public class XBotNode implements OptimizerNode {
         this.attl = attl;
         this.pttl = pttl;
 
-        optimizing = true;
+        optimizing = false;
         this.optimizationPeriod = optimizationPeriod;
 
         waiting = false;
@@ -264,6 +264,8 @@ public class XBotNode implements OptimizerNode {
         if(optimizing)
             return;
 
+        System.out.println("Received opti");
+
         OptimizationMessage msg = OptimizationMessage.parse(bytes);
 
         optimizing = true;
@@ -302,6 +304,8 @@ public class XBotNode implements OptimizerNode {
 
         optimizing = false;
 
+        System.out.println(id + " optimized " + old + " for " + cand);
+
         itoo = 0;
         itoc = Long.MAX_VALUE;
         ctod = 0;
@@ -310,6 +314,8 @@ public class XBotNode implements OptimizerNode {
 
     private void handleReplace(ByteBuffer bytes) {
         ReplaceMessage msg = ReplaceMessage.parse(bytes);
+
+        optimizing = true;
 
         init = msg.sender();
         old = msg.old();
@@ -492,7 +498,7 @@ public class XBotNode implements OptimizerNode {
     }
 
     @Override
-    public void init() throws NotReadyForInitException {
+    public void initialize() throws NotReadyForInitException {
         if(udp == null || oracle == null)
             throw new NotReadyForInitException();
 
@@ -520,7 +526,7 @@ public class XBotNode implements OptimizerNode {
         while(true)
             try {
                 CostNotification notification = costNotifications.take();
-                int code = costsWaiting.get(notification.sender);
+                int code = costsWaiting.remove(notification.sender);
 
                 if(code == JOIN)
                     try {
@@ -553,6 +559,8 @@ public class XBotNode implements OptimizerNode {
         if(optimizing || passiveView.size() == 0)
             return;
 
+        System.out.println("Trying to find cand");
+
         optimizing = true;
         InetSocketAddress cand = random.fromSet(passiveView);
         try {
@@ -576,14 +584,14 @@ public class XBotNode implements OptimizerNode {
             return;
         }
 
+        System.out.println(id + " found cand " + cand);
+
         this.itoc = itoc;
-        costsWaiting.remove(cand);
         this.cand = cand;
 
         BiasedInetAddress old = biasedActiveView.last();
 
         this.itoo = old.cost;
-        costsWaiting.remove(old.address);
         this.old = old.address;
 
         Message msg = new OptimizationMessage(id, old.address, itoo, itoc);

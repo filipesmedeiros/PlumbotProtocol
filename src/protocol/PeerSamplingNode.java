@@ -32,7 +32,7 @@ public interface PeerSamplingNode extends MessageListener, Node  {
     boolean removeNeighbourboodListener(NeighbourhoodListener listener)
         throws IllegalArgumentException;
 
-    void init() throws NotReadyForInitException;
+    void initialize() throws NotReadyForInitException;
 
     void join(InetSocketAddress contact);
 }

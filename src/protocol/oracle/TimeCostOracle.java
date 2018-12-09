@@ -103,7 +103,7 @@ public class TimeCostOracle implements Oracle {
 
     @Override
     public void notifyMessage(ByteBuffer msg) {
-        // msg.getShort();
+        msg.getShort();
         PingBackMessage reply = PingBackMessage.parse(msg);
         InetSocketAddress sender = reply.sender();
 
