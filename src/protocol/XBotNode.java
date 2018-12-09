@@ -347,9 +347,13 @@ public class XBotNode implements OptimizerNode {
     private void handleReplaceReply(ByteBuffer bytes) {
         ReplaceReplyMessage msg = ReplaceReplyMessage.parse(bytes);
 
-        boolean removed = removeFromBiased(msg.sender());
+        boolean removed = false;
 
-        addPeerToBiasedActiveView(init, itoc);
+        if(msg.accept()) {
+            removed = removeFromBiased(msg.sender());
+
+            addPeerToBiasedActiveView(init, itoc);
+        }
 
         try {
             Message optimizationReply = new OptimizationReplyMessage(id, msg.accept(), removed);
