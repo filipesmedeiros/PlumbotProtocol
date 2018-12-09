@@ -33,7 +33,7 @@ public class OptimizationReplyMessage extends ControlMessage {
 
     @Override
     public int size() {
-        return super.size() + 1;
+        return super.size() + 1 + 1;
     }
 
     public boolean accept() {

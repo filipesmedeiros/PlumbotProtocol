@@ -261,12 +261,22 @@ public class XBotNode implements OptimizerNode {
     }
 
     private void handleOptimization(ByteBuffer bytes) {
-        if(optimizing)
+        OptimizationMessage msg = OptimizationMessage.parse(bytes);
+
+        if(optimizing || biasedActiveView.size() == 0) {
+            OptimizationReplyMessage reply = new OptimizationReplyMessage(id, false, false);
+
+            try {
+                udp.send(reply.bytes(), msg.sender());
+            } catch(IOException | InterruptedException e) {
+                // TODO
+                e.printStackTrace();
+            }
+
             return;
+        }
 
         System.out.println("Received opti");
-
-        OptimizationMessage msg = OptimizationMessage.parse(bytes);
 
         optimizing = true;
 

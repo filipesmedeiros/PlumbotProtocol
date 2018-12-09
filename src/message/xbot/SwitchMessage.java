@@ -23,6 +23,8 @@ public class SwitchMessage extends ControlMessage {
         ByteBuffer buffer = putSenderInBuffer();
         putAddressInBuffer(buffer, init);
 
+        buffer.putLong(dtoo);
+
         buffer.put(EOT).flip();
 
         return buffer;
@@ -31,7 +33,7 @@ public class SwitchMessage extends ControlMessage {
     @Override
     public int size() {
         return super.size() + init.toString().length() * 2 + 2
-                + 8 + 1;
+                + 8;
     }
 
     public InetSocketAddress init() {

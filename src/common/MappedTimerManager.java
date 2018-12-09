@@ -1,7 +1,5 @@
 package common;
 
-import javax.print.DocFlavor;
-import javax.print.attribute.standard.RequestingUserName;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Timer;
@@ -30,7 +28,7 @@ public class MappedTimerManager implements TimerManager {
     }
 
     @Override
-    public void addDelayedTimer(String id, Runnable task, long interval, long delay) {
+    public void addDelayedTimer(String id, Runnable task, long delay, long interval) {
         TimerTask tTask = new TimerTask() {
             @Override
             public void run() {

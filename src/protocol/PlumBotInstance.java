@@ -32,7 +32,7 @@ public class PlumBotInstance implements PlumBot {
         try {
             udp = new UDP(local);
 
-            xbot = new XBotNode(local, 5, 1, 10, FIVE_MINUTES, ONE_MINUTE, 4, 2);
+            xbot = new XBotNode(local, 5, 1, 10, 1000 * 30, ONE_MINUTE, 4, 2);
 
             plum = new PlumtreeNode();
 
