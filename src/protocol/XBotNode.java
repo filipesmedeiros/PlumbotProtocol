@@ -196,7 +196,7 @@ public class XBotNode implements OptimizerNode {
         JoinMessage msg = JoinMessage.parse(bytes);
 
         if(addPeerToActiveView(msg.sender(), -1)) {
-            AcceptJoinMessage accept = new AcceptJoinMessage(id);
+            Message accept = new AcceptJoinMessage(id);
             try {
                 udp.send(accept.bytes(), msg.sender());
             } catch(IOException | InterruptedException e) {
@@ -235,7 +235,7 @@ public class XBotNode implements OptimizerNode {
         try {
             if(msg.ttl() == 0 || activeView.size() <= 1) {
                 if(addPeerToActiveView(msg.joiner(), -1)) {
-                    AcceptJoinMessage accept = new AcceptJoinMessage(id);
+                    Message accept = new AcceptJoinMessage(id);
                     try {
                         udp.send(accept.bytes(), msg.sender());
                     } catch(IOException | InterruptedException e) {
@@ -264,7 +264,7 @@ public class XBotNode implements OptimizerNode {
         OptimizationMessage msg = OptimizationMessage.parse(bytes);
 
         if(optimizing || biasedActiveView.size() == 0) {
-            OptimizationReplyMessage reply = new OptimizationReplyMessage(id, false, false);
+            Message reply = new OptimizationReplyMessage(id, false, false);
 
             try {
                 udp.send(reply.bytes(), msg.sender());
@@ -327,7 +327,7 @@ public class XBotNode implements OptimizerNode {
 
         optimizing = true;
 
-        init = msg.sender();
+        init = msg.init();
         old = msg.old();
         itoo = msg.itoo();
         itoc = msg.itoc();
@@ -639,8 +639,8 @@ public class XBotNode implements OptimizerNode {
         try {
             if(itsWorthOptimizing(this::basicComparer, itoo, itoc, ctod, dtoo)) {
 
-                ReplaceReplyMessage replaceReply = new ReplaceReplyMessage(id, true);
-                SwitchMessage switchMessage = new SwitchMessage(id, init, dtoo);
+                Message replaceReply = new ReplaceReplyMessage(id, true);
+                Message switchMessage = new SwitchMessage(id, init, dtoo);
 
                 udp.send(replaceReply.bytes(), cand);
                 udp.send(switchMessage.bytes(), old);
@@ -658,7 +658,7 @@ public class XBotNode implements OptimizerNode {
                 dtoo = 0;
                 ctod = 0;
             } else {
-                ReplaceReplyMessage replaceReply = new ReplaceReplyMessage(id, false);
+                Message replaceReply = new ReplaceReplyMessage(id, false);
 
                 udp.send(replaceReply.bytes(), cand);
 
@@ -786,6 +786,8 @@ public class XBotNode implements OptimizerNode {
     }
 
     private boolean removeFromBiased(InetSocketAddress peer) {
+        System.out.println(id + " removed " + peer + " from biased");
+
         activeView.remove(peer);
 
         for(BiasedInetAddress aPeer : biasedActiveView) {
