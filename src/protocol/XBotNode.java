@@ -187,7 +187,7 @@ public class XBotNode implements OptimizerNode {
                 break;
 
             default:
-                System.out.println("???");
+                System.out.println("??? unrecognized message");
                 break;
         }
     }
@@ -558,7 +558,7 @@ public class XBotNode implements OptimizerNode {
                     optimizeStep3_2(notification.sender, notification.cost);
 
                 else
-                    System.out.println("???");
+                    System.out.println("??? unrecognized code");
             } catch(InterruptedException e) {
                 // TODO
                 e.printStackTrace();
@@ -588,7 +588,7 @@ public class XBotNode implements OptimizerNode {
             return;
 
         if(biasedActiveView.size() < 1) {
-            System.out.println("???");
+            System.out.println("??? optimizing with empty biased view");
             optimizing = false;
 
             return;
@@ -643,6 +643,8 @@ public class XBotNode implements OptimizerNode {
 
                 removeFromBiased(cand);
 
+                System.out.println("itoo " + itoo + "\nitoc " + itoc + "\nctod " + ctod + "\ndtoo " + dtoo + "\nold " + old + "\ncand " + cand + "\ninit " + init);
+
                 addPeerToBiasedActiveView(old, dtoo);
 
                 optimizing = false;
@@ -670,6 +672,13 @@ public class XBotNode implements OptimizerNode {
     }
 
     private boolean addPeerToActiveView(InetSocketAddress peer, long cost) {
+        try {
+            if (peer.equals(id))
+                throw new IllegalArgumentException();
+        } catch(IllegalArgumentException e) {
+            e.printStackTrace();
+        }
+
         if((activeView.size() == activeViewMaxSize - 1 && waiting) || activeView.size() == activeViewMaxSize)
             removeRandomFromActive();
 
@@ -704,6 +713,13 @@ public class XBotNode implements OptimizerNode {
     }
 
     private void addPeerToBiasedActiveView(InetSocketAddress peer, long cost) {
+        try {
+            if (peer.equals(id))
+                throw new IllegalArgumentException();
+        } catch(IllegalArgumentException e) {
+            e.printStackTrace();
+        }
+
         activeView.add(peer);
         biasedActiveView.add(new BiasedInetAddress(peer, cost));
     }

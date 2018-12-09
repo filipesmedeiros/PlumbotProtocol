@@ -113,13 +113,15 @@ public class TimeCostOracle implements Oracle {
 
         long dif = System.currentTimeMillis() - sendTime;
 
-        if(costs.size() < costsSize)
-            costs.put(sender, new CostWithTTL(dif));
-        else {
+        System.out.println("diiiiiffff " + dif);
+
+        // Set should be ordered and should remove oldest cost
+        if(costs.size() >= costsSize) {
             Set<InetSocketAddress> set = costs.keySet();
             costs.remove(random.fromSet(set));
-            costs.put(sender, new CostWithTTL(dif));
         }
+
+        costs.put(sender, new CostWithTTL(dif));
 
         try {
             replies.put(new CostNotification(sender, dif));
@@ -134,20 +136,17 @@ public class TimeCostOracle implements Oracle {
         while(true) {
             try {
                 CostNotification notification = replies.take();
-                InetSocketAddress sender = notification.sender;
-
-                Long cost = pings.get(sender);
 
                 for(OracleUser user : users) {
                     try {
-                        user.notifyCost(new CostNotification(sender, cost));
-                      } catch(NullPointerException e) {
+                        user.notifyCost(new CostNotification(notification.sender, notification.cost));
+                    } catch(NullPointerException e) {
                         // For certain network sizes, collisions of forward joins might occur
                         // Just ignore it, everything is ok... probably
                     }
                 }
 
-                pings.remove(sender);
+                pings.remove(notification.sender);
             } catch(InterruptedException e) {
                 // TODO
                 // Have to restart oracle

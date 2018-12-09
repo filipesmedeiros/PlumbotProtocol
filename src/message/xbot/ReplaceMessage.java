@@ -44,7 +44,7 @@ public class ReplaceMessage extends ControlMessage {
         return super.size()
                 + init.toString().length() * 2 + 2
                 + old.toString().length() * 2 + 2
-                + 8 + 8 + 1;
+                + 8 + 8;
     }
 
     public InetSocketAddress init() {
