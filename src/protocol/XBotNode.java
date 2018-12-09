@@ -306,6 +306,8 @@ public class XBotNode implements OptimizerNode {
                 Message reply = new DisconnectMessage(id, msg.removed());
 
                 udp.send(reply.bytes(), old);
+
+                System.out.println(id + " optimized " + old + " for " + cand);
             }
         } catch(IOException | InterruptedException e) {
             // TODO
@@ -313,8 +315,6 @@ public class XBotNode implements OptimizerNode {
         }
 
         optimizing = false;
-
-        System.out.println(id + " optimized " + old + " for " + cand);
 
         itoo = 0;
         itoc = Long.MAX_VALUE;
@@ -677,6 +677,8 @@ public class XBotNode implements OptimizerNode {
             unbiasedActiveView.add(peer);
             activeView.add(peer);
 
+            passiveView.remove(peer);
+
             return true;
         } else if(cost == -1)
             try {
@@ -694,6 +696,8 @@ public class XBotNode implements OptimizerNode {
         else {
             biasedActiveView.add(new BiasedInetAddress(peer, cost));
             activeView.add(peer);
+
+            passiveView.remove(peer);
 
             return true;
         }
@@ -756,6 +760,8 @@ public class XBotNode implements OptimizerNode {
             unbiasedActiveView.remove(peer);
         }
 
+        addPeerToPassiveView(peer);
+
         return removed;
     }
 
@@ -764,6 +770,8 @@ public class XBotNode implements OptimizerNode {
 
         for(BiasedInetAddress aPeer : biasedActiveView) {
             if(aPeer.address.equals(peer)) {
+                addPeerToPassiveView(peer);
+
                 return biasedActiveView.remove(aPeer);
             }
         }
