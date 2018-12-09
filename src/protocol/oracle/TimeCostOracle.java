@@ -113,9 +113,7 @@ public class TimeCostOracle implements Oracle {
 
         long dif = System.currentTimeMillis() - sendTime;
 
-        System.out.println("diiiiiffff " + dif);
-
-        // Set should be ordered and should remove oldest cost
+        // TODO Set should be ordered and should remove oldest cost
         if(costs.size() >= costsSize) {
             Set<InetSocketAddress> set = costs.keySet();
             costs.remove(random.fromSet(set));

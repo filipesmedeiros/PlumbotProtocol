@@ -536,7 +536,11 @@ public class XBotNode implements OptimizerNode {
         while(true)
             try {
                 CostNotification notification = costNotifications.take();
-                int code = costsWaiting.remove(notification.sender);
+
+                Integer code = costsWaiting.remove(notification.sender);
+
+                if(code == null)
+                    continue;
 
                 if(code == JOIN)
                     try {
@@ -566,7 +570,7 @@ public class XBotNode implements OptimizerNode {
     }
 
     private void optimizeStep1() {
-        if(optimizing || passiveView.size() == 0)
+        if(optimizing || passiveView.size() == 0 || biasedActiveView.size() < 1)
             return;
 
         System.out.println("Trying to find cand");
@@ -643,7 +647,7 @@ public class XBotNode implements OptimizerNode {
 
                 removeFromBiased(cand);
 
-                System.out.println("itoo " + itoo + "\nitoc " + itoc + "\nctod " + ctod + "\ndtoo " + dtoo + "\nold " + old + "\ncand " + cand + "\ninit " + init);
+                System.out.println("id " + id + "\nitoo " + itoo + "\nitoc " + itoc + "\nctod " + ctod + "\ndtoo " + dtoo + "\nold " + old + "\ncand " + cand + "\ninit " + init);
 
                 addPeerToBiasedActiveView(old, dtoo);
 
@@ -673,7 +677,7 @@ public class XBotNode implements OptimizerNode {
 
     private boolean addPeerToActiveView(InetSocketAddress peer, long cost) {
         try {
-            if (peer.equals(id))
+            if(peer.equals(id))
                 throw new IllegalArgumentException();
         } catch(IllegalArgumentException e) {
             e.printStackTrace();
