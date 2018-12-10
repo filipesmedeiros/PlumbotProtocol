@@ -44,7 +44,8 @@ public class XBotNode implements OptimizerNode {
     private Oracle oracle;
     private BlockingQueue<CostNotification> costNotifications;
     private long optimizationPeriod;
-    private boolean optimizing;
+    // used in previous versions for allowing a node to only participate in an optimizing cycle at a time
+    // private boolean optimizing;
 
     private boolean waiting;
     private long waitTimeout;
@@ -105,7 +106,7 @@ public class XBotNode implements OptimizerNode {
         this.attl = attl;
         this.pttl = pttl;
 
-        optimizing = false;
+        // optimizing = false;
         this.optimizationPeriod = optimizationPeriod;
 
         waiting = false;
@@ -263,7 +264,7 @@ public class XBotNode implements OptimizerNode {
     private void handleOptimization(ByteBuffer bytes) {
         OptimizationMessage msg = OptimizationMessage.parse(bytes);
 
-        if(optimizing || biasedActiveView.size() == 0) {
+        if(/*optimizing || */biasedActiveView.size() == 0) {
             Message reply = new OptimizationReplyMessage(id, false, false);
 
             try {
@@ -278,7 +279,7 @@ public class XBotNode implements OptimizerNode {
 
         System.out.println("Received opti");
 
-        optimizing = true;
+        // optimizing = true;
 
         init = msg.sender();
         old = msg.old();
@@ -314,7 +315,7 @@ public class XBotNode implements OptimizerNode {
             e.printStackTrace();
         }
 
-        optimizing = false;
+        // optimizing = false;
 
         itoo = 0;
         itoc = Long.MAX_VALUE;
@@ -325,7 +326,7 @@ public class XBotNode implements OptimizerNode {
     private void handleReplace(ByteBuffer bytes) {
         ReplaceMessage msg = ReplaceMessage.parse(bytes);
 
-        optimizing = true;
+        // optimizing = true;
 
         init = msg.init();
         old = msg.old();
@@ -364,7 +365,7 @@ public class XBotNode implements OptimizerNode {
             e.printStackTrace();
         }
 
-        optimizing = false;
+        // optimizing = false;
 
         itoo = 0;
         itoc = Long.MAX_VALUE;
@@ -574,19 +575,19 @@ public class XBotNode implements OptimizerNode {
     }
 
     private void optimizeStep1() {
-        if(optimizing || passiveView.size() == 0 || biasedActiveView.size() < 1)
+        if(/*optimizing || */passiveView.size() == 0 || biasedActiveView.size() < 1)
             return;
 
         System.out.println("Trying to find cand");
 
-        optimizing = true;
+        // optimizing = true;
         InetSocketAddress cand = random.fromSet(passiveView);
         try {
             oracle.getCost(cand);
             costsWaiting.put(cand, ITOC);
         } catch(IOException | InterruptedException e) {
             // TODO
-            optimizing = false;
+            // optimizing = false;
             e.printStackTrace();
         }
     }
@@ -597,7 +598,7 @@ public class XBotNode implements OptimizerNode {
 
         if(biasedActiveView.size() < 1) {
             System.out.println("??? optimizing with empty biased view");
-            optimizing = false;
+            // optimizing = false;
 
             return;
         }
@@ -655,7 +656,7 @@ public class XBotNode implements OptimizerNode {
 
                 addPeerToBiasedActiveView(old, dtoo);
 
-                optimizing = false;
+                // optimizing = false;
 
                 itoo = 0;
                 itoc = Long.MAX_VALUE;
@@ -666,7 +667,7 @@ public class XBotNode implements OptimizerNode {
 
                 udp.send(replaceReply.bytes(), cand);
 
-                optimizing = false;
+                // optimizing = false;
 
                 itoo = 0;
                 itoc = Long.MAX_VALUE;
