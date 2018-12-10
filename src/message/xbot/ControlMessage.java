@@ -1,4 +1,6 @@
-package message;
+package message.xbot;
+
+import message.Message;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -23,7 +25,7 @@ public abstract class ControlMessage implements Message {
 
     @Override
     public int size() {
-        return 2 + sender().toString().length() * 2 + 2 + 1;
+        return Message.MSG_TYPE_SIZE + sender().toString().length() * 2 + 2 + 1;
     }
 
     @Override
@@ -74,22 +76,19 @@ public abstract class ControlMessage implements Message {
         buffer.putShort(type);
 
         char[] senderChars = sender().toString().toCharArray();
-        for(int i = 0; i < senderChars.length; i++) {
-            buffer.putChar(senderChars[i]);
-        }
+        for(char c : senderChars)
+            buffer.putChar(c);
 
         buffer.putChar(EOS);
 
         return buffer;
     }
 
-    public ByteBuffer putAddressInBuffer(ByteBuffer buffer, InetSocketAddress address) {
+    void putAddressInBuffer(ByteBuffer buffer, InetSocketAddress address) {
         char[] chars = address.toString().toCharArray();
-        for(int i = 0; i < chars.length; i++)
-            buffer.putChar(chars[i]);
+        for(char c : chars)
+            buffer.putChar(c);
 
         buffer.putChar(EOS);
-
-        return buffer;
     }
 }

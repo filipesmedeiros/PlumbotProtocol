@@ -21,8 +21,6 @@ public interface PeerSamplingNode extends MessageListener, Node  {
 
     int setPViewSize(int size) throws IllegalArgumentException;
 
-    boolean setUDP(UDPInterface udp) throws IllegalArgumentException;
-
     boolean setNeighbourhoodListener(NeighbourhoodListener listener)
         throws IllegalArgumentException;
 

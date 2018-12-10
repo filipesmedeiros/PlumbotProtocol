@@ -1,7 +1,5 @@
 package message.xbot;
 
-import message.ControlMessage;
-
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 
