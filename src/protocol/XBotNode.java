@@ -277,8 +277,6 @@ public class XBotNode implements OptimizerNode {
             return;
         }
 
-        System.out.println("Received opti");
-
         // optimizing = true;
 
         init = msg.sender();
@@ -307,8 +305,6 @@ public class XBotNode implements OptimizerNode {
                 Message reply = new DisconnectMessage(id, msg.removed());
 
                 udp.send(reply.bytes(), old);
-
-                System.out.println(id + " optimized " + old + " for " + cand);
             }
         } catch(IOException | InterruptedException e) {
             // TODO
@@ -578,8 +574,6 @@ public class XBotNode implements OptimizerNode {
         if(/*optimizing || */passiveView.size() == 0 || biasedActiveView.size() < 1)
             return;
 
-        System.out.println("Trying to find cand");
-
         // optimizing = true;
         InetSocketAddress cand = random.fromSet(passiveView);
         try {
@@ -602,8 +596,6 @@ public class XBotNode implements OptimizerNode {
 
             return;
         }
-
-        System.out.println(id + " found cand " + cand);
 
         this.itoc = itoc;
         this.cand = cand;
@@ -651,8 +643,6 @@ public class XBotNode implements OptimizerNode {
                 udp.send(switchMessage.bytes(), old);
 
                 removeFromBiased(cand);
-
-                System.out.println("id " + id + "\nitoo " + itoo + "\nitoc " + itoc + "\nctod " + ctod + "\ndtoo " + dtoo + "\nold " + old + "\ncand " + cand + "\ninit " + init);
 
                 addPeerToBiasedActiveView(old, dtoo);
 
@@ -791,8 +781,6 @@ public class XBotNode implements OptimizerNode {
     }
 
     private boolean removeFromBiased(InetSocketAddress peer) {
-        System.out.println(id + " removed " + peer + " from biased");
-
         activeView.remove(peer);
 
         for(BiasedInetAddress aPeer : biasedActiveView) {

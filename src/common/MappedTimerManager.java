@@ -19,7 +19,6 @@ public class MappedTimerManager implements TimerManager {
             @Override
             public void run() {
                 task.run();
-                System.out.println("ran " + task);
             }
         };
 
