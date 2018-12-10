@@ -1,15 +1,18 @@
 package protocol;
 
-import message.Message;
 import message.plumtree.BodyMessage;
-import network.UDP;
+import message.plumtree.IHaveMessage;
 import network.UDPInterface;
+import test.Application;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.Queue;
 import java.util.Set;
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
 public class PlumtreeNode implements TreeBroadcastNode {
@@ -17,15 +20,25 @@ public class PlumtreeNode implements TreeBroadcastNode {
     private InetSocketAddress id;
 
     private Set<InetSocketAddress> eagerPeers;
+    private int fanout;
 
     private BlockingQueue<BodyMessage> messages;
+    private Set<Application> applications;
+
+    private Set<IHaveMessage> ihaves;
 
     private UDPInterface udp;
 
-    public PlumtreeNode(InetSocketAddress id, int eagerPeerSetSize) {
+    public PlumtreeNode(InetSocketAddress id, int eagerPeerSetSize, int fanout) {
         this.id = id;
 
         eagerPeers = new HashSet<>(eagerPeerSetSize);
+        this.fanout = fanout;
+
+        messages = new ArrayBlockingQueue<>(10);
+        applications = new HashSet<>();
+
+        ihaves = new LinkedHashSet<>();
 
         udp = null;
     }
@@ -61,8 +74,6 @@ public class PlumtreeNode implements TreeBroadcastNode {
 
     }
 
-
-
     @Override
     public void initialize() {
 
@@ -74,12 +85,25 @@ public class PlumtreeNode implements TreeBroadcastNode {
     }
 
     @Override
-    public void notifyMessage(ByteBuffer msg) {
+    public void notifyMessage(ByteBuffer bytes) {
+        short type = bytes.getShort();
 
+        if(type == BodyMessage.TYPE)
+            try {
+                BodyMessage msg = BodyMessage.parse(bytes);
+
+                messages.put(msg);
+            } catch(InterruptedException e) {
+                // TODO
+                e.printStackTrace();
+            }
+        else if(type == IHaveMessage.TYPE)
+            ihaves.add(IHaveMessage.parse(bytes));
     }
 
     @Override
     public boolean setUDP(UDPInterface udp) throws IllegalArgumentException {
-        return false;
+        this.udp = udp;
+        return true;
     }
 }
