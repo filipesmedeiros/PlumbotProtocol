@@ -1,6 +1,5 @@
 package message.plumtree;
 
-import message.Message;
 import message.ControlMessage;
 
 import java.net.InetSocketAddress;

@@ -2,6 +2,7 @@ package common;
 
 import java.util.Map;
 import java.util.Timer;
+import java.util.function.Consumer;
 
 public interface TimerManager {
 
@@ -10,6 +11,8 @@ public interface TimerManager {
     void addDelayedTimer(String id, Runnable task, long interval, long delay);
 
     void addAction(String id, Runnable task, long delay);
+
+    void addAction(String id, Consumer<>)
 
     Map<String, Timer> timers();
 

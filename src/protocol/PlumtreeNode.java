@@ -38,7 +38,7 @@ public class PlumtreeNode implements TreeBroadcastNode {
     private BlockingQueue<BodyMessage> messages;
     private Set<Application> applications;
 
-    private BlockingQueue<Entry<InetSocketAddress, Integer>> missing;
+    private BlockingQueue<IHaveMessage> missing;
     private Map<Integer, CountedMessage> toBeSent;
     private long iHaveTimeout;
 
@@ -159,8 +159,8 @@ public class PlumtreeNode implements TreeBroadcastNode {
             if(msg.getValue().peers.remove(peer))
                 toBeSent.remove(msg.getKey());
 
-        for(Entry msg : missing)
-            if(msg.getKey().equals(peer))
+        for(IHaveMessage msg : missing)
+            if(msg.sender().equals(peer))
                 missing.remove(msg);
 
         eagerPeers.remove(peer);
@@ -222,8 +222,8 @@ public class PlumtreeNode implements TreeBroadcastNode {
             else
                 receivedHashes.put(hash, System.currentTimeMillis());
 
-            for(Entry<InetSocketAddress, Integer> missMsg : missing)
-                if(missMsg.getValue() == hash) {
+            for(IHaveMessage missMsg : missing)
+                if(missMsg.hash() == hash) {
                     missing.remove(missMsg);
                     break;
                 }
@@ -237,9 +237,8 @@ public class PlumtreeNode implements TreeBroadcastNode {
         try {
             IHaveMessage msg = IHaveMessage.parse(bytes);
 
-            int hash = msg.hash();
-            if(!haveMessage(hash))
-                missing.put(new SimpleEntry<>(msg.sender(), hash));
+            if(!haveMessage(msg.hash()))
+                missing.put(msg);
 
 
         } catch(InterruptedException e) {
@@ -262,14 +261,26 @@ public class PlumtreeNode implements TreeBroadcastNode {
 
             Message bodyMessage = new BodyMessage(id, counted.bytes, counted.bytes.limit());
 
-            udp.send(bodyMessage.bytes(), msg.sender);
+            udp.send(bodyMessage.bytes(), msg.sender());
 
-            if(counted.removePeer(msg.sender))
+            if(counted.removePeer(msg.sender()))
                 toBeSent.remove(msg.hash());
         } catch(IOException | InterruptedException e) {
             // TODO
             e.printStackTrace();
         }
+    }
+
+    private void triggerGraft(IHaveMessage msg) {
+        int hash = msg.hash();
+        for(IHaveMessage missMsg : missing)
+            if(missMsg.hash() == msg.hash())
+                try {
+                    udp.send(new GraftMessage(id, hash));
+                } catch(InterruptedException | IOException e) {
+                    // TODO
+                    e.printStackTrace();
+                }
     }
 
     @Override
