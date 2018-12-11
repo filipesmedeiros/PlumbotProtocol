@@ -8,7 +8,7 @@ import java.nio.ByteBuffer;
 
 public interface TreeBroadcastNode extends NeighbourhoodListener, MessageListener {
 
-    void broadcast(ByteBuffer buffer) throws IllegalArgumentException;
+    void broadcast(ByteBuffer bytes) throws IllegalArgumentException;
 
     int eagerPeerSetSize(int size) throws IllegalArgumentException;
 
