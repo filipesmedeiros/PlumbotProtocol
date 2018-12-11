@@ -1,21 +1,21 @@
 package protocol;
 
-import common.MappedTimerManager;
 import common.RandomChooser;
-import common.TimerManager;
 import exceptions.NotReadyForInitException;
 import message.Message;
 import message.plumtree.BodyMessage;
 import message.plumtree.IHaveMessage;
 import message.plumtree.PruneMessage;
+import message.plumtree.RequestMessage;
 import network.UDPInterface;
 import test.Application;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
+import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
@@ -24,6 +24,7 @@ public class PlumtreeNode implements TreeBroadcastNode {
 
     // Names for the timers (threads)
     public final static String DELIVER = "D";
+    public final static String REQUEST = "R";
 
     private InetSocketAddress id;
 
@@ -35,7 +36,8 @@ public class PlumtreeNode implements TreeBroadcastNode {
     private BlockingQueue<BodyMessage> messages;
     private Set<Application> applications;
 
-    private BlockingQueue<IHaveMessage> ihaves;
+    private BlockingQueue<IHaveMessage> missing;
+    private Map<Integer, CountedMessage> toBeSent;
 
     private UDPInterface udp;
 
@@ -52,7 +54,8 @@ public class PlumtreeNode implements TreeBroadcastNode {
         messages = new ArrayBlockingQueue<>(10);
         applications = new HashSet<>();
 
-        ihaves = new ArrayBlockingQueue<>(10);
+        missing = new ArrayBlockingQueue<>(10);
+        toBeSent = new HashMap<>();
 
         udp = null;
 
@@ -79,13 +82,18 @@ public class PlumtreeNode implements TreeBroadcastNode {
         int hash = hashMessage(bytes);
         Message iHave = new IHaveMessage(id, hash);
 
+        int counter = 0;
         for(InetSocketAddress peer : lazyPeers)
             try {
                 udp.send(iHave.bytes(), peer);
+
+                counter++;
             } catch(IOException | InterruptedException e) {
                 // TODO
                 e.printStackTrace();
             }
+
+        toBeSent.put(hash, new CountedMessage(bytes, counter));
     }
 
     // Only here in case it gets more complex in the future
@@ -128,6 +136,8 @@ public class PlumtreeNode implements TreeBroadcastNode {
             throw new NotReadyForInitException();
 
         new Thread(this::deliver, DELIVER).start();
+
+        new Thread(this::requestMessage, REQUEST).start();
     }
 
     @Override
@@ -139,6 +149,24 @@ public class PlumtreeNode implements TreeBroadcastNode {
     public void notifyMessage(ByteBuffer bytes) {
         short type = bytes.getShort();
 
+        switch(type) {
+            case BodyMessage.TYPE:
+                handleBody(bytes);
+                break;
+            case IHaveMessage.TYPE:
+                handleIHave(bytes);
+                break;
+            case PruneMessage.TYPE:
+                handlePrune(bytes);
+                break;
+            case RequestMessage.TYPE:
+                handleRequest(bytes);
+                break;
+
+            default:
+                System.out.println("???");
+                break;
+        }
         if(type == BodyMessage.TYPE)
             handleBody(bytes);
         else if(type == IHaveMessage.TYPE)
@@ -163,7 +191,7 @@ public class PlumtreeNode implements TreeBroadcastNode {
             IHaveMessage msg = IHaveMessage.parse(bytes);
 
             if(!haveMessage(msg.hash()))
-                ihaves.put(msg);
+                missing.put(msg);
         } catch(InterruptedException e) {
             // TODO
             e.printStackTrace();
@@ -175,18 +203,41 @@ public class PlumtreeNode implements TreeBroadcastNode {
         removeFromEager(msg.sender(), false);
     }
 
+    // Eventually should check if requester is real (IP address
+    // is one to which we sent the IHave)
+    private void handleRequest(ByteBuffer bytes) {
+        RequestMessage msg = RequestMessage.parse(bytes);
+        try {
+            CountedMessage counted = toBeSent.get(msg.hash());
+            if(counted == null)
+                return;
+
+            Message bodyMessage = new BodyMessage(id, counted.bytes, counted.bytes.limit());
+
+            udp.send(bodyMessage.bytes(), msg.sender);
+
+            if(counted.decCounter())
+                toBeSent.remove(msg.hash());
+        } catch(IOException | InterruptedException e) {
+            // TODO
+            e.printStackTrace();
+        }
+    }
+
     @Override
     public boolean setUDP(UDPInterface udp) throws IllegalArgumentException {
         this.udp = udp;
         return true;
     }
 
-    private void askForMessage() {
+    private void requestMessage() {
         while(true)
             try {
-                IHaveMessage msg = ihaves.take();
+                IHaveMessage msg = missing.take();
 
+                Message request = new RequestMessage(id, msg.hash());
 
+                udp.send(request.bytes(), msg.sender());
             } catch(InterruptedException | IOException e) {
                 // TODO
                 e.printStackTrace();
@@ -194,7 +245,7 @@ public class PlumtreeNode implements TreeBroadcastNode {
     }
 
     private boolean haveMessage(int hash) {
-        for(IHaveMessage msg : ihaves)
+        for(IHaveMessage msg : missing)
             if(msg.hash() == hash)
                 return true;
 
@@ -227,5 +278,20 @@ public class PlumtreeNode implements TreeBroadcastNode {
                 // TODO
                 e.printStackTrace();
             }
+    }
+
+    private static class CountedMessage {
+        private ByteBuffer bytes;
+        private Integer counter;
+
+        private CountedMessage(ByteBuffer bytes, Integer counter) {
+            this.bytes = bytes;
+            this.counter = counter;
+        }
+
+        // returns true if counter is 0, false otherwise
+        public boolean decCounter() {
+            return --counter == 0;
+        }
     }
 }

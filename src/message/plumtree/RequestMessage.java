@@ -1,6 +1,7 @@
 package message.plumtree;
 
 import message.Message;
+import message.xbot.ControlMessage;
 
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
@@ -55,5 +56,13 @@ public class RequestMessage implements Message {
     @Override
     public short messageType() {
         return TYPE;
+    }
+
+    public static RequestMessage parse(ByteBuffer bytes) {
+        InetSocketAddress sender = ControlMessage.parseAddress(bytes);
+
+        int hash = bytes.getInt();
+
+        return new RequestMessage(sender, hash);
     }
 }
