@@ -16,6 +16,8 @@ import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
+import java.util.Map.Entry;
+import java.util.AbstractMap.SimpleEntry;
 
 public class PlumtreeNode implements TreeBroadcastNode {
 
@@ -36,15 +38,16 @@ public class PlumtreeNode implements TreeBroadcastNode {
     private BlockingQueue<BodyMessage> messages;
     private Set<Application> applications;
 
-    private BlockingQueue<IHaveMessage> missing;
+    private BlockingQueue<Entry<InetSocketAddress, Integer>> missing;
     private Map<Integer, CountedMessage> toBeSent;
+    private long iHaveTimeout;
 
     private UDPInterface udp;
 
     private RandomChooser<InetSocketAddress> random;
 
     public PlumtreeNode(InetSocketAddress id, int eagerPeerSetSize,
-                        int fanout, long repeatMessageTimeout) {
+                        int fanout, long repeatMessageTimeout, long iHaveTimeout) {
         this.id = id;
 
         eagerPeers = new HashSet<>(eagerPeerSetSize);
@@ -60,6 +63,7 @@ public class PlumtreeNode implements TreeBroadcastNode {
 
         missing = new ArrayBlockingQueue<>(10);
         toBeSent = new HashMap<>();
+        this.iHaveTimeout = iHaveTimeout;
 
         udp = null;
 
@@ -155,8 +159,8 @@ public class PlumtreeNode implements TreeBroadcastNode {
             if(msg.getValue().peers.remove(peer))
                 toBeSent.remove(msg.getKey());
 
-        for(IHaveMessage msg : missing)
-            if(msg.sender().equals(peer))
+        for(Entry msg : missing)
+            if(msg.getKey().equals(peer))
                 missing.remove(msg);
 
         eagerPeers.remove(peer);
@@ -201,12 +205,6 @@ public class PlumtreeNode implements TreeBroadcastNode {
                 System.out.println("???");
                 break;
         }
-        if(type == BodyMessage.TYPE)
-            handleBody(bytes);
-        else if(type == IHaveMessage.TYPE)
-            handleIHave(bytes);
-        else if(type == PruneMessage.TYPE)
-            handlePrune(bytes);
     }
 
     private void handleBody(ByteBuffer bytes) {
@@ -215,12 +213,20 @@ public class PlumtreeNode implements TreeBroadcastNode {
 
             messages.put(msg);
 
-            Long firstReceive = receivedHashes.get(hashMessage(bytes));
+            int hash = hashMessage(bytes);
+
+            Long firstReceive = receivedHashes.get(hash);
             if(firstReceive != null
                     && System.currentTimeMillis() - firstReceive < repeatMessageTimeout)
                 removeFromEager(msg.sender(), true);
             else
-                receivedHashes.put(hashMessage(bytes), System.currentTimeMillis());
+                receivedHashes.put(hash, System.currentTimeMillis());
+
+            for(Entry<InetSocketAddress, Integer> missMsg : missing)
+                if(missMsg.getValue() == hash) {
+                    missing.remove(missMsg);
+                    break;
+                }
         } catch(InterruptedException e) {
             // TODO
             e.printStackTrace();
@@ -231,8 +237,11 @@ public class PlumtreeNode implements TreeBroadcastNode {
         try {
             IHaveMessage msg = IHaveMessage.parse(bytes);
 
-            if(!haveMessage(msg.hash()))
-                missing.put(msg);
+            int hash = msg.hash();
+            if(!haveMessage(hash))
+                missing.put(new SimpleEntry<>(msg.sender(), hash));
+
+
         } catch(InterruptedException e) {
             // TODO
             e.printStackTrace();
@@ -272,11 +281,11 @@ public class PlumtreeNode implements TreeBroadcastNode {
     private void requestMessage() {
         while(true)
             try {
-                IHaveMessage msg = missing.take();
+                Entry<InetSocketAddress, Integer> msg = missing.take();
 
-                Message request = new RequestMessage(id, msg.hash());
+                Message request = new RequestMessage(id, msg.getValue());
 
-                udp.send(request.bytes(), msg.sender());
+                udp.send(request.bytes(), msg.getKey());
             } catch(InterruptedException | IOException e) {
                 // TODO
                 e.printStackTrace();
@@ -317,6 +326,11 @@ public class PlumtreeNode implements TreeBroadcastNode {
                 // TODO
                 e.printStackTrace();
             }
+    }
+
+    @Override
+    public boolean canRemove(InetSocketAddress peer) throws IllegalArgumentException {
+        return !eagerPeers.contains(peer);
     }
 
     private static class CountedMessage {

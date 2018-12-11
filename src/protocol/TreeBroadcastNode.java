@@ -3,12 +3,13 @@ package protocol;
 import exceptions.NotReadyForInitException;
 import interfaces.MessageListener;
 import interfaces.NeighbourhoodListener;
+import interfaces.StableNeighbour;
 import test.Application;
 
 import java.nio.ByteBuffer;
 import java.util.Set;
 
-public interface TreeBroadcastNode extends NeighbourhoodListener, MessageListener {
+public interface TreeBroadcastNode extends NeighbourhoodListener, MessageListener, StableNeighbour {
 
     void broadcast(ByteBuffer bytes) throws IllegalArgumentException;
 
