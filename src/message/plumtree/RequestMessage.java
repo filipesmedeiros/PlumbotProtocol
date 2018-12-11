@@ -1,22 +1,19 @@
 package message.plumtree;
 
 import message.Message;
-import message.xbot.ControlMessage;
 
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 
-public class IHaveMessage implements Message {
+public class RequestMessage implements Message {
 
-    public static final short TYPE = 101;
-    // public static final int HASH_SIZE = 64; // 512 bit hash (in byte length) too hard, invest time later // TODO
-    static final int HASH_SIZE = 4; // 32 bit hash (in byte length) this is an integer
+    public static final short TYPE = 103;
 
-    private InetSocketAddress sender;
+    public InetSocketAddress sender;
 
     private int hash;
 
-    public IHaveMessage(InetSocketAddress sender, int hash) {
+    public RequestMessage(InetSocketAddress sender, int hash) {
         this.sender = sender;
         this.hash = hash;
     }
@@ -52,19 +49,11 @@ public class IHaveMessage implements Message {
     @Override
     public int size() {
         return Message.MSG_TYPE_SIZE + sender.toString().length() * 2 + 2
-                + HASH_SIZE + 1;
+                + IHaveMessage.HASH_SIZE + 1;
     }
 
     @Override
     public short messageType() {
         return TYPE;
-    }
-
-    public static IHaveMessage parse(ByteBuffer bytes) {
-        InetSocketAddress sender = ControlMessage.parseAddress(bytes);
-
-        int hash = bytes.getInt();
-
-        return new IHaveMessage(sender, hash);
     }
 }

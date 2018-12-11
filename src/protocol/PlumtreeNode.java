@@ -35,7 +35,7 @@ public class PlumtreeNode implements TreeBroadcastNode {
     private BlockingQueue<BodyMessage> messages;
     private Set<Application> applications;
 
-    private Set<IHaveMessage> ihaves;
+    private BlockingQueue<IHaveMessage> ihaves;
 
     private UDPInterface udp;
 
@@ -52,7 +52,7 @@ public class PlumtreeNode implements TreeBroadcastNode {
         messages = new ArrayBlockingQueue<>(10);
         applications = new HashSet<>();
 
-        ihaves = new LinkedHashSet<>();
+        ihaves = new ArrayBlockingQueue<>(10);
 
         udp = null;
 
@@ -105,7 +105,7 @@ public class PlumtreeNode implements TreeBroadcastNode {
         return count;
     }
 
-    // TODO how to implement this???
+    // TODO how to implement this??? many ways
     @Override
     public int lazyPeerSetSize(int size) throws IllegalArgumentException {
         return 0;
@@ -124,6 +124,8 @@ public class PlumtreeNode implements TreeBroadcastNode {
     @Override
     public void initialize()
             throws NotReadyForInitException {
+        if(udp == null)
+            throw new NotReadyForInitException();
 
         new Thread(this::deliver, DELIVER).start();
     }
@@ -157,7 +159,15 @@ public class PlumtreeNode implements TreeBroadcastNode {
     }
 
     private void handleIHave(ByteBuffer bytes) {
-        ihaves.add(IHaveMessage.parse(bytes));
+        try {
+            IHaveMessage msg = IHaveMessage.parse(bytes);
+
+            if(!haveMessage(msg.hash()))
+                ihaves.put(msg);
+        } catch(InterruptedException e) {
+            // TODO
+            e.printStackTrace();
+        }
     }
 
     private void handlePrune(ByteBuffer bytes) {
@@ -169,6 +179,26 @@ public class PlumtreeNode implements TreeBroadcastNode {
     public boolean setUDP(UDPInterface udp) throws IllegalArgumentException {
         this.udp = udp;
         return true;
+    }
+
+    private void askForMessage() {
+        while(true)
+            try {
+                IHaveMessage msg = ihaves.take();
+
+
+            } catch(InterruptedException | IOException e) {
+                // TODO
+                e.printStackTrace();
+            }
+    }
+
+    private boolean haveMessage(int hash) {
+        for(IHaveMessage msg : ihaves)
+            if(msg.hash() == hash)
+                return true;
+
+        return false;
     }
 
     private void deliver() {
