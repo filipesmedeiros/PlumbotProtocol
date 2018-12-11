@@ -1,56 +1,30 @@
 package message.plumtree;
 
 import message.Message;
-import message.xbot.ControlMessage;
+import message.ControlMessage;
 
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 
-public class PruneMessage implements Message {
+public class PruneMessage extends ControlMessage {
 
     public static final short TYPE = 102;
 
-    private InetSocketAddress sender;
-
-    public PruneMessage(InetSocketAddress sender)
-            throws IllegalArgumentException {
-        this.sender = sender;
+    public PruneMessage(InetSocketAddress sender) {
+        super(sender, TYPE);
     }
 
     @Override
     public ByteBuffer bytes() {
-        ByteBuffer buffer = ByteBuffer.allocate(size());
+        ByteBuffer buffer = putSenderInBuffer();
 
-        buffer.putShort(TYPE);
-
-        char[] chars = sender().toString().toCharArray();
-        for(char c : chars)
-            buffer.putChar(c);
-
-        buffer.putChar(EOS);
-
-        buffer.put(EOT);
+        buffer.put(EOT).flip();
 
         return buffer;
     }
 
-    @Override
-    public InetSocketAddress sender() {
-        return sender;
-    }
-
-    @Override
-    public int size() {
-        return Message.MSG_TYPE_SIZE + sender.toString().length() * 2 + 2 + 1;
-    }
-
-    @Override
-    public short messageType() {
-        return TYPE;
-    }
-
     public static PruneMessage parse(ByteBuffer bytes) {
-        InetSocketAddress sender = ControlMessage.parseAddress(bytes);
+        InetSocketAddress sender = parseAddress(bytes);
 
         return new PruneMessage(sender);
     }

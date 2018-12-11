@@ -293,8 +293,8 @@ public class PlumtreeNode implements TreeBroadcastNode {
     }
 
     private boolean haveMessage(int hash) {
-        for(IHaveMessage msg : missing)
-            if(msg.hash() == hash)
+        for(Entry<InetSocketAddress, Integer> msg : missing)
+            if(msg.getValue() == hash)
                 return true;
 
         return false;

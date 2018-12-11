@@ -1,4 +1,4 @@
-package message.xbot;
+package message;
 
 import message.Message;
 

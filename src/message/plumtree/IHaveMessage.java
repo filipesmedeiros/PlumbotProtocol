@@ -1,12 +1,12 @@
 package message.plumtree;
 
 import message.Message;
-import message.xbot.ControlMessage;
+import message.ControlMessage;
 
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 
-public class IHaveMessage implements Message {
+public class IHaveMessage extends ControlMessage {
 
     public static final short TYPE = 101;
     // public static final int HASH_SIZE = 64; // 512 bit hash (in byte length) too hard, invest time later // TODO
@@ -17,21 +17,13 @@ public class IHaveMessage implements Message {
     private int hash;
 
     public IHaveMessage(InetSocketAddress sender, int hash) {
-        this.sender = sender;
+        super(sender, TYPE);
         this.hash = hash;
     }
 
     @Override
     public ByteBuffer bytes() {
-        ByteBuffer buffer = ByteBuffer.allocate(size());
-
-        buffer.putShort(TYPE);
-
-        char[] chars = sender().toString().toCharArray();
-        for(char c : chars)
-            buffer.putChar(c);
-
-        buffer.putChar(EOS);
+        ByteBuffer buffer = putSenderInBuffer();
 
         buffer.putInt(hash);
 
@@ -40,19 +32,13 @@ public class IHaveMessage implements Message {
         return buffer;
     }
 
-    @Override
-    public InetSocketAddress sender() {
-        return sender;
-    }
-
     public int hash() {
         return hash;
     }
 
     @Override
     public int size() {
-        return Message.MSG_TYPE_SIZE + sender.toString().length() * 2 + 2
-                + HASH_SIZE + 1;
+        return super.size() + HASH_SIZE;
     }
 
     @Override
@@ -61,7 +47,7 @@ public class IHaveMessage implements Message {
     }
 
     public static IHaveMessage parse(ByteBuffer bytes) {
-        InetSocketAddress sender = ControlMessage.parseAddress(bytes);
+        InetSocketAddress sender = parseAddress(bytes);
 
         int hash = bytes.getInt();
 

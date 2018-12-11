@@ -1,7 +1,7 @@
 package message.plumtree;
 
 import message.Message;
-import message.xbot.ControlMessage;
+import message.ControlMessage;
 
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
