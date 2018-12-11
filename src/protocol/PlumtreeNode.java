@@ -13,10 +13,7 @@ import test.Application;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
@@ -24,14 +21,17 @@ public class PlumtreeNode implements TreeBroadcastNode {
 
     // Names for the timers (threads)
     public final static String DELIVER = "D";
-    public final static String REQUEST = "R";
+    // public final static String REQUEST = "R";
 
     private InetSocketAddress id;
 
     private Set<InetSocketAddress> eagerPeers;
-    private int fanout;
+    // private int fanout;
 
     private Set<InetSocketAddress> lazyPeers;
+
+    private Map<Integer, Long> receivedHashes;
+    private long repeatMessageTimeout;
 
     private BlockingQueue<BodyMessage> messages;
     private Set<Application> applications;
@@ -43,13 +43,17 @@ public class PlumtreeNode implements TreeBroadcastNode {
 
     private RandomChooser<InetSocketAddress> random;
 
-    public PlumtreeNode(InetSocketAddress id, int eagerPeerSetSize, int fanout) {
+    public PlumtreeNode(InetSocketAddress id, int eagerPeerSetSize,
+                        int fanout, long repeatMessageTimeout) {
         this.id = id;
 
         eagerPeers = new HashSet<>(eagerPeerSetSize);
-        this.fanout = fanout;
+        // this.fanout = fanout;
 
         lazyPeers = new HashSet<>(fanout - eagerPeerSetSize);
+
+        receivedHashes = new HashMap<>();
+        this.repeatMessageTimeout = repeatMessageTimeout;
 
         messages = new ArrayBlockingQueue<>(10);
         applications = new HashSet<>();
@@ -82,18 +86,18 @@ public class PlumtreeNode implements TreeBroadcastNode {
         int hash = hashMessage(bytes);
         Message iHave = new IHaveMessage(id, hash);
 
-        int counter = 0;
+        List<InetSocketAddress> sentTo = new LinkedList<>();
         for(InetSocketAddress peer : lazyPeers)
             try {
                 udp.send(iHave.bytes(), peer);
 
-                counter++;
+                sentTo.add(peer);
             } catch(IOException | InterruptedException e) {
                 // TODO
                 e.printStackTrace();
             }
 
-        toBeSent.put(hash, new CountedMessage(bytes, counter));
+        toBeSent.put(hash, new CountedMessage(bytes, sentTo));
     }
 
     // Only here in case it gets more complex in the future
@@ -120,13 +124,43 @@ public class PlumtreeNode implements TreeBroadcastNode {
     }
 
     @Override
-    public void neighbourUp(InetSocketAddress peer) {
+    public void addApplication(Application app)
+            throws IllegalArgumentException {
+
+        if(app == null)
+            throw new IllegalArgumentException();
+
+        applications.add(app);
+    }
+
+    @Override
+    public void addApplications(Set<Application> apps)
+            throws IllegalArgumentException {
+
+        if(apps == null || apps.isEmpty())
+            throw new IllegalArgumentException();
+
+        applications.addAll(apps);
 
     }
 
     @Override
-    public void neighbourDown(InetSocketAddress peer) {
+    public void neighbourUp(InetSocketAddress peer) {
+        eagerPeers.add(peer);
+    }
 
+    @Override
+    public void neighbourDown(InetSocketAddress peer) {
+        for(Map.Entry<Integer, CountedMessage> msg : toBeSent.entrySet())
+            if(msg.getValue().peers.remove(peer))
+                toBeSent.remove(msg.getKey());
+
+        for(IHaveMessage msg : missing)
+            if(msg.sender().equals(peer))
+                missing.remove(msg);
+
+        eagerPeers.remove(peer);
+        lazyPeers.remove(peer);
     }
 
     @Override
@@ -137,7 +171,7 @@ public class PlumtreeNode implements TreeBroadcastNode {
 
         new Thread(this::deliver, DELIVER).start();
 
-        new Thread(this::requestMessage, REQUEST).start();
+        requestMessage();
     }
 
     @Override
@@ -180,6 +214,13 @@ public class PlumtreeNode implements TreeBroadcastNode {
             BodyMessage msg = BodyMessage.parse(bytes);
 
             messages.put(msg);
+
+            Long firstReceive = receivedHashes.get(hashMessage(bytes));
+            if(firstReceive != null
+                    && System.currentTimeMillis() - firstReceive < repeatMessageTimeout)
+                removeFromEager(msg.sender(), true);
+            else
+                receivedHashes.put(hashMessage(bytes), System.currentTimeMillis());
         } catch(InterruptedException e) {
             // TODO
             e.printStackTrace();
@@ -203,8 +244,6 @@ public class PlumtreeNode implements TreeBroadcastNode {
         removeFromEager(msg.sender(), false);
     }
 
-    // Eventually should check if requester is real (IP address
-    // is one to which we sent the IHave)
     private void handleRequest(ByteBuffer bytes) {
         RequestMessage msg = RequestMessage.parse(bytes);
         try {
@@ -216,7 +255,7 @@ public class PlumtreeNode implements TreeBroadcastNode {
 
             udp.send(bodyMessage.bytes(), msg.sender);
 
-            if(counted.decCounter())
+            if(counted.removePeer(msg.sender))
                 toBeSent.remove(msg.hash());
         } catch(IOException | InterruptedException e) {
             // TODO
@@ -282,16 +321,16 @@ public class PlumtreeNode implements TreeBroadcastNode {
 
     private static class CountedMessage {
         private ByteBuffer bytes;
-        private Integer counter;
+        private List<InetSocketAddress> peers;
 
-        private CountedMessage(ByteBuffer bytes, Integer counter) {
+        private CountedMessage(ByteBuffer bytes, List<InetSocketAddress> peers) {
             this.bytes = bytes;
-            this.counter = counter;
+            this.peers = peers;
         }
 
-        // returns true if counter is 0, false otherwise
-        public boolean decCounter() {
-            return --counter == 0;
+        boolean removePeer(InetSocketAddress peer) {
+            peers.remove(peer);
+            return peers.isEmpty();
         }
     }
 }
