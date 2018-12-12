@@ -12,7 +12,7 @@ public interface TimerManager {
 
     void addAction(String id, Runnable task, long delay);
 
-    void addAction(String id, Consumer<>)
+    void addAction(String id, Consumer<Object> task, Object t, long delay);
 
     Map<String, Timer> timers();
 

@@ -1,12 +1,11 @@
 package protocol;
 
+import common.MappedTimerManager;
 import common.RandomChooser;
+import common.TimerManager;
 import exceptions.NotReadyForInitException;
 import message.Message;
-import message.plumtree.BodyMessage;
-import message.plumtree.IHaveMessage;
-import message.plumtree.PruneMessage;
-import message.plumtree.RequestMessage;
+import message.plumtree.*;
 import network.UDPInterface;
 import test.Application;
 
@@ -24,6 +23,7 @@ public class PlumtreeNode implements TreeBroadcastNode {
     // Names for the timers (threads)
     public final static String DELIVER = "D";
     // public final static String REQUEST = "R";
+    public final static String GRAFT = "G";
 
     private InetSocketAddress id;
 
@@ -41,6 +41,8 @@ public class PlumtreeNode implements TreeBroadcastNode {
     private BlockingQueue<IHaveMessage> missing;
     private Map<Integer, CountedMessage> toBeSent;
     private long iHaveTimeout;
+
+    private TimerManager timerManager;
 
     private UDPInterface udp;
 
@@ -64,6 +66,8 @@ public class PlumtreeNode implements TreeBroadcastNode {
         missing = new ArrayBlockingQueue<>(10);
         toBeSent = new HashMap<>();
         this.iHaveTimeout = iHaveTimeout;
+
+        timerManager = new MappedTimerManager();
 
         udp = null;
 
@@ -240,7 +244,7 @@ public class PlumtreeNode implements TreeBroadcastNode {
             if(!haveMessage(msg.hash()))
                 missing.put(msg);
 
-
+            timerManager.addAction(GRAFT, this::triggerGraft, msg, iHaveTimeout);
         } catch(InterruptedException e) {
             // TODO
             e.printStackTrace();
@@ -271,12 +275,16 @@ public class PlumtreeNode implements TreeBroadcastNode {
         }
     }
 
-    private void triggerGraft(IHaveMessage msg) {
+    // TODO
+    private void triggerGraft(Object msgO) {
+        IHaveMessage msg = (IHaveMessage) msgO;
+
         int hash = msg.hash();
         for(IHaveMessage missMsg : missing)
             if(missMsg.hash() == msg.hash())
                 try {
-                    udp.send(new GraftMessage(id, hash));
+                    Message graftMsg = new GraftMessage(id, hash);
+                    udp.send(graftMsg.bytes(), missMsg.sender());
                 } catch(InterruptedException | IOException e) {
                     // TODO
                     e.printStackTrace();
@@ -292,11 +300,11 @@ public class PlumtreeNode implements TreeBroadcastNode {
     private void requestMessage() {
         while(true)
             try {
-                Entry<InetSocketAddress, Integer> msg = missing.take();
+                IHaveMessage msg = missing.take();
 
-                Message request = new RequestMessage(id, msg.getValue());
+                Message request = new RequestMessage(id, msg.hash());
 
-                udp.send(request.bytes(), msg.getKey());
+                udp.send(request.bytes(), msg.sender());
             } catch(InterruptedException | IOException e) {
                 // TODO
                 e.printStackTrace();
@@ -304,8 +312,8 @@ public class PlumtreeNode implements TreeBroadcastNode {
     }
 
     private boolean haveMessage(int hash) {
-        for(Entry<InetSocketAddress, Integer> msg : missing)
-            if(msg.getValue() == hash)
+        for(IHaveMessage msg : missing)
+            if(msg.hash() == hash)
                 return true;
 
         return false;
