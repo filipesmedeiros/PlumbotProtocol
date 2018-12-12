@@ -1,11 +1,11 @@
 package message.xbot;
 
-import message.ControlMessage;
+import message.PlumbotMessage;
 
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 
-public class JoinMessage extends ControlMessage {
+public class JoinMessage extends PlumbotMessage {
 
     public final static short TYPE = 1;
 

@@ -1,11 +1,11 @@
 package message.plumtree;
 
-import message.ControlMessage;
+import message.PlumbotMessage;
 
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 
-public class RequestMessage extends ControlMessage {
+public class RequestMessage extends PlumbotMessage {
 
     public static final short TYPE = 103;
 

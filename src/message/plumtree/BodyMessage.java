@@ -1,12 +1,12 @@
 package message.plumtree;
 
 import message.Message;
-import message.ControlMessage;
+import message.PlumbotMessage;
 
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 
-public class BodyMessage implements Message {
+public class BodyMessage extends HopMessage {
 
     public static final short TYPE = 100;
 
@@ -17,6 +17,7 @@ public class BodyMessage implements Message {
 
     public BodyMessage(InetSocketAddress sender, ByteBuffer body, int bodySize)
             throws IllegalArgumentException {
+        super(sender, TYPE);
         if(calcSize(sender, body) >= Message.MSG_SIZE)
             throw new IllegalArgumentException();
 
@@ -27,15 +28,7 @@ public class BodyMessage implements Message {
 
     @Override
     public ByteBuffer bytes() {
-        ByteBuffer buffer = ByteBuffer.allocate(size());
-
-        buffer.putShort(TYPE);
-
-        char[] senderChars = sender().toString().toCharArray();
-        for(char c : senderChars)
-            buffer.putChar(c);
-
-        buffer.putChar(EOS);
+        ByteBuffer buffer = putSenderInBuffer();
 
         buffer.putInt(bodySize);
 
@@ -66,7 +59,7 @@ public class BodyMessage implements Message {
     }
 
     public static BodyMessage parse(ByteBuffer bytes) {
-        InetSocketAddress sender = ControlMessage.parseAddress(bytes);
+        InetSocketAddress sender = PlumbotMessage.parseAddress(bytes);
 
         byte[] body = new byte[bytes.getInt()];
 
@@ -76,6 +69,6 @@ public class BodyMessage implements Message {
     }
 
     private static int calcSize(InetSocketAddress sender, ByteBuffer body) {
-        return Message.MSG_TYPE_SIZE + sender.toString().length() * 2 + 2 + 4 + body.limit();
+        return Message.MSG_TYPE_SIZE + sender.toString().length() * 2 + 2 + 4 + body.limit() + 1;
     }
 }

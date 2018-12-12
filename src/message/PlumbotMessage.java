@@ -8,12 +8,12 @@ import java.net.UnknownHostException;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 
-public abstract class ControlMessage implements Message {
+public abstract class PlumbotMessage implements Message {
 
     private InetSocketAddress sender;
     private short type;
 
-    public ControlMessage(InetSocketAddress sender, short type) {
+    public PlumbotMessage(InetSocketAddress sender, short type) {
         this.sender = sender;
         this.type = type;
     }
