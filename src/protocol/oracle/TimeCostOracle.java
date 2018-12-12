@@ -130,6 +130,18 @@ public class TimeCostOracle implements Oracle {
         }
     }
 
+    @Override
+    public boolean setUDP(UDPInterface udp)
+            throws IllegalArgumentException {
+
+        if(udp == null)
+            throw new IllegalArgumentException();
+
+        this.udp = udp;
+
+        return true;
+    }
+
     private void notifyUsers() {
         while(true) {
             try {

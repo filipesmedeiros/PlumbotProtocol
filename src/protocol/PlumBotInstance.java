@@ -34,7 +34,7 @@ public class PlumBotInstance implements PlumBot {
 
             xbot = new XBotNode(local, 5, 1, 10, 1000 * 30, ONE_MINUTE, 4, 2);
 
-            plum = new PlumtreeNode();
+            plum = new PlumtreeNode(local, 3, 5, FIVE_MINUTES, ONE_MINUTE);
 
             Oracle oracle = new TimeCostOracle(local, udp, 10, 10, FIVE_MINUTES);
 

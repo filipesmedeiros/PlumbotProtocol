@@ -84,7 +84,7 @@ public abstract class PlumbotMessage implements Message {
         return buffer;
     }
 
-    void putAddressInBuffer(ByteBuffer buffer, InetSocketAddress address) {
+    public void putAddressInBuffer(ByteBuffer buffer, InetSocketAddress address) {
         char[] chars = address.toString().toCharArray();
         for(char c : chars)
             buffer.putChar(c);

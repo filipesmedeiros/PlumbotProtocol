@@ -11,9 +11,12 @@ public class GraftMessage extends PlumbotMessage {
 
     private int hash;
 
-    public GraftMessage(InetSocketAddress sender, int hash) {
+    private boolean send;
+
+    public GraftMessage(InetSocketAddress sender, int hash, boolean send) {
         super(sender, TYPE);
         this.hash = hash;
+        this.send = send;
     }
 
     @Override
@@ -22,6 +25,8 @@ public class GraftMessage extends PlumbotMessage {
 
         buffer.putInt(hash);
 
+        buffer.put(send ? (byte) 1 : (byte) 0);
+
         buffer.put(EOT);
 
         return buffer;
@@ -29,6 +34,10 @@ public class GraftMessage extends PlumbotMessage {
 
     public int hash() {
         return hash;
+    }
+
+    public boolean send() {
+        return send;
     }
 
     @Override
@@ -41,6 +50,8 @@ public class GraftMessage extends PlumbotMessage {
 
         int hash = bytes.getInt();
 
-        return new GraftMessage(sender, hash);
+        boolean send = bytes.get() == 1;
+
+        return new GraftMessage(sender, hash, send);
     }
 }
