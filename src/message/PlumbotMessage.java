@@ -1,7 +1,5 @@
 package message;
 
-import message.Message;
-
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
@@ -10,7 +8,7 @@ import java.nio.ByteBuffer;
 
 public abstract class PlumbotMessage implements Message {
 
-    private InetSocketAddress sender;
+    protected InetSocketAddress sender;
     private short type;
 
     public PlumbotMessage(InetSocketAddress sender, short type) {
@@ -84,7 +82,7 @@ public abstract class PlumbotMessage implements Message {
         return buffer;
     }
 
-    public void putAddressInBuffer(ByteBuffer buffer, InetSocketAddress address) {
+    protected void putAddressInBuffer(ByteBuffer buffer, InetSocketAddress address) {
         char[] chars = address.toString().toCharArray();
         for(char c : chars)
             buffer.putChar(c);

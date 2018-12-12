@@ -86,7 +86,7 @@ public class PlumtreeNode implements TreeBroadcastNode {
         eagerPushMessage(bytes);
 
         int hash = hashMessage(bytes);
-        IHaveMessage iHave = new IHaveMessage(id, hash);
+        IHaveMessage iHave = new IHaveMessage(id, hash, (short) 1, id);
 
         lazyQueue.add(iHave);
 
@@ -96,7 +96,8 @@ public class PlumtreeNode implements TreeBroadcastNode {
     private void eagerPushMessage(ByteBuffer bytes) {
         for(InetSocketAddress peer : eagerPeers)
             try {
-                udp.send(bytes, peer);
+                BodyMessage msg = new BodyMessage(id, bytes, bytes.limit(), (short) 1);
+                udp.send(msg.next(id).bytes(), peer);
             } catch(IOException | InterruptedException e) {
                 // TODO
                 e.printStackTrace();
@@ -198,7 +199,7 @@ public class PlumtreeNode implements TreeBroadcastNode {
         return id;
     }
 
-    // IS THIS BLOCKING THE EXECUTION (CAN GO BACK TO UDP)
+    // IS THIS BLOCKING THE EXECUTION??? (CAN GO BACK TO UDP)
     @Override
     public void notifyMessage(ByteBuffer bytes) {
         short type = bytes.getShort();
@@ -230,16 +231,25 @@ public class PlumtreeNode implements TreeBroadcastNode {
         try {
             BodyMessage msg = BodyMessage.parse(bytes);
 
-            messages.put(msg);
-
             int hash = hashMessage(bytes);
 
             Long firstReceive = receivedHashes.get(hash);
             if(firstReceive != null
                     && System.currentTimeMillis() - firstReceive < repeatMessageTimeout)
                 removeFromEager(msg.sender(), true);
-            else
+            else {
                 receivedHashes.put(hash, System.currentTimeMillis());
+                messages.put(msg);
+
+                for(InetSocketAddress peer : eagerPeers)
+                    if(peer.equals(msg.sender()))
+                        try {
+                            udp.send(msg.next(id).bytes(), peer);
+                        } catch(IOException e) {
+                            // TODO
+                            e.printStackTrace();
+                        }
+            }
 
             for(IHaveMessage missMsg : missing)
                 if(missMsg.hash() == hash) {
@@ -291,7 +301,7 @@ public class PlumtreeNode implements TreeBroadcastNode {
         if(counted == null)
             return;
 
-        Message bodyMessage = new BodyMessage(id, counted.bytes, counted.bytes.limit());
+        Message bodyMessage = new BodyMessage(id, counted.bytes, counted.bytes.limit(), (short) 1);
 
         try {
             udp.send(bodyMessage.bytes(), sender);

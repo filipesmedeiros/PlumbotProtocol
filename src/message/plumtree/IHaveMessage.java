@@ -9,10 +9,13 @@ public class IHaveMessage extends HopMessage {
     // public static final int HASH_SIZE = 64; // 512 bit hash (in byte length) too hard, invest time later // TODO
     static final int HASH_SIZE = 4; // 32 bit hash (in byte length) this is an integer
 
+    private InetSocketAddress original;
+
     private int hash;
 
-    public IHaveMessage(InetSocketAddress sender, int hash) {
-        super(sender, TYPE);
+    public IHaveMessage(InetSocketAddress sender, int hash, short hops, InetSocketAddress original) {
+        super(sender, TYPE, hops);
+        this.original = original;
         this.hash = hash;
     }
 
@@ -20,7 +23,11 @@ public class IHaveMessage extends HopMessage {
     public ByteBuffer bytes() {
         ByteBuffer buffer = putSenderInBuffer();
 
+        putAddressInBuffer(buffer, original);
+
         buffer.putInt(hash);
+
+        buffer.putShort(hops());
 
         buffer.put(EOT);
 
@@ -33,7 +40,8 @@ public class IHaveMessage extends HopMessage {
 
     @Override
     public int size() {
-        return super.size() + HASH_SIZE;
+        return super.size() + original.toString().length() * 2 + 2
+                + HASH_SIZE + 2;
     }
 
     @Override
@@ -41,11 +49,21 @@ public class IHaveMessage extends HopMessage {
         return TYPE;
     }
 
+    public IHaveMessage next(InetSocketAddress sender) {
+        nextHop();
+        this.sender = sender;
+        return this;
+    }
+
     public static IHaveMessage parse(ByteBuffer bytes) {
         InetSocketAddress sender = parseAddress(bytes);
 
+        InetSocketAddress original = parseAddress(bytes);
+
         int hash = bytes.getInt();
 
-        return new IHaveMessage(sender, hash);
+        short hops = bytes.getShort();
+
+        return new IHaveMessage(sender, hash, hops, original);
     }
 }

@@ -6,14 +6,18 @@ import java.net.InetSocketAddress;
 
 public abstract class HopMessage extends PlumbotMessage {
 
-    private int hops;
+    private short hops;
 
-    public HopMessage(InetSocketAddress sender, short type) {
+    HopMessage(InetSocketAddress sender, short type, short hops) {
         super(sender, type);
-        hops = 0;
+        this.hops = hops;
     }
 
-    public int hops() {
+    short hops() {
         return hops;
+    }
+
+    void nextHop() {
+        hops++;
     }
 }
