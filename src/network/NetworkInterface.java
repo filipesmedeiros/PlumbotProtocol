@@ -10,27 +10,27 @@ import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Map;
 
-public interface UDPInterface {
+public interface NetworkInterface {
 
     // Names for threads
-    public static final String RECEIVE_THREAD = "Receive Thread";
-    public static final String FULFILL_THREAD = "Fulfill Thread";
+    String RECEIVE_THREAD = "Receive Thread";
+    String FULFILL_THREAD = "Fulfill Thread";
 
     // End of transmission
-    public static final byte EOT = 4;
+    byte EOT = 4;
 
     void send(ByteBuffer bytes, InetSocketAddress to)
         throws IOException, InterruptedException, IllegalArgumentException;
 
-    UDPInterface setMsgSize(int size);
+    NetworkInterface setMsgSize(int size);
 
-    UDPInterface addMessageListener(MessageListener listener, List<Short> msgTypes);
+    NetworkInterface addMessageListener(MessageListener listener, List<Short> msgTypes);
 
-    UDPInterface addMessageListeners(Map<MessageListener, List<Short>> listeners);
+    NetworkInterface addMessageListeners(Map<MessageListener, List<Short>> listeners);
 
     void init()
         throws NotReadyForInitException;
 
-    UDPInterface setRequestQueueSize(int size)
+    NetworkInterface setRequestQueueSize(int size)
         throws CantResizeQueueException;
 }

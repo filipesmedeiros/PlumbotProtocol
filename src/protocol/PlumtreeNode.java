@@ -6,7 +6,7 @@ import common.TimerManager;
 import exceptions.NotReadyForInitException;
 import message.Message;
 import message.plumtree.*;
-import network.UDPInterface;
+import network.NetworkInterface;
 import test.Application;
 
 import java.io.IOException;
@@ -46,7 +46,7 @@ public class PlumtreeNode implements TreeBroadcastNode {
 
     private TimerManager timerManager;
 
-    private UDPInterface udp;
+    private NetworkInterface udp;
 
     private RandomChooser<InetSocketAddress> random;
 
@@ -335,7 +335,7 @@ public class PlumtreeNode implements TreeBroadcastNode {
     }
 
     @Override
-    public boolean setUDP(UDPInterface udp) throws IllegalArgumentException {
+    public boolean setUDP(NetworkInterface udp) throws IllegalArgumentException {
         this.udp = udp;
         return true;
     }

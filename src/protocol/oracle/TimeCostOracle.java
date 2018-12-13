@@ -4,7 +4,7 @@ import common.RandomChooser;
 import interfaces.OracleUser;
 import message.xbot.PingBackMessage;
 import message.xbot.PingMessage;
-import network.UDPInterface;
+import network.NetworkInterface;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -17,7 +17,7 @@ public class TimeCostOracle implements Oracle {
 
     private static final String ORACLE_THREAD = "Oracle Thread ";
 
-    private UDPInterface udp;
+    private NetworkInterface udp;
     private InetSocketAddress address;
     private Set<OracleUser> users;
 
@@ -33,7 +33,7 @@ public class TimeCostOracle implements Oracle {
     private Map<InetSocketAddress, CostWithTTL> costs;
     private long costTTL;
 
-    public TimeCostOracle(InetSocketAddress address, UDPInterface udp, int repliesSize,
+    public TimeCostOracle(InetSocketAddress address, NetworkInterface udp, int repliesSize,
                           int costsSize, long costTTL) throws IllegalArgumentException {
 
         if(address == null || udp == null || repliesSize <= 0 || costsSize <= 0)
@@ -131,7 +131,7 @@ public class TimeCostOracle implements Oracle {
     }
 
     @Override
-    public boolean setUDP(UDPInterface udp)
+    public boolean setUDP(NetworkInterface udp)
             throws IllegalArgumentException {
 
         if(udp == null)

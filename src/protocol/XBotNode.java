@@ -9,7 +9,7 @@ import interfaces.NeighbourhoodListener;
 import interfaces.OptimizerNode;
 import message.Message;
 import message.xbot.*;
-import network.UDPInterface;
+import network.NetworkInterface;
 import protocol.oracle.Oracle;
 import protocol.oracle.TimeCostOracle.CostNotification;
 
@@ -72,7 +72,7 @@ public class XBotNode implements OptimizerNode {
     private int attl;
     private int pttl;
 
-    private UDPInterface udp;
+    private NetworkInterface udp;
 
     private Set<NeighbourhoodListener> neighbourhoodListeners;
 
@@ -475,7 +475,7 @@ public class XBotNode implements OptimizerNode {
     }
 
     @Override
-    public boolean setUDP(UDPInterface udp) throws IllegalArgumentException {
+    public boolean setUDP(NetworkInterface udp) throws IllegalArgumentException {
         // TODO does this screw something? something should be checked?
         this.udp = udp;
         return true;

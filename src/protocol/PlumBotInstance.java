@@ -4,7 +4,7 @@ import exceptions.NotReadyForInitException;
 import interfaces.OptimizerNode;
 import message.xbot.*;
 import network.UDP;
-import network.UDPInterface;
+import network.NetworkInterface;
 import protocol.oracle.Oracle;
 import protocol.oracle.TimeCostOracle;
 
@@ -22,7 +22,7 @@ public class PlumBotInstance implements PlumBot {
 
     private OptimizerNode xbot;
     private TreeBroadcastNode plum;
-    private UDPInterface udp;
+    private NetworkInterface udp;
 
     private InetSocketAddress id;
 

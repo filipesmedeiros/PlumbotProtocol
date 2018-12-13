@@ -1,6 +1,6 @@
 package interfaces;
 
-import network.UDPInterface;
+import network.NetworkInterface;
 
 import java.nio.ByteBuffer;
 
@@ -8,5 +8,5 @@ public interface MessageListener {
 
     void notifyMessage(ByteBuffer msg);
 
-    boolean setUDP(UDPInterface udp) throws IllegalArgumentException;
+    boolean setUDP(NetworkInterface udp) throws IllegalArgumentException;
 }

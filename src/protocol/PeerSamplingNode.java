@@ -4,7 +4,6 @@ import exceptions.NotReadyForInitException;
 import interfaces.MessageListener;
 import interfaces.NeighbourhoodListener;
 import interfaces.Node;
-import network.UDPInterface;
 
 import java.net.InetSocketAddress;
 import java.util.Set;
