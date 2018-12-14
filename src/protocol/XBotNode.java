@@ -9,7 +9,12 @@ import interfaces.NeighbourhoodListener;
 import interfaces.OptimizerNode;
 import message.Message;
 import message.xbot.*;
-import network.NetworkInterface;
+import network.Network;
+import network.PersistantNetwork;
+import network.TCP;
+import notifications.MessageNotification;
+import notifications.Notification;
+import notifications.TCPConnectionNotification;
 import protocol.oracle.Oracle;
 import protocol.oracle.TimeCostOracle.CostNotification;
 
@@ -72,7 +77,7 @@ public class XBotNode implements OptimizerNode {
     private int attl;
     private int pttl;
 
-    private NetworkInterface udp;
+    private PersistantNetwork tcp;
 
     private Set<NeighbourhoodListener> neighbourhoodListeners;
 
@@ -128,7 +133,7 @@ public class XBotNode implements OptimizerNode {
 
         pingSleepTime = random.integer(3000);
 
-        udp = null;
+        tcp = null;
         oracle = null;
         neighbourhoodListeners = new HashSet<>();
     }
@@ -152,39 +157,76 @@ public class XBotNode implements OptimizerNode {
     }
 
     @Override
-    public void notifyMessage(ByteBuffer msg) {
-        short type = msg.getShort();
+    public void notify(Notification notification) {
+        short type = notification.type();
+
+        switch (type) {
+            case TCPConnectionNotification.TYPE:
+                handleConnection(notification);
+                break;
+            case MessageNotification.TYPE:
+                handleMessage(notification);
+        }
+    }
+
+    private void handleConnection(Notification notification) {
+        if(!(notification instanceof TCPConnectionNotification)) {
+            System.out.println("??? Wrong connection notification");
+            return;
+        }
+
+        TCPConnectionNotification tcpNoti = (TCPConnectionNotification) notification;
+
+        Message joinMsg = new JoinMessage(id);
+
+        try {
+            tcp.send(joinMsg.bytes(), tcpNoti.peer());
+        } catch(IOException | InterruptedException e) {
+            // TODO
+            e.printStackTrace();
+        }
+    }
+
+    private void handleMessage(Notification notification) {
+        if(!(notification instanceof MessageNotification)) {
+            System.out.println("??? Wrong message notification");
+            return;
+        }
+
+        MessageNotification msgNoti = (MessageNotification) notification;
+
+        short type = msgNoti.type();
 
         switch(type) {
             case JoinMessage.TYPE:
-                handleJoin(msg);
+                handleJoin(msgNoti.message());
                 break;
             case AcceptJoinMessage.TYPE:
-                handleAcceptJoin(msg);
+                handleAcceptJoin(msgNoti.message());
                 break;
             case ForwardJoinMessage.TYPE:
-                handleForwardJoin(msg);
+                handleForwardJoin(msgNoti.message());
                 break;
             case OptimizationMessage.TYPE:
-                handleOptimization(msg);
+                handleOptimization(msgNoti.message());
                 break;
             case OptimizationReplyMessage.TYPE:
-                handleOptimizationReply(msg);
+                handleOptimizationReply(msgNoti.message());
                 break;
             case ReplaceMessage.TYPE:
-                handleReplace(msg);
+                handleReplace(msgNoti.message());
                 break;
             case ReplaceReplyMessage.TYPE:
-                handleReplaceReply(msg);
+                handleReplaceReply(msgNoti.message());
                 break;
             case PingMessage.TYPE:
-                handlePing(msg);
+                handlePing(msgNoti.message());
                 break;
             case DisconnectMessage.TYPE:
-                handleDisconnect(msg);
+                handleDisconnect(msgNoti.message());
                 break;
             case SwitchMessage.TYPE:
-                handleSwitch(msg);
+                handleSwitch(msgNoti.message());
                 break;
 
             default:
@@ -193,17 +235,21 @@ public class XBotNode implements OptimizerNode {
         }
     }
 
+    private void sendAcceptJoin(Message accept, InetSocketAddress sender) {
+        try {
+            tcp.send(accept.bytes(), sender);
+        } catch(IOException | InterruptedException e) {
+            // TODO
+            e.printStackTrace();
+        }
+    }
+
     private void handleJoin(ByteBuffer bytes) {
         JoinMessage msg = JoinMessage.parse(bytes);
 
         if(addPeerToActiveView(msg.sender(), -1)) {
             Message accept = new AcceptJoinMessage(id);
-            try {
-                udp.send(accept.bytes(), msg.sender());
-            } catch(IOException | InterruptedException e) {
-                // TODO
-                e.printStackTrace();
-            }
+            sendAcceptJoin(accept, msg.sender());
         }
 
         try {
@@ -212,7 +258,7 @@ public class XBotNode implements OptimizerNode {
 
                 if(!peer.equals(msg.sender())) {
                     try {
-                        udp.send(forwardMsg.bytes(), peer);
+                        tcp.send(forwardMsg.bytes(), peer);
                     } catch(IOException | InterruptedException e) {
                         // TODO
                         e.printStackTrace();
@@ -237,12 +283,7 @@ public class XBotNode implements OptimizerNode {
             if(msg.ttl() == 0 || activeView.size() <= 1) {
                 if(addPeerToActiveView(msg.joiner(), -1)) {
                     Message accept = new AcceptJoinMessage(id);
-                    try {
-                        udp.send(accept.bytes(), msg.sender());
-                    } catch(IOException | InterruptedException e) {
-                        // TODO
-                        e.printStackTrace();
-                    }
+                    sendAcceptJoin(accept, msg.sender());
                 }
             } else {
                 if(msg.ttl() == pttl)
@@ -253,7 +294,7 @@ public class XBotNode implements OptimizerNode {
                 while(peer.equals(msg.sender()) || peer.equals(msg.joiner()))
                     peer = random.fromSet(activeView);
 
-                udp.send(msg.next(id).bytes(), peer);
+                tcp.send(msg.next(id).bytes(), peer);
             }
         } catch(IllegalArgumentException | IOException | InterruptedException e) {
             // TODO
@@ -268,7 +309,7 @@ public class XBotNode implements OptimizerNode {
             Message reply = new OptimizationReplyMessage(id, false, false);
 
             try {
-                udp.send(reply.bytes(), msg.sender());
+                tcp.send(reply.bytes(), msg.sender());
             } catch(IOException | InterruptedException e) {
                 // TODO
                 e.printStackTrace();
@@ -287,7 +328,7 @@ public class XBotNode implements OptimizerNode {
         Message replace = new ReplaceMessage(id, init, old, itoo, itoc);
 
         try {
-            udp.send(replace.bytes(), biasedActiveView.last().address);
+            tcp.send(replace.bytes(), biasedActiveView.last().address);
         } catch(IllegalArgumentException | IOException | InterruptedException e) {
             // TODO
             e.printStackTrace();
@@ -304,7 +345,7 @@ public class XBotNode implements OptimizerNode {
 
                 Message reply = new DisconnectMessage(id, msg.removed());
 
-                udp.send(reply.bytes(), old);
+                tcp.send(reply.bytes(), old);
             }
         } catch(IOException | InterruptedException e) {
             // TODO
@@ -355,7 +396,7 @@ public class XBotNode implements OptimizerNode {
         try {
             Message optimizationReply = new OptimizationReplyMessage(id, msg.accept(), removed);
 
-            udp.send(optimizationReply.bytes(), init);
+            tcp.send(optimizationReply.bytes(), init);
         } catch(IOException | InterruptedException e) {
             // TODO
             e.printStackTrace();
@@ -377,7 +418,7 @@ public class XBotNode implements OptimizerNode {
         try {
             Thread.sleep(pingSleepTime);
 
-            udp.send(pingBackMsg.bytes(), msg.sender());
+            tcp.send(pingBackMsg.bytes(), msg.sender());
         } catch(InterruptedException | IllegalArgumentException | IOException e) {
             // TODO
             e.printStackTrace();
@@ -401,16 +442,6 @@ public class XBotNode implements OptimizerNode {
 
         addPeerToActiveView(msg.sender(), msg.dtoo());
         removeFromActive(msg.init());
-    }
-
-    @Override
-    public void notifyCost(CostNotification noti) {
-        try {
-            costNotifications.put(noti);
-        } catch(InterruptedException e) {
-            // TODO
-            e.printStackTrace();
-        }
     }
 
     @Override
@@ -474,10 +505,15 @@ public class XBotNode implements OptimizerNode {
         return num;
     }
 
+    // TODO does this screw something? something should be checked?
     @Override
-    public boolean setUDP(NetworkInterface udp) throws IllegalArgumentException {
-        // TODO does this screw something? something should be checked?
-        this.udp = udp;
+    public boolean setNetwork(Network tcp)
+            throws IllegalArgumentException {
+
+        if(!(tcp instanceof PersistantNetwork))
+            throw new IllegalArgumentException();
+
+        this.tcp = (PersistantNetwork) tcp;
         return true;
     }
 
@@ -510,7 +546,7 @@ public class XBotNode implements OptimizerNode {
 
     @Override
     public void initialize() throws NotReadyForInitException {
-        if(udp == null || oracle == null)
+        if(tcp == null || oracle == null)
             throw new NotReadyForInitException();
 
         timerManager.addTimer(OPTI, this::optimizeStep1, optimizationPeriod);
@@ -524,10 +560,9 @@ public class XBotNode implements OptimizerNode {
     public void join(InetSocketAddress contact) {
         if(contact == null) return;
 
-        Message joinMsg = new JoinMessage(id);
         try {
-            udp.send(joinMsg.bytes(), contact);
-        } catch(IllegalArgumentException | IOException | InterruptedException e) {
+            tcp.connect(contact);
+        } catch(IllegalArgumentException | IOException e) {
             // TODO
             e.printStackTrace();
         }
@@ -547,7 +582,7 @@ public class XBotNode implements OptimizerNode {
                     try {
                         addPeerToActiveView(notification.sender, notification.cost);
                         Message acceptMsg = new AcceptJoinMessage(id);
-                        udp.send(acceptMsg.bytes(), notification.sender);
+                        tcp.send(acceptMsg.bytes(), notification.sender);
                     } catch(IOException | InterruptedException e) {
                         // TODO
                         e.printStackTrace();
@@ -608,7 +643,7 @@ public class XBotNode implements OptimizerNode {
         Message msg = new OptimizationMessage(id, old.address, itoo, itoc);
 
         try {
-            udp.send(msg.bytes(), cand);
+            tcp.send(msg.bytes(), cand);
         } catch(IllegalArgumentException | IOException | InterruptedException e) {
             // TODO
             e.printStackTrace();
@@ -639,8 +674,8 @@ public class XBotNode implements OptimizerNode {
                 Message replaceReply = new ReplaceReplyMessage(id, true);
                 Message switchMessage = new SwitchMessage(id, init, dtoo);
 
-                udp.send(replaceReply.bytes(), cand);
-                udp.send(switchMessage.bytes(), old);
+                tcp.send(replaceReply.bytes(), cand);
+                tcp.send(switchMessage.bytes(), old);
 
                 removeFromBiased(cand);
 
@@ -655,7 +690,7 @@ public class XBotNode implements OptimizerNode {
             } else {
                 Message replaceReply = new ReplaceReplyMessage(id, false);
 
-                udp.send(replaceReply.bytes(), cand);
+                tcp.send(replaceReply.bytes(), cand);
 
                 // optimizing = false;
 
@@ -735,7 +770,7 @@ public class XBotNode implements OptimizerNode {
         Message msg = new DisconnectMessage(id, false);
 
         try {
-            udp.send(msg.bytes(), disconnect);
+            tcp.send(msg.bytes(), disconnect);
         } catch(IllegalArgumentException | IOException | InterruptedException e) {
             // TODO
             e.printStackTrace();

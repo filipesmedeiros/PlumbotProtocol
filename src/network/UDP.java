@@ -1,5 +1,6 @@
 package network;
 
+import interfaces.Node;
 import message.Message;
 
 import java.io.IOException;
@@ -13,9 +14,9 @@ public class UDP extends Network {
 
     final private DatagramChannel channel;
 
-    public UDP(InetSocketAddress address, int numTypes, int msgSize)
+    public UDP(InetSocketAddress address, Node node, short numTypes, int msgSize)
             throws IOException {
-        super(address, numTypes, msgSize);
+        super(address, node, numTypes, msgSize);
 
         channel = DatagramChannel.open();
         channel.configureBlocking(false);
@@ -25,14 +26,13 @@ public class UDP extends Network {
     }
 
     // Default values, can later be changed
-    public UDP(InetSocketAddress address)
+    public UDP(InetSocketAddress address, Node node)
             throws IOException {
-
-        this(address, 30, Message.MSG_SIZE);
+        this(address, node, (short) 30, Message.MSG_SIZE);
     }
 
     @Override
-    void receive()
+    void listenToSelector()
             throws IOException {
 
         while(true) {
@@ -47,8 +47,8 @@ public class UDP extends Network {
 
                     short type = buffer.getShort(0);
 
-                    for(MessageListener msgListener : listeners.get(type))
-                        msgListener.notifyMessage(buffer);
+                    for(Node msgListener : listeners.get(type))
+                        msgListener.notify(buffer);
                 }
             }
         }

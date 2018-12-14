@@ -13,8 +13,8 @@ import java.util.Map;
 public interface NetworkInterface {
 
     // Names for threads
-    String RECEIVE_THREAD = "Receive Thread";
-    String FULFILL_THREAD = "Fulfill Thread";
+    String LISTEN_TO_SELECTOR_THREAD = "Listen To Selector Thread";
+    // String FULFILL_THREAD = "Fulfill Thread";
 
     // End of transmission
     byte EOT = 4;

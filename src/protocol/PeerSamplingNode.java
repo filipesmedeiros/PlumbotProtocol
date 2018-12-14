@@ -3,11 +3,13 @@ package protocol;
 import exceptions.NotReadyForInitException;
 import interfaces.NeighbourhoodListener;
 import interfaces.Node;
+import network.Network;
+import network.PersistantNetwork;
 
 import java.net.InetSocketAddress;
 import java.util.Set;
 
-public interface PeerSamplingNode extends MessageListener, Node  {
+public interface PeerSamplingNode extends Node {
 
     Set<InetSocketAddress> activeView();
 
@@ -20,13 +22,13 @@ public interface PeerSamplingNode extends MessageListener, Node  {
     int setPViewSize(int size) throws IllegalArgumentException;
 
     boolean setNeighbourhoodListener(NeighbourhoodListener listener)
-        throws IllegalArgumentException;
+            throws IllegalArgumentException;
 
     boolean setNeighbourhoodListeners(Set<NeighbourhoodListener> listeners)
-        throws IllegalArgumentException;
+            throws IllegalArgumentException;
 
     boolean removeNeighbourboodListener(NeighbourhoodListener listener)
-        throws IllegalArgumentException;
+            throws IllegalArgumentException;
 
     void initialize() throws NotReadyForInitException;
 

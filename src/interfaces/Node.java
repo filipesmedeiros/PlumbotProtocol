@@ -1,12 +1,12 @@
 package interfaces;
 
-import notifications.Notification;
+import network.Network;
 
 import java.net.InetSocketAddress;
 
-public interface Node {
+public interface Node extends Notifiable {
 
     InetSocketAddress id();
 
-    void notify(Notification notification);
+    boolean setNetwork(Network network);
 }

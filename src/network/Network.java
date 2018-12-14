@@ -18,10 +18,10 @@ public abstract class Network implements NetworkInterface {
     final InetSocketAddress address;
 
     int msgSize;
-    List<List<Node>> listeners;
+    Map<Short, List<Node>> listeners;
     BlockingQueue<MessageRequest> requests;
 
-    public Network(InetSocketAddress address, int numTypes, int msgSize)
+    public Network(InetSocketAddress address, short numTypes, int msgSize)
             throws IOException {
         this.address = address;
 
@@ -29,9 +29,9 @@ public abstract class Network implements NetworkInterface {
 
         requests = new ArrayBlockingQueue<>(10);
 
-        listeners = new ArrayList<>(numTypes);
-        for(int i = 0; i < numTypes; i++)
-            listeners.add(new LinkedList<>());
+        listeners = new HashMap<>(numTypes * 4 / 3);
+        for(short i = 0; i < numTypes; i++)
+            listeners.put(i, new LinkedList<>());
 
         this.msgSize = msgSize;
     }
@@ -89,17 +89,17 @@ public abstract class Network implements NetworkInterface {
 
         new Thread(() -> {
             try {
-                receive();
-            } catch (IOException e) {
+                listenToSelector();
+            } catch (IOException | InterruptedException e) {
                 // TODO
                 e.printStackTrace();
             }
-        }, RECEIVE_THREAD + address).start();
+        }, LISTEN_TO_SELECTOR_THREAD + address).start();
 
         fulfill();
     }
 
-    abstract void receive() throws IOException;
+    abstract void listenToSelector() throws IOException, InterruptedException;
 
     abstract void fulfill();
 }
