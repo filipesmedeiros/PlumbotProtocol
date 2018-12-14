@@ -66,6 +66,8 @@ public class PlumBotInstance implements PlumBot {
                 }
             }).start();
 
+            System.out.println("Initialized UDP");
+
             new Thread(() -> {
                 try {
                     tcp.initialize();
@@ -74,6 +76,8 @@ public class PlumBotInstance implements PlumBot {
                     e.printStackTrace();
                 }
             }).start();
+
+            System.out.println("Initialized TCP");
 
             new Thread(() -> {
                 try {
@@ -84,12 +88,18 @@ public class PlumBotInstance implements PlumBot {
                 }
             }).start();
 
-            try {
-                xbot.initialize();
-            } catch(NotReadyForInitException e) {
-                // TODO
-                e.printStackTrace();
-            }
+            System.out.println("Initialized Plumtree");
+
+            new Thread(() -> {
+                try {
+                    xbot.initialize();
+                } catch(NotReadyForInitException e) {
+                    // TODO
+                    e.printStackTrace();
+                }
+            }).start();
+            System.out.println("Initialized X-Bot");
+
         } catch (IOException e) {
             // TODO
             e.printStackTrace();

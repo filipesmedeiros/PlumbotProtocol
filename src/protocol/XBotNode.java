@@ -477,7 +477,7 @@ public class XBotNode implements OptimizerNode {
 
         timerManager.addTimer(OPTI, this::optimizeStep1, optimizationPeriod);
 
-        oracle.init();
+        new Thread(() -> oracle.init());
 
         processNotification();
     }
