@@ -1,7 +1,6 @@
 package protocol;
 
 import exceptions.NotReadyForInitException;
-import interfaces.MessageListener;
 import interfaces.NeighbourhoodListener;
 import interfaces.StableNeighbour;
 import test.Application;

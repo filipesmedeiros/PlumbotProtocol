@@ -1,4 +1,4 @@
-package protocol.notifications;
+package notifications;
 
 import java.net.InetSocketAddress;
 

@@ -1,8 +1,5 @@
 package network;
 
-import exceptions.CantResizeQueueException;
-import exceptions.NotReadyForInitException;
-import interfaces.MessageListener;
 import message.Message;
 
 import java.io.IOException;
@@ -10,10 +7,7 @@ import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.DatagramChannel;
 import java.nio.channels.SelectionKey;
-import java.nio.channels.Selector;
 import java.util.*;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
 
 public class UDP extends Network {
 

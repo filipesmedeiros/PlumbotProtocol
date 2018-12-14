@@ -1,7 +1,6 @@
 package protocol.oracle;
 
 import common.RandomChooser;
-import interfaces.OracleUser;
 import message.xbot.PingBackMessage;
 import message.xbot.PingMessage;
 import network.NetworkInterface;

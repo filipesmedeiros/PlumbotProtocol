@@ -1,6 +1,6 @@
 package interfaces;
 
-import protocol.notifications.Notification;
+import notifications.Notification;
 
 import java.net.InetSocketAddress;
 

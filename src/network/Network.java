@@ -2,12 +2,11 @@ package network;
 
 import exceptions.CantResizeQueueException;
 import exceptions.NotReadyForInitException;
-import interfaces.MessageListener;
+import interfaces.Node;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
-import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.util.*;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -19,7 +18,7 @@ public abstract class Network implements NetworkInterface {
     final InetSocketAddress address;
 
     int msgSize;
-    List<List<MessageListener>> listeners;
+    List<List<Node>> listeners;
     BlockingQueue<MessageRequest> requests;
 
     public Network(InetSocketAddress address, int numTypes, int msgSize)
@@ -54,7 +53,7 @@ public abstract class Network implements NetworkInterface {
     }
 
     @Override
-    public NetworkInterface addMessageListener(MessageListener listener, List<Short> msgTypes) {
+    public NetworkInterface addMessageListener(Node listener, List<Short> msgTypes) {
         for(Short index : msgTypes)
             listeners.get(index).add(listener);
 
@@ -62,8 +61,8 @@ public abstract class Network implements NetworkInterface {
     }
 
     @Override
-    public NetworkInterface addMessageListeners(Map<MessageListener, List<Short>> listeners) {
-        for(Map.Entry<MessageListener, List<Short>> entry : listeners.entrySet())
+    public NetworkInterface addMessageListeners(Map<Node, List<Short>> listeners) {
+        for(Map.Entry<Node, List<Short>> entry : listeners.entrySet())
             addMessageListener(entry.getKey(), entry.getValue());
 
         return this;

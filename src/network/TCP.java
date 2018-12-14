@@ -1,10 +1,10 @@
 package network;
 
-import exceptions.NotReadyForInitException;
-import interfaces.MessageListener;
+import interfaces.Node;
 import message.Message;
-import protocol.notifications.Notification;
-import protocol.notifications.TCPConnectionNotification;
+import notifications.MessageNotification;
+import notifications.Notification;
+import notifications.TCPConnectionNotification;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -76,6 +76,9 @@ public class TCP extends Network {
                     connections.put(remote, channel);
 
                     Notification connectNoti = new TCPConnectionNotification((InetSocketAddress) key.attachment());
+                    for(Node node : listeners.get(type)) {
+                        node.notify(messageNoti);
+                    }
                 } else if(key.isReadable()) {
                     ByteBuffer buffer = ByteBuffer.allocate(msgSize);
                     channel.read(buffer);
@@ -83,8 +86,10 @@ public class TCP extends Network {
 
                     short type = buffer.getShort(0);
 
-                    for(MessageListener msgListener : listeners.get(type))
-                        msgListener.notifyMessage(buffer);
+                    Notification messageNoti = new MessageNotification(buffer);
+                    for(Node node : listeners.get(type)) {
+                        node.notify(messageNoti);
+                    }
                 }
             }
         }

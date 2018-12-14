@@ -1,8 +1,5 @@
 package protocol.oracle;
 
-import interfaces.MessageListener;
-import interfaces.OracleUser;
-
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.Set;
