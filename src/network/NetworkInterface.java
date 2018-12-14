@@ -3,6 +3,7 @@ package network;
 import exceptions.CantResizeQueueException;
 import exceptions.NotReadyForInitException;
 import interfaces.Node;
+import interfaces.OnlineNotifiable;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -24,9 +25,9 @@ public interface NetworkInterface {
 
     NetworkInterface setMsgSize(int size);
 
-    NetworkInterface addMessageListener(Node listener, List<Short> msgTypes);
+    NetworkInterface addMessageListener(OnlineNotifiable listener, List<Short> msgTypes);
 
-    NetworkInterface addMessageListeners(Map<Node, List<Short>> listeners);
+    NetworkInterface addMessageListeners(Map<OnlineNotifiable, List<Short>> listeners);
 
     void init()
         throws NotReadyForInitException;

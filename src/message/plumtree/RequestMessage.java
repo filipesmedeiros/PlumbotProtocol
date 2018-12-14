@@ -7,7 +7,7 @@ import java.nio.ByteBuffer;
 
 public class RequestMessage extends PlumbotMessage {
 
-    public static final short TYPE = 103;
+    public static final short TYPE = 16;
 
     private int hash;
 

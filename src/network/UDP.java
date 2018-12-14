@@ -1,7 +1,9 @@
 package network;
 
 import interfaces.Node;
+import interfaces.OnlineNotifiable;
 import message.Message;
+import notifications.MessageNotification;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -14,9 +16,9 @@ public class UDP extends Network {
 
     final private DatagramChannel channel;
 
-    public UDP(InetSocketAddress address, Node node, short numTypes, int msgSize)
+    public UDP(InetSocketAddress address, short numTypes, int msgSize)
             throws IOException {
-        super(address, node, numTypes, msgSize);
+        super(address, numTypes, msgSize);
 
         channel = DatagramChannel.open();
         channel.configureBlocking(false);
@@ -26,14 +28,14 @@ public class UDP extends Network {
     }
 
     // Default values, can later be changed
-    public UDP(InetSocketAddress address, Node node)
+    public UDP(InetSocketAddress address)
             throws IOException {
-        this(address, node, (short) 30, Message.MSG_SIZE);
+        this(address, (short) 30, Message.MSG_SIZE);
     }
 
     @Override
     void listenToSelector()
-            throws IOException {
+            throws IOException, InterruptedException {
 
         while(true) {
             selector.select();
@@ -47,8 +49,10 @@ public class UDP extends Network {
 
                     short type = buffer.getShort(0);
 
-                    for(Node msgListener : listeners.get(type))
-                        msgListener.notify(buffer);
+                    MessageNotification notification = new MessageNotification(buffer);
+
+                    for(OnlineNotifiable msgListener : listeners.get(type))
+                        msgListener.notify(notification);
                 }
             }
         }

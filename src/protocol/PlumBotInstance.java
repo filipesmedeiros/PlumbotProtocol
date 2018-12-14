@@ -2,7 +2,10 @@ package protocol;
 
 import exceptions.NotReadyForInitException;
 import interfaces.OptimizerNode;
+import message.plumtree.*;
 import message.xbot.*;
+import network.PersistantNetwork;
+import network.TCP;
 import network.UDP;
 import network.NetworkInterface;
 import protocol.oracle.Oracle;
@@ -23,6 +26,7 @@ public class PlumBotInstance implements PlumBot {
     private OptimizerNode xbot;
     private TreeBroadcastNode plum;
     private NetworkInterface udp;
+    private PersistantNetwork tcp;
 
     private InetSocketAddress id;
 
@@ -32,17 +36,24 @@ public class PlumBotInstance implements PlumBot {
         try {
             udp = new UDP(local);
 
+            tcp = new TCP(local);
+
             xbot = new XBotNode(local, 5, 1, 10, 1000 * 30, ONE_MINUTE, 4, 2);
 
-            plum = new PlumtreeNode(local, 3, 5, FIVE_MINUTES, ONE_MINUTE);
+            plum = new PlumtreeNode(local, 3, 5, FIVE_MINUTES, ONE_MINUTE, FIVE_MINUTES);
 
             Oracle oracle = new TimeCostOracle(local, udp, 10, 10, FIVE_MINUTES);
 
-            udp.addMessageListener(xbot, xbotMessageTypes());
+            tcp.setConnector(xbot);
+            tcp.addMessageListener(xbot, xbotMessageTypes());
+            tcp.addMessageListener(plum, plumtreeMessageTypes());
+
             udp.addMessageListener(oracle, oracleMessageTypes());
 
             xbot.setOracle(oracle);
-            xbot.setUDP(udp);
+            xbot.setNetwork(tcp);
+
+            plum.setNetwork(tcp);
 
             oracle.setUser(xbot);
 
@@ -99,7 +110,7 @@ public class PlumBotInstance implements PlumBot {
     }
 
     private List<Short> xbotMessageTypes() {
-        List<Short> list = new ArrayList<>(6);
+        List<Short> list = new ArrayList<>(10);
         list.add(JoinMessage.TYPE);
         list.add(AcceptJoinMessage.TYPE);
         list.add(ForwardJoinMessage.TYPE);
@@ -110,6 +121,17 @@ public class PlumBotInstance implements PlumBot {
         list.add(DisconnectMessage.TYPE);
         list.add(SwitchMessage.TYPE);
         list.add(PingMessage.TYPE);
+
+        return list;
+    }
+
+    private List<Short> plumtreeMessageTypes() {
+        List<Short> list = new ArrayList<>(5);
+        list.add(PruneMessage.TYPE);
+        list.add(BodyMessage.TYPE);
+        list.add(GraftMessage.TYPE);
+        list.add(IHaveMessage.TYPE);
+        list.add(RequestMessage.TYPE);
 
         return list;
     }

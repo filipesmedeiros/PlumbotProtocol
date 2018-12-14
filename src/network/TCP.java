@@ -1,8 +1,10 @@
 package network;
 
 import common.Pair;
+import exceptions.NotReadyForInitException;
 import interfaces.Node;
 import interfaces.Notifiable;
+import interfaces.OnlineNotifiable;
 import message.Message;
 import notifications.MessageNotification;
 import notifications.Notification;
@@ -18,25 +20,46 @@ import java.util.*;
 public class TCP extends Network implements PersistantNetwork {
 
     // Node that handles connections (Xbot)
-    final Notifiable connector;
+    private Notifiable connector;
 
     // Map of existing connections, and the channel responsible for them
     private Map<InetSocketAddress, SocketChannel> connections;
 
-    public TCP(InetSocketAddress address, Notifiable connector, short numTypes, int msgSize)
+    public TCP(InetSocketAddress address, short numTypes, int msgSize)
             throws IOException {
         super(address, numTypes, msgSize);
 
-        this.connector = connector;
+        connector = null;
 
         connections = new HashMap<>();
     }
 
     // Default values, can later be changed
-    public TCP(InetSocketAddress address, Node node)
+    public TCP(InetSocketAddress address)
             throws IOException {
 
-        this(address, node, (short) 30, Message.MSG_SIZE);
+        this(address, (short) 30, Message.MSG_SIZE);
+    }
+
+    // Any problems here with replacing with no checks???
+    @Override
+    public void setConnector(Notifiable connector)
+            throws IllegalArgumentException{
+
+        if(connector == null)
+            throw new IllegalArgumentException();
+
+        this.connector = connector;
+    }
+
+    @Override
+    public void init()
+            throws NotReadyForInitException {
+
+        if(msgSize == 0 || listeners == null || listeners.isEmpty() || connector == null)
+            throw new NotReadyForInitException();
+
+        triggerListenToSel();
     }
 
     // Returns the channel if we were already connected
@@ -98,7 +121,7 @@ public class TCP extends Network implements PersistantNetwork {
 
                 if(key.isConnectable()) {
                     if(channel.finishConnect()) {
-                        key.cancel();
+                        channel.close();
                         channel.register(selector, SelectionKey.OP_READ);
 
                         InetSocketAddress remote = (InetSocketAddress) key.attachment();
@@ -115,7 +138,7 @@ public class TCP extends Network implements PersistantNetwork {
                     short type = buffer.getShort(0);
 
                     Notification messageNoti = new MessageNotification(buffer);
-                    for(Node node : listeners.get(type)) {
+                    for(OnlineNotifiable node : listeners.get(type)) {
                         node.notify(messageNoti);
                     }
                 }

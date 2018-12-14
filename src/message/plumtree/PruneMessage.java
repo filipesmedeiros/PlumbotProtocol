@@ -7,7 +7,7 @@ import java.nio.ByteBuffer;
 
 public class PruneMessage extends PlumbotMessage {
 
-    public static final short TYPE = 102;
+    public static final short TYPE = 15;
 
     public PruneMessage(InetSocketAddress sender) {
         super(sender, TYPE);

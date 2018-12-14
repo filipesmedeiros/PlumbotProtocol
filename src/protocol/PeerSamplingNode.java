@@ -3,13 +3,14 @@ package protocol;
 import exceptions.NotReadyForInitException;
 import interfaces.NeighbourhoodListener;
 import interfaces.Node;
+import interfaces.OnlineNotifiable;
 import network.Network;
 import network.PersistantNetwork;
 
 import java.net.InetSocketAddress;
 import java.util.Set;
 
-public interface PeerSamplingNode extends Node {
+public interface PeerSamplingNode extends Node, OnlineNotifiable {
 
     Set<InetSocketAddress> activeView();
 

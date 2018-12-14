@@ -9,14 +9,13 @@ import interfaces.NeighbourhoodListener;
 import interfaces.OptimizerNode;
 import message.Message;
 import message.xbot.*;
-import network.Network;
+import network.NetworkInterface;
 import network.PersistantNetwork;
-import network.TCP;
+import notifications.CostNotification;
 import notifications.MessageNotification;
 import notifications.Notification;
 import notifications.TCPConnectionNotification;
 import protocol.oracle.Oracle;
-import protocol.oracle.TimeCostOracle.CostNotification;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -47,8 +46,9 @@ public class XBotNode implements OptimizerNode {
     private TimerManager timerManager;
 
     private Oracle oracle;
-    private BlockingQueue<CostNotification> costNotifications;
+    private BlockingQueue<Notification> notifications;
     private long optimizationPeriod;
+
     // used in previous versions for allowing a node to only participate in an optimizing cycle at a time
     // private boolean optimizing;
 
@@ -129,7 +129,7 @@ public class XBotNode implements OptimizerNode {
 
         timerManager = new MappedTimerManager();
 
-        costNotifications = new ArrayBlockingQueue<>(10);
+        notifications = new ArrayBlockingQueue<>(10);
 
         pingSleepTime = random.integer(3000);
 
@@ -158,81 +158,7 @@ public class XBotNode implements OptimizerNode {
 
     @Override
     public void notify(Notification notification) {
-        short type = notification.type();
-
-        switch (type) {
-            case TCPConnectionNotification.TYPE:
-                handleConnection(notification);
-                break;
-            case MessageNotification.TYPE:
-                handleMessage(notification);
-        }
-    }
-
-    private void handleConnection(Notification notification) {
-        if(!(notification instanceof TCPConnectionNotification)) {
-            System.out.println("??? Wrong connection notification");
-            return;
-        }
-
-        TCPConnectionNotification tcpNoti = (TCPConnectionNotification) notification;
-
-        Message joinMsg = new JoinMessage(id);
-
-        try {
-            tcp.send(joinMsg.bytes(), tcpNoti.peer());
-        } catch(IOException | InterruptedException e) {
-            // TODO
-            e.printStackTrace();
-        }
-    }
-
-    private void handleMessage(Notification notification) {
-        if(!(notification instanceof MessageNotification)) {
-            System.out.println("??? Wrong message notification");
-            return;
-        }
-
-        MessageNotification msgNoti = (MessageNotification) notification;
-
-        short type = msgNoti.type();
-
-        switch(type) {
-            case JoinMessage.TYPE:
-                handleJoin(msgNoti.message());
-                break;
-            case AcceptJoinMessage.TYPE:
-                handleAcceptJoin(msgNoti.message());
-                break;
-            case ForwardJoinMessage.TYPE:
-                handleForwardJoin(msgNoti.message());
-                break;
-            case OptimizationMessage.TYPE:
-                handleOptimization(msgNoti.message());
-                break;
-            case OptimizationReplyMessage.TYPE:
-                handleOptimizationReply(msgNoti.message());
-                break;
-            case ReplaceMessage.TYPE:
-                handleReplace(msgNoti.message());
-                break;
-            case ReplaceReplyMessage.TYPE:
-                handleReplaceReply(msgNoti.message());
-                break;
-            case PingMessage.TYPE:
-                handlePing(msgNoti.message());
-                break;
-            case DisconnectMessage.TYPE:
-                handleDisconnect(msgNoti.message());
-                break;
-            case SwitchMessage.TYPE:
-                handleSwitch(msgNoti.message());
-                break;
-
-            default:
-                System.out.println("??? unrecognized message");
-                break;
-        }
+        notifications.add(notification);
     }
 
     private void sendAcceptJoin(Message accept, InetSocketAddress sender) {
@@ -507,7 +433,7 @@ public class XBotNode implements OptimizerNode {
 
     // TODO does this screw something? something should be checked?
     @Override
-    public boolean setNetwork(Network tcp)
+    public boolean setNetwork(NetworkInterface tcp)
             throws IllegalArgumentException {
 
         if(!(tcp instanceof PersistantNetwork))
@@ -553,7 +479,7 @@ public class XBotNode implements OptimizerNode {
 
         oracle.init();
 
-        new Thread(this::receiveCost).start();
+        processNotification();
     }
 
     @Override
@@ -568,37 +494,134 @@ public class XBotNode implements OptimizerNode {
         }
     }
 
-    private void receiveCost() {
+    private void handleConnection(Notification notification) {
+        if(!(notification instanceof TCPConnectionNotification)) {
+            System.out.println("??? Wrong connection notification");
+            return;
+        }
+
+        TCPConnectionNotification tcpNoti = (TCPConnectionNotification) notification;
+
+        Message joinMsg = new JoinMessage(id);
+
+        try {
+            tcp.send(joinMsg.bytes(), tcpNoti.peer());
+        } catch(IOException | InterruptedException e) {
+            // TODO
+            e.printStackTrace();
+        }
+    }
+
+    @SuppressWarnings("all")
+    private void handleMessage(Notification notification) {
+        if(!(notification instanceof MessageNotification)) {
+            System.out.println("??? Wrong message notification");
+            return;
+        }
+
+        MessageNotification msgNoti = (MessageNotification) notification;
+
+        short type = msgNoti.type();
+
+        switch(type) {
+            case JoinMessage.TYPE:
+                handleJoin(msgNoti.message());
+                break;
+            case AcceptJoinMessage.TYPE:
+                handleAcceptJoin(msgNoti.message());
+                break;
+            case ForwardJoinMessage.TYPE:
+                handleForwardJoin(msgNoti.message());
+                break;
+            case OptimizationMessage.TYPE:
+                handleOptimization(msgNoti.message());
+                break;
+            case OptimizationReplyMessage.TYPE:
+                handleOptimizationReply(msgNoti.message());
+                break;
+            case ReplaceMessage.TYPE:
+                handleReplace(msgNoti.message());
+                break;
+            case ReplaceReplyMessage.TYPE:
+                handleReplaceReply(msgNoti.message());
+                break;
+            case PingMessage.TYPE:
+                handlePing(msgNoti.message());
+                break;
+            case DisconnectMessage.TYPE:
+                handleDisconnect(msgNoti.message());
+                break;
+            case SwitchMessage.TYPE:
+                handleSwitch(msgNoti.message());
+                break;
+
+            default:
+                System.out.println("??? unrecognized message");
+                break;
+        }
+    }
+
+    private void handleCost(Notification notification) {
+        if(!(notification instanceof CostNotification)) {
+            System.out.println("??? Wrong cost notification");
+            return;
+        }
+
+        CostNotification costNoti = (CostNotification) notification;
+        InetSocketAddress sender = costNoti.sender();
+        long cost = costNoti.cost();
+
+        Integer code = costsWaiting.remove(sender);
+
+        if(code == null)
+            return;
+
+        if(code == JOIN)
+            try {
+                addPeerToActiveView(sender, cost);
+                Message acceptMsg = new AcceptJoinMessage(id);
+                tcp.send(acceptMsg.bytes(), sender);
+            } catch(IOException | InterruptedException e) {
+                // TODO
+                e.printStackTrace();
+            }
+
+        else if(code == ITOC)
+            optimizeStep2(sender, cost);
+
+        else if(code == DTOO)
+            optimizeStep3_1(sender, cost);
+
+        else if(code == CTOD)
+            optimizeStep3_2(sender, cost);
+
+        else
+            System.out.println("??? unrecognized code");
+    }
+
+    @SuppressWarnings("all")
+    private void processNotification() {
         while(true)
             try {
-                CostNotification notification = costNotifications.take();
+                Notification notification = notifications.take();
 
-                Integer code = costsWaiting.remove(notification.sender);
+                short type = notification.type();
 
-                if(code == null)
-                    continue;
+                switch (type) {
+                    case TCPConnectionNotification.TYPE:
+                        handleConnection(notification);
+                        break;
+                    case MessageNotification.TYPE:
+                        handleMessage(notification);
+                        break;
+                    case CostNotification.TYPE:
+                        handleCost(notification);
+                        break;
 
-                if(code == JOIN)
-                    try {
-                        addPeerToActiveView(notification.sender, notification.cost);
-                        Message acceptMsg = new AcceptJoinMessage(id);
-                        tcp.send(acceptMsg.bytes(), notification.sender);
-                    } catch(IOException | InterruptedException e) {
-                        // TODO
-                        e.printStackTrace();
-                    }
-
-                else if(code == ITOC)
-                    optimizeStep2(notification.sender, notification.cost);
-
-                else if(code == DTOO)
-                    optimizeStep3_1(notification.sender, notification.cost);
-
-                else if(code == CTOD)
-                    optimizeStep3_2(notification.sender, notification.cost);
-
-                else
-                    System.out.println("??? unrecognized code");
+                    default:
+                        System.out.println("??? Wrong notification");
+                        break;
+                }
             } catch(InterruptedException e) {
                 // TODO
                 e.printStackTrace();

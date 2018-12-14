@@ -1,9 +1,13 @@
 package protocol.oracle;
 
 import common.RandomChooser;
+import interfaces.Notifiable;
 import message.xbot.PingBackMessage;
 import message.xbot.PingMessage;
 import network.NetworkInterface;
+import notifications.CostNotification;
+import notifications.MessageNotification;
+import notifications.Notification;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -18,10 +22,10 @@ public class TimeCostOracle implements Oracle {
 
     private NetworkInterface udp;
     private InetSocketAddress address;
-    private Set<OracleUser> users;
+    private Set<Notifiable> users;
 
     private Map<InetSocketAddress, Long> pings;
-    private BlockingQueue<CostNotification> replies;
+    private BlockingQueue<Notification> notifications;
 
     private RandomChooser<InetSocketAddress> random;
 
@@ -51,12 +55,12 @@ public class TimeCostOracle implements Oracle {
         costs = new HashMap<>();
 
         users = new HashSet<>();
-        replies = new ArrayBlockingQueue<>(repliesSize);
+        notifications = new ArrayBlockingQueue<>(repliesSize);
     }
 
     @Override
     public void init() {
-        new Thread(this::notifyUsers, ORACLE_THREAD + address).start();
+        processNotification();
     }
 
     @Override
@@ -69,8 +73,8 @@ public class TimeCostOracle implements Oracle {
             if (costTTL.isExpired())
                 costs.remove(dest);
             else {
-                for(OracleUser user : users)
-                    user.notifyCost(new CostNotification(dest, costTTL.cost));
+                for(Notifiable user : users)
+                    user.notify(new CostNotification(dest, costTTL.cost));
                 return;
             }
         }
@@ -86,12 +90,12 @@ public class TimeCostOracle implements Oracle {
     }
 
     @Override
-    public void setUser(OracleUser user) {
+    public void setUser(Notifiable user) {
         users.add(user);
     }
 
     @Override
-    public void setUsers(Set<OracleUser> users) {
+    public void setUsers(Set<Notifiable> users) {
         this.users.addAll(users);
     }
 
@@ -100,8 +104,16 @@ public class TimeCostOracle implements Oracle {
         costTTL = ttl;
     }
 
+    // Should only receive PingBackMessages
     @Override
-    public void notifyMessage(ByteBuffer msg) {
+    public void notify(Notification notification) {
+        if(!(notification instanceof MessageNotification)) {
+            System.out.println("??? Wrong message notification");
+            return;
+        }
+
+        ByteBuffer msg = ((MessageNotification) notification).message();
+
         msg.getShort();
         PingBackMessage reply = PingBackMessage.parse(msg);
         InetSocketAddress sender = reply.sender();
@@ -121,7 +133,7 @@ public class TimeCostOracle implements Oracle {
         costs.put(sender, new CostWithTTL(dif));
 
         try {
-            replies.put(new CostNotification(sender, dif));
+            notifications.put(new CostNotification(sender, dif));
         } catch(InterruptedException e) {
             // TODO
             // Annoying to user the user, but will only delay, probably
@@ -130,7 +142,7 @@ public class TimeCostOracle implements Oracle {
     }
 
     @Override
-    public boolean setUDP(NetworkInterface udp)
+    public boolean setNetwork(NetworkInterface udp)
             throws IllegalArgumentException {
 
         if(udp == null)
@@ -141,36 +153,34 @@ public class TimeCostOracle implements Oracle {
         return true;
     }
 
-    private void notifyUsers() {
+    private void processNotification() {
         while(true) {
             try {
-                CostNotification notification = replies.take();
+                Notification notification = notifications.take();
 
-                for(OracleUser user : users) {
+                if(notification.type() != CostNotification.TYPE) {
+                    System.out.println("??? Wrong cost notification");
+                    continue;
+                }
+
+                CostNotification costNoti = (CostNotification) notification;
+
+                for(Notifiable user : users) {
                     try {
-                        user.notifyCost(new CostNotification(notification.sender, notification.cost));
+
+                        user.notify(costNoti);
                     } catch(NullPointerException e) {
                         // For certain network sizes, collisions of forward joins might occur
                         // Just ignore it, everything is ok... probably
                     }
                 }
 
-                pings.remove(notification.sender);
+                pings.remove(costNoti.sender());
             } catch(InterruptedException e) {
                 // TODO
                 // Have to restart oracle
                 e.printStackTrace();
             }
-        }
-    }
-
-    public static class CostNotification {
-        public InetSocketAddress sender;
-        public long cost;
-
-        private CostNotification(InetSocketAddress sender, long cost) {
-            this.sender = sender;
-            this.cost = cost;
         }
     }
 

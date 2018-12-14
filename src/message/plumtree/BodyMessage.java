@@ -8,7 +8,7 @@ import java.nio.ByteBuffer;
 
 public class BodyMessage extends HopMessage {
 
-    public static final short TYPE = 100;
+    public static final short TYPE = 12;
 
     private ByteBuffer body;
     private int bodySize;

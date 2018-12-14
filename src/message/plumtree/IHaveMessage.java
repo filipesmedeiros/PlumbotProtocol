@@ -5,7 +5,7 @@ import java.nio.ByteBuffer;
 
 public class IHaveMessage extends HopMessage {
 
-    public static final short TYPE = 101;
+    public static final short TYPE = 14;
     // public static final int HASH_SIZE = 64; // 512 bit hash (in byte length) too hard, invest time later // TODO
     static final int HASH_SIZE = 4; // 32 bit hash (in byte length) this is an integer
 

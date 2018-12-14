@@ -7,6 +7,8 @@ import exceptions.NotReadyForInitException;
 import message.Message;
 import message.plumtree.*;
 import network.NetworkInterface;
+import network.PersistantNetwork;
+import notifications.*;
 import test.Application;
 
 import java.io.IOException;
@@ -33,6 +35,8 @@ public class PlumtreeNode implements TreeBroadcastNode {
     private Map<Integer, Long> receivedHashes;
     private long repeatMessageTimeout;
 
+    private BlockingQueue<Notification> notifications;
+
     private BlockingQueue<BodyMessage> messages;
     private Set<Application> applications;
 
@@ -46,7 +50,7 @@ public class PlumtreeNode implements TreeBroadcastNode {
 
     private TimerManager timerManager;
 
-    private NetworkInterface udp;
+    private NetworkInterface tcp;
 
     private RandomChooser<InetSocketAddress> random;
 
@@ -63,6 +67,8 @@ public class PlumtreeNode implements TreeBroadcastNode {
         receivedHashes = new HashMap<>();
         this.repeatMessageTimeout = repeatMessageTimeout;
 
+        notifications = new ArrayBlockingQueue<>(10);
+
         messages = new ArrayBlockingQueue<>(10);
         applications = new HashSet<>();
 
@@ -76,7 +82,7 @@ public class PlumtreeNode implements TreeBroadcastNode {
 
         timerManager = new MappedTimerManager();
 
-        udp = null;
+        tcp = null;
 
         random = new RandomChooser<>();
     }
@@ -97,7 +103,7 @@ public class PlumtreeNode implements TreeBroadcastNode {
         for(InetSocketAddress peer : eagerPeers)
             try {
                 BodyMessage msg = new BodyMessage(id, bytes, bytes.limit(), (short) 1);
-                udp.send(msg.next(id).bytes(), peer);
+                tcp.send(msg.next(id).bytes(), peer);
             } catch(IOException | InterruptedException e) {
                 // TODO
                 e.printStackTrace();
@@ -111,7 +117,7 @@ public class PlumtreeNode implements TreeBroadcastNode {
 
                 CountedMessage counted = msgsToBeSent.get(iHave.hash());
                 for(InetSocketAddress peer : lazyPeers) {
-                    udp.send(iHave.bytes(), peer);
+                    tcp.send(iHave.bytes(), peer);
                     counted.addPeer(peer);
                 }
             } catch(IOException | InterruptedException e) {
@@ -186,12 +192,12 @@ public class PlumtreeNode implements TreeBroadcastNode {
     @Override
     public void initialize()
             throws NotReadyForInitException {
-        if(udp == null)
+        if(tcp == null)
             throw new NotReadyForInitException();
 
         new Thread(this::deliver, DELIVER).start();
 
-        requestMessage();
+        processNotification();
     }
 
     @Override
@@ -199,32 +205,13 @@ public class PlumtreeNode implements TreeBroadcastNode {
         return id;
     }
 
-    // IS THIS BLOCKING THE EXECUTION??? (CAN GO BACK TO UDP)
     @Override
-    public void notifyMessage(ByteBuffer bytes) {
-        short type = bytes.getShort();
+    public void notify(Notification notification) {
+        notifications.add(notification);
+    }
 
-        switch(type) {
-            case BodyMessage.TYPE:
-                handleBody(bytes);
-                break;
-            case IHaveMessage.TYPE:
-                handleIHave(bytes);
-                break;
-            case PruneMessage.TYPE:
-                handlePrune(bytes);
-                break;
-            case RequestMessage.TYPE:
-                handleRequest(bytes);
-                break;
-            case GraftMessage.TYPE:
-                handleGraft(bytes);
-                break;
-
-            default:
-                System.out.println("??? Unrecognized message");
-                break;
-        }
+    private boolean hashIsOutdated(long firstReceive) {
+        return System.currentTimeMillis() - firstReceive > repeatMessageTimeout;
     }
 
     private void handleBody(ByteBuffer bytes) {
@@ -234,8 +221,7 @@ public class PlumtreeNode implements TreeBroadcastNode {
             int hash = hashMessage(bytes);
 
             Long firstReceive = receivedHashes.get(hash);
-            if(firstReceive != null
-                    && System.currentTimeMillis() - firstReceive < repeatMessageTimeout)
+            if(firstReceive != null && !hashIsOutdated(firstReceive))
                 removeFromEager(msg.sender(), true);
             else {
                 receivedHashes.put(hash, System.currentTimeMillis());
@@ -244,7 +230,7 @@ public class PlumtreeNode implements TreeBroadcastNode {
                 for(InetSocketAddress peer : eagerPeers)
                     if(peer.equals(msg.sender()))
                         try {
-                            udp.send(msg.next(id).bytes(), peer);
+                            tcp.send(msg.next(id).bytes(), peer);
                         } catch(IOException e) {
                             // TODO
                             e.printStackTrace();
@@ -266,11 +252,15 @@ public class PlumtreeNode implements TreeBroadcastNode {
         try {
             IHaveMessage msg = IHaveMessage.parse(bytes);
 
-            if(!haveMessage(msg.hash()))
-                missing.put(msg);
+            if(!haveMessage(msg.hash())) {
+                Message request = new RequestMessage(id, msg.hash());
 
+                tcp.send(request.bytes(), msg.sender());
 
-        } catch(InterruptedException e) {
+                // I think this makes sense here, but does it?
+                timerManager.addAction(GRAFT, this::triggerGraft, msg, iHaveTimeout);
+            }
+        } catch(IOException | InterruptedException e) {
             // TODO
             e.printStackTrace();
         }
@@ -304,7 +294,7 @@ public class PlumtreeNode implements TreeBroadcastNode {
         Message bodyMessage = new BodyMessage(id, counted.bytes, counted.bytes.limit(), (short) 1);
 
         try {
-            udp.send(bodyMessage.bytes(), sender);
+            tcp.send(bodyMessage.bytes(), sender);
         } catch(IOException | InterruptedException e) {
             // TODO
             e.printStackTrace();
@@ -325,7 +315,7 @@ public class PlumtreeNode implements TreeBroadcastNode {
             if(missMsg.hash() == msg.hash())
                 try {
                     Message graftMsg = new GraftMessage(id, hash, true);
-                    udp.send(graftMsg.bytes(), missMsg.sender());
+                    tcp.send(graftMsg.bytes(), missMsg.sender());
 
                     timerManager.addAction(GRAFT, this::triggerGraft, msg, (long)(iHaveTimeout * ihtoMultiplier));
                 } catch(InterruptedException | IOException e) {
@@ -334,24 +324,73 @@ public class PlumtreeNode implements TreeBroadcastNode {
                 }
     }
 
+    // TODO does this screw something? something should be checked?
     @Override
-    public boolean setUDP(NetworkInterface udp) throws IllegalArgumentException {
-        this.udp = udp;
+    public boolean setNetwork(NetworkInterface tcp)
+            throws IllegalArgumentException {
+
+        if(!(tcp instanceof PersistantNetwork))
+            throw new IllegalArgumentException();
+
+        this.tcp = tcp;
         return true;
     }
 
-    private void requestMessage() {
+    @SuppressWarnings("all")
+    private void handleMessage(Notification notification) {
+        if(!(notification instanceof MessageNotification)) {
+            System.out.println("??? Wrong message notification");
+            return;
+        }
+
+        MessageNotification msgNoti = (MessageNotification) notification;
+
+        short type = msgNoti.type();
+
+        switch(type) {
+            case BodyMessage.TYPE:
+                handleBody(msgNoti.message());
+                break;
+            case GraftMessage.TYPE:
+                handleGraft(msgNoti.message());
+                break;
+            case RequestMessage.TYPE:
+                handleRequest(msgNoti.message());
+                break;
+            case PruneMessage.TYPE:
+                handlePrune(msgNoti.message());
+                break;
+            case IHaveMessage.TYPE:
+                handleIHave(msgNoti.message());
+                break;
+
+            default:
+                System.out.println("??? unrecognized message");
+                break;
+        }
+    }
+
+    private void handleNeighbour(Notification notification) {
+
+    }
+
+    private void processNotification() {
         while(true)
             try {
-                IHaveMessage msg = missing.take();
+                Notification notification = notifications.take();
 
-                Message request = new RequestMessage(id, msg.hash());
+                short type = notification.type();
 
-                udp.send(request.bytes(), msg.sender());
+                switch (type) {
+                    case MessageNotification.TYPE:
+                        handleMessage(notification);
+                        break;
 
-                // I think this makes sense here, but does it?
-                timerManager.addAction(GRAFT, this::triggerGraft, msg, iHaveTimeout);
-            } catch(InterruptedException | IOException e) {
+                    default:
+                        System.out.println("??? Wrong notification");
+                        break;
+                }
+            } catch(InterruptedException e) {
                 // TODO
                 e.printStackTrace();
             }
@@ -386,7 +425,7 @@ public class PlumtreeNode implements TreeBroadcastNode {
         if(prune)
             try {
                 Message pruneMsg = new PruneMessage(id);
-                udp.send(pruneMsg.bytes(), peer);
+                tcp.send(pruneMsg.bytes(), peer);
             } catch(IOException | InterruptedException e) {
                 // TODO
                 e.printStackTrace();
