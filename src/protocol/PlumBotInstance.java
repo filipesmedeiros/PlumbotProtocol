@@ -59,7 +59,25 @@ public class PlumBotInstance implements PlumBot {
 
             new Thread(() -> {
                 try {
-                    udp.init();
+                    udp.initialize();
+                } catch(NotReadyForInitException e) {
+                    // TODO
+                    e.printStackTrace();
+                }
+            }).start();
+
+            new Thread(() -> {
+                try {
+                    tcp.initialize();
+                } catch(NotReadyForInitException e) {
+                    // TODO
+                    e.printStackTrace();
+                }
+            }).start();
+
+            new Thread(() -> {
+                try {
+                    plum.initialize();
                 } catch(NotReadyForInitException e) {
                     // TODO
                     e.printStackTrace();

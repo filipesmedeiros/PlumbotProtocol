@@ -53,7 +53,7 @@ public class TCP extends Network implements PersistantNetwork {
     }
 
     @Override
-    public void init()
+    public void initialize()
             throws NotReadyForInitException {
 
         if(msgSize == 0 || listeners == null || listeners.isEmpty() || connector == null)
