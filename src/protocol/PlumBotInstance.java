@@ -60,7 +60,7 @@ public class PlumBotInstance implements PlumBot {
             new Thread(() -> {
                 try {
                     udp.initialize();
-                } catch(NotReadyForInitException e) {
+                } catch(NotReadyForInitException | IOException e) {
                     // TODO
                     e.printStackTrace();
                 }
@@ -69,7 +69,7 @@ public class PlumBotInstance implements PlumBot {
             new Thread(() -> {
                 try {
                     tcp.initialize();
-                } catch(NotReadyForInitException e) {
+                } catch(NotReadyForInitException | IOException e) {
                     // TODO
                     e.printStackTrace();
                 }

@@ -63,6 +63,7 @@ public class TCP extends Network implements PersistantNetwork {
 
         server = ServerSocketChannel.open();
         server.bind(address);
+        server.configureBlocking(false);
         server.register(selector, SelectionKey.OP_ACCEPT);
 
         triggerListenToSel();
@@ -80,7 +81,6 @@ public class TCP extends Network implements PersistantNetwork {
         channel = SocketChannel.open();
         channel.configureBlocking(false);
         channel.setOption(StandardSocketOptions.SO_KEEPALIVE, true);
-
         channel.register(selector, SelectionKey.OP_CONNECT, remote);
 
         try {
@@ -124,9 +124,16 @@ public class TCP extends Network implements PersistantNetwork {
                     ServerSocketChannel ssChannel = (ServerSocketChannel) selectableChannel;
 
                     SocketChannel channel = ssChannel.accept();
+
+                    InetSocketAddress remote = (InetSocketAddress) channel.getRemoteAddress();
+
+                    channel.configureBlocking(false);
+                    channel.setOption(StandardSocketOptions.SO_KEEPALIVE, true);
+                    channel.register(selector, SelectionKey.OP_READ, remote);
+
                     System.out.println(channel.getRemoteAddress());
 
-                    connections.put((InetSocketAddress) channel.getRemoteAddress(), channel);
+                    connections.put(remote, channel);
                 } else if(key.isConnectable()) {
                     SocketChannel channel = (SocketChannel) selectableChannel;
 
