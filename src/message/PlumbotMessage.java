@@ -2,6 +2,7 @@ package message;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 import java.net.UnknownHostException;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
@@ -59,7 +60,7 @@ public abstract class PlumbotMessage implements Message {
 
         String host;
         try {
-            host = InetAddress.getByName(hostStr.toString().substring(1)).getHostAddress();
+            host = InetAddress.getByAddress().getByName(hostStr.toString().substring(1)).getHostAddress();
         } catch(UnknownHostException e) {
             e.printStackTrace();
             return null;

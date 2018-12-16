@@ -125,7 +125,7 @@ public class TCP extends Network implements PersistantNetwork {
 
                     SocketChannel channel = ssChannel.accept();
 
-                    InetSocketAddress remote = (InetSocketAddress) channel.getRemoteAddress();
+                    InetSocketAddress remote = (InetSocketAddress) channel.getLocalAddress();
 
                     channel.configureBlocking(false);
                     channel.setOption(StandardSocketOptions.SO_KEEPALIVE, true);
@@ -141,7 +141,8 @@ public class TCP extends Network implements PersistantNetwork {
                     System.out.println("connecting to remote -> " + channel.getRemoteAddress());
 
                     if(channel.finishConnect()) {
-                        channel.close();
+                        key.interestOps(0);
+
                         channel.register(selector, SelectionKey.OP_READ);
 
                         InetSocketAddress remote = (InetSocketAddress) key.attachment();
