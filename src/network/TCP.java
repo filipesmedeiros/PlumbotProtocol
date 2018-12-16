@@ -1,8 +1,6 @@
 package network;
 
-import common.Pair;
 import exceptions.NotReadyForInitException;
-import interfaces.Node;
 import interfaces.Notifiable;
 import interfaces.OnlineNotifiable;
 import message.Message;
@@ -19,6 +17,8 @@ import java.util.*;
 
 public class TCP extends Network implements PersistantNetwork {
 
+    private ServerSocketChannel server;
+
     // Node that handles connections (Xbot)
     private Notifiable connector;
 
@@ -32,6 +32,8 @@ public class TCP extends Network implements PersistantNetwork {
         connector = null;
 
         connections = new HashMap<>();
+
+        server = null;
     }
 
     // Default values, can later be changed
@@ -54,10 +56,14 @@ public class TCP extends Network implements PersistantNetwork {
 
     @Override
     public void initialize()
-            throws NotReadyForInitException {
+            throws NotReadyForInitException, IOException {
 
         if(msgSize == 0 || listeners == null || listeners.isEmpty() || connector == null)
             throw new NotReadyForInitException();
+
+        server = ServerSocketChannel.open();
+        server.bind(address);
+        server.register(selector, SelectionKey.OP_ACCEPT);
 
         triggerListenToSel();
     }
@@ -73,7 +79,6 @@ public class TCP extends Network implements PersistantNetwork {
 
         channel = SocketChannel.open();
         channel.configureBlocking(false);
-        channel.bind(address);
         channel.setOption(StandardSocketOptions.SO_KEEPALIVE, true);
 
         channel.register(selector, SelectionKey.OP_CONNECT, remote);
@@ -114,12 +119,20 @@ public class TCP extends Network implements PersistantNetwork {
 
             for(SelectionKey key : keys) {
                 SelectableChannel selectableChannel = key.channel();
-                if(!(selectableChannel instanceof SocketChannel))
-                    continue;
 
-                SocketChannel channel = (SocketChannel) selectableChannel;
+                if(key.isAcceptable()) {
+                    ServerSocketChannel ssChannel = (ServerSocketChannel) selectableChannel;
 
-                if(key.isConnectable()) {
+                    SocketChannel channel = ssChannel.accept();
+                    System.out.println(channel.getRemoteAddress());
+
+                    connections.put((InetSocketAddress) channel.getRemoteAddress(), channel);
+                } else if(key.isConnectable()) {
+                    SocketChannel channel = (SocketChannel) selectableChannel;
+
+                    System.out.println("local -> " + channel.getLocalAddress());
+                    System.out.println("connecting to remote -> " + channel.getRemoteAddress());
+
                     if(channel.finishConnect()) {
                         channel.close();
                         channel.register(selector, SelectionKey.OP_READ);
@@ -131,6 +144,8 @@ public class TCP extends Network implements PersistantNetwork {
                         connector.notify(connectNoti);
                     }
                 } else if(key.isReadable()) {
+                    SocketChannel channel = (SocketChannel) selectableChannel;
+
                     ByteBuffer buffer = ByteBuffer.allocate(msgSize);
                     channel.read(buffer);
                     buffer.flip();

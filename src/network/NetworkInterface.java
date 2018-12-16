@@ -30,7 +30,7 @@ public interface NetworkInterface {
     NetworkInterface addMessageListeners(Map<OnlineNotifiable, List<Short>> listeners);
 
     void initialize()
-        throws NotReadyForInitException;
+        throws NotReadyForInitException, IOException;
 
     NetworkInterface setRequestQueueSize(int size)
         throws CantResizeQueueException;

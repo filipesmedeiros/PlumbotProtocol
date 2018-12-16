@@ -83,7 +83,7 @@ public abstract class Network implements NetworkInterface {
 
     @Override
     public void initialize()
-            throws NotReadyForInitException {
+            throws NotReadyForInitException, IOException {
 
         if(msgSize == 0 || listeners == null || listeners.isEmpty())
             throw new NotReadyForInitException();
