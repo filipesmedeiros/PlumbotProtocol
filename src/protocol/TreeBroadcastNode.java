@@ -2,14 +2,14 @@ package protocol;
 
 import exceptions.NotReadyForInitException;
 import interfaces.NeighbourhoodListener;
-import interfaces.OnlineNotifiable;
+import interfaces.NetworkNotifiable;
 import interfaces.StableNeighbour;
 import test.Application;
 
 import java.nio.ByteBuffer;
 import java.util.Set;
 
-public interface TreeBroadcastNode extends NeighbourhoodListener, OnlineNotifiable, StableNeighbour {
+public interface TreeBroadcastNode extends NeighbourhoodListener, NetworkNotifiable, StableNeighbour {
 
     void broadcast(ByteBuffer bytes) throws IllegalArgumentException;
 

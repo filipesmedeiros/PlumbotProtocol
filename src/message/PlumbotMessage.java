@@ -6,6 +6,7 @@ import java.net.SocketAddress;
 import java.net.UnknownHostException;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
+import java.nio.channels.SelectionKey;
 
 public abstract class PlumbotMessage implements Message {
 
@@ -58,15 +59,8 @@ public abstract class PlumbotMessage implements Message {
 
         int port = Integer.parseInt(portStr.toString());
 
-        String host;
-        try {
-            host = InetAddress.getByName(hostStr.toString().substring(1)).getHostAddress();
-        } catch(UnknownHostException e) {
-            e.printStackTrace();
-            return null;
-        }
-
-        return new InetSocketAddress(host, port);
+        // remove the slash from the string
+        return new InetSocketAddress(hostStr.toString().substring(1), port);
     }
 
     public ByteBuffer putSenderInBuffer() {

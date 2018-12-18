@@ -523,36 +523,40 @@ public class XBotNode implements OptimizerNode {
 
         short type = msgNoti.type();
 
+        ByteBuffer msg = msgNoti.message();
+        // remove type of message
+        msg.getShort();
+
         switch(type) {
             case JoinMessage.TYPE:
-                handleJoin(msgNoti.message());
+                handleJoin(msg);
                 break;
             case AcceptJoinMessage.TYPE:
-                handleAcceptJoin(msgNoti.message());
+                handleAcceptJoin(msg);
                 break;
             case ForwardJoinMessage.TYPE:
-                handleForwardJoin(msgNoti.message());
+                handleForwardJoin(msg);
                 break;
             case OptimizationMessage.TYPE:
-                handleOptimization(msgNoti.message());
+                handleOptimization(msg);
                 break;
             case OptimizationReplyMessage.TYPE:
-                handleOptimizationReply(msgNoti.message());
+                handleOptimizationReply(msg);
                 break;
             case ReplaceMessage.TYPE:
-                handleReplace(msgNoti.message());
+                handleReplace(msg);
                 break;
             case ReplaceReplyMessage.TYPE:
-                handleReplaceReply(msgNoti.message());
+                handleReplaceReply(msg);
                 break;
             case PingMessage.TYPE:
-                handlePing(msgNoti.message());
+                handlePing(msg);
                 break;
             case DisconnectMessage.TYPE:
-                handleDisconnect(msgNoti.message());
+                handleDisconnect(msg);
                 break;
             case SwitchMessage.TYPE:
-                handleSwitch(msgNoti.message());
+                handleSwitch(msg);
                 break;
 
             default:

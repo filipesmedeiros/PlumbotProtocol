@@ -2,7 +2,7 @@ package network;
 
 import exceptions.NotReadyForInitException;
 import interfaces.Notifiable;
-import interfaces.OnlineNotifiable;
+import interfaces.NetworkNotifiable;
 import message.Message;
 import notifications.MessageNotification;
 import notifications.Notification;
@@ -79,6 +79,7 @@ public class TCP extends Network implements PersistantNetwork {
             return channel;
 
         channel = SocketChannel.open();
+        channel.bind(new InetSocketAddress(address.getAddress(), 0));
         channel.configureBlocking(false);
         channel.setOption(StandardSocketOptions.SO_KEEPALIVE, true);
         channel.register(selector, SelectionKey.OP_CONNECT, remote);
@@ -116,8 +117,10 @@ public class TCP extends Network implements PersistantNetwork {
         while(true) {
             selector.select();
             Set<SelectionKey> keys = selector.selectedKeys();
+            Iterator<SelectionKey> keyIt = keys.iterator();
 
-            for(SelectionKey key : keys) {
+            while(keyIt.hasNext()) {
+                SelectionKey key = keyIt.next();
                 SelectableChannel selectableChannel = key.channel();
 
                 if(key.isAcceptable()) {
@@ -125,20 +128,15 @@ public class TCP extends Network implements PersistantNetwork {
 
                     SocketChannel channel = ssChannel.accept();
 
-                    InetSocketAddress remote = (InetSocketAddress) channel.getLocalAddress();
+                    InetSocketAddress remote = (InetSocketAddress) channel.getRemoteAddress();
 
                     channel.configureBlocking(false);
                     channel.setOption(StandardSocketOptions.SO_KEEPALIVE, true);
                     channel.register(selector, SelectionKey.OP_READ, remote);
 
-                    System.out.println(channel.getRemoteAddress());
-
                     connections.put(remote, channel);
                 } else if(key.isConnectable()) {
                     SocketChannel channel = (SocketChannel) selectableChannel;
-
-                    System.out.println("local -> " + channel.getLocalAddress());
-                    System.out.println("connecting to remote -> " + channel.getRemoteAddress());
 
                     if(channel.finishConnect()) {
                         key.interestOps(0);
@@ -161,10 +159,12 @@ public class TCP extends Network implements PersistantNetwork {
                     short type = buffer.getShort(0);
 
                     Notification messageNoti = new MessageNotification(buffer);
-                    for(OnlineNotifiable node : listeners.get(type)) {
+                    for(NetworkNotifiable node : listeners.get(type)) {
                         node.notify(messageNoti);
                     }
                 }
+
+                keyIt.remove();
             }
         }
     }

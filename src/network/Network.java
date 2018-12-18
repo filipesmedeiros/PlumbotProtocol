@@ -2,8 +2,7 @@ package network;
 
 import exceptions.CantResizeQueueException;
 import exceptions.NotReadyForInitException;
-import interfaces.Node;
-import interfaces.OnlineNotifiable;
+import interfaces.NetworkNotifiable;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -19,7 +18,7 @@ public abstract class Network implements NetworkInterface {
     final InetSocketAddress address;
 
     int msgSize;
-    Map<Short, List<OnlineNotifiable>> listeners;
+    Map<Short, List<NetworkNotifiable>> listeners;
     BlockingQueue<MessageRequest> requests;
 
     public Network(InetSocketAddress address, short numTypes, int msgSize)
@@ -54,7 +53,7 @@ public abstract class Network implements NetworkInterface {
     }
 
     @Override
-    public NetworkInterface addMessageListener(OnlineNotifiable listener, List<Short> msgTypes) {
+    public NetworkInterface addMessageListener(NetworkNotifiable listener, List<Short> msgTypes) {
         for(Short index : msgTypes)
             listeners.get(index).add(listener);
 
@@ -62,8 +61,8 @@ public abstract class Network implements NetworkInterface {
     }
 
     @Override
-    public NetworkInterface addMessageListeners(Map<OnlineNotifiable, List<Short>> listeners) {
-        for(Map.Entry<OnlineNotifiable, List<Short>> entry : listeners.entrySet())
+    public NetworkInterface addMessageListeners(Map<NetworkNotifiable, List<Short>> listeners) {
+        for(Map.Entry<NetworkNotifiable, List<Short>> entry : listeners.entrySet())
             addMessageListener(entry.getKey(), entry.getValue());
 
         return this;

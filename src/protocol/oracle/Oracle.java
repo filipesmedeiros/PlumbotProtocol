@@ -1,13 +1,13 @@
 package protocol.oracle;
 
 import interfaces.Notifiable;
-import interfaces.OnlineNotifiable;
+import interfaces.NetworkNotifiable;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.Set;
 
-public interface Oracle extends OnlineNotifiable {
+public interface Oracle extends NetworkNotifiable {
 
     void init();
 

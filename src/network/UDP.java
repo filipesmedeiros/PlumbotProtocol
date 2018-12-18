@@ -1,7 +1,6 @@
 package network;
 
-import interfaces.Node;
-import interfaces.OnlineNotifiable;
+import interfaces.NetworkNotifiable;
 import message.Message;
 import notifications.MessageNotification;
 
@@ -51,7 +50,7 @@ public class UDP extends Network {
 
                     MessageNotification notification = new MessageNotification(buffer);
 
-                    for(OnlineNotifiable msgListener : listeners.get(type))
+                    for(NetworkNotifiable msgListener : listeners.get(type))
                         msgListener.notify(notification);
                 }
             }
