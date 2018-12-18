@@ -8,8 +8,12 @@ public class TCPConnectionNotification implements Notification {
 
     private InetSocketAddress peer;
 
-    public TCPConnectionNotification(InetSocketAddress peer) {
+    // true if this was an accept, false if this was a connection this node made
+    private boolean accept;
+
+    public TCPConnectionNotification(InetSocketAddress peer, boolean accept) {
         this.peer = peer;
+        this.accept = accept;
     }
 
     @Override
@@ -19,5 +23,9 @@ public class TCPConnectionNotification implements Notification {
 
     public InetSocketAddress peer() {
         return peer;
+    }
+
+    public boolean accept() {
+        return accept;
     }
 }

@@ -502,6 +502,9 @@ public class XBotNode implements OptimizerNode {
 
         TCPConnectionNotification tcpNoti = (TCPConnectionNotification) notification;
 
+        if(tcpNoti.accept())
+            return;
+
         Message joinMsg = new JoinMessage(id);
 
         try {

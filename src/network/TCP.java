@@ -82,7 +82,7 @@ public class TCP extends Network implements PersistantNetwork {
         channel.bind(new InetSocketAddress(address.getAddress(), 0));
         channel.configureBlocking(false);
         channel.setOption(StandardSocketOptions.SO_KEEPALIVE, true);
-        channel.register(selector, SelectionKey.OP_CONNECT, remote);
+        channel.register(selector, SelectionKey.OP_CONNECT);
 
         try {
             channel.connect(remote);
@@ -129,24 +129,30 @@ public class TCP extends Network implements PersistantNetwork {
                     SocketChannel channel = ssChannel.accept();
 
                     InetSocketAddress remote = (InetSocketAddress) channel.getRemoteAddress();
+                    System.out.println("local " + address + " accepted connection from " + remote);
 
                     channel.configureBlocking(false);
                     channel.setOption(StandardSocketOptions.SO_KEEPALIVE, true);
                     channel.register(selector, SelectionKey.OP_READ, remote);
 
                     connections.put(remote, channel);
+
+                    Notification connectNoti = new TCPConnectionNotification(remote, true);
+                    connector.notify(connectNoti);
                 } else if(key.isConnectable()) {
                     SocketChannel channel = (SocketChannel) selectableChannel;
 
                     if(channel.finishConnect()) {
+
                         key.interestOps(0);
 
                         channel.register(selector, SelectionKey.OP_READ);
 
-                        InetSocketAddress remote = (InetSocketAddress) key.attachment();
+                        InetSocketAddress remote = (InetSocketAddress) channel.getRemoteAddress();
+                        System.out.println("local " + address + " finished connecting to " + remote);
                         connections.put(remote, channel);
 
-                        Notification connectNoti = new TCPConnectionNotification(remote);
+                        Notification connectNoti = new TCPConnectionNotification(remote, false);
                         connector.notify(connectNoti);
                     }
                 } else if(key.isReadable()) {
