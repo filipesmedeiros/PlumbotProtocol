@@ -124,55 +124,69 @@ public class TCP extends Network implements PersistantNetwork {
                 SelectionKey key = keyIt.next();
                 SelectableChannel selectableChannel = key.channel();
 
-                if(key.isAcceptable()) {
-                    ServerSocketChannel ssChannel = (ServerSocketChannel) selectableChannel;
-
-                    SocketChannel channel = ssChannel.accept();
-
-                    InetSocketAddress remote = (InetSocketAddress) channel.getRemoteAddress();
-
-                    channel.configureBlocking(false);
-                    channel.setOption(StandardSocketOptions.SO_KEEPALIVE, true);
-                    channel.register(selector, SelectionKey.OP_READ, remote);
-
-                    connections.put(remote, channel);
-                    System.out.println(address + " added " + remote);
-
-                    Notification connectNoti = new TCPConnectionNotification(remote, true);
-                    connector.notify(connectNoti);
-                } else if(key.isConnectable()) {
-                    SocketChannel channel = (SocketChannel) selectableChannel;
-
-                    if(channel.finishConnect()) {
-                        key.interestOps(0);
-
-                        channel.register(selector, SelectionKey.OP_READ);
-
-                        InetSocketAddress remote = (InetSocketAddress) channel.getRemoteAddress();
-                        connections.put(remote, channel);
-
-                        Notification connectNoti = new TCPConnectionNotification(remote, false);
-                        connector.notify(connectNoti);
-                    }
-                } else if(key.isReadable()) {
-                    SocketChannel channel = (SocketChannel) selectableChannel;
-
-                    ByteBuffer buffer = ByteBuffer.allocate(msgSize);
-                    channel.read(buffer);
-                    buffer.flip();
-
-                    short type = buffer.getShort(0);
-
-                    InetSocketAddress remote = (InetSocketAddress) channel.getRemoteAddress();
-                    Notification messageNoti = new MessageNotification(buffer, remote.getPort());
-                    for(NetworkNotifiable notifiable : listeners.get(type)) {
-                        notifiable.notify(messageNoti);
-                    }
-                }
+                if(key.isAcceptable())
+                    accept(selectableChannel);
+                else if(key.isConnectable())
+                    finishConnection(key, selectableChannel);
+                else if(key.isReadable())
+                    read(selectableChannel);
 
                 keyIt.remove();
             }
         }
+    }
+
+    private void accept(SelectableChannel selectableChannel)
+            throws IOException, InterruptedException {
+
+        ServerSocketChannel ssChannel = (ServerSocketChannel) selectableChannel;
+
+        SocketChannel channel = ssChannel.accept();
+
+        InetSocketAddress remote = (InetSocketAddress) channel.getRemoteAddress();
+
+        channel.configureBlocking(false);
+        channel.setOption(StandardSocketOptions.SO_KEEPALIVE, true);
+        channel.register(selector, SelectionKey.OP_READ, remote);
+
+        connections.put(remote, channel);
+        System.out.println(address + " added " + remote);
+
+        Notification connectNoti = new TCPConnectionNotification(remote, true);
+        connector.notify(connectNoti);
+    }
+
+    private void finishConnection(SelectionKey key, SelectableChannel selectableChannel)
+            throws IOException, InterruptedException {
+        SocketChannel channel = (SocketChannel) selectableChannel;
+
+        if(channel.finishConnect()) {
+            key.interestOps(0);
+
+            channel.register(selector, SelectionKey.OP_READ);
+
+            InetSocketAddress remote = (InetSocketAddress) channel.getRemoteAddress();
+            connections.put(remote, channel);
+
+            Notification connectNoti = new TCPConnectionNotification(remote, false);
+            connector.notify(connectNoti);
+        }
+    }
+
+    private void read(SelectableChannel selectableChannel)
+            throws IOException, InterruptedException {
+        SocketChannel channel = (SocketChannel) selectableChannel;
+
+        ByteBuffer buffer = ByteBuffer.allocate(msgSize);
+        channel.read(buffer);
+        buffer.flip();
+
+        short type = buffer.getShort(0);
+
+        InetSocketAddress remote = (InetSocketAddress) channel.getRemoteAddress();
+        Notification messageNoti = new MessageNotification(buffer, remote.getPort());
+        for(NetworkNotifiable notifiable : listeners.get(type))
+            notifiable.notify(messageNoti);
     }
 
     @SuppressWarnings("all")
