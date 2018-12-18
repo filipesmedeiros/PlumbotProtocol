@@ -110,6 +110,7 @@ public class TCP extends Network implements PersistantNetwork {
         return true;
     }
 
+    @SuppressWarnings("all")
     @Override
     void listenToSelector()
             throws IOException, InterruptedException {
@@ -129,13 +130,13 @@ public class TCP extends Network implements PersistantNetwork {
                     SocketChannel channel = ssChannel.accept();
 
                     InetSocketAddress remote = (InetSocketAddress) channel.getRemoteAddress();
-                    System.out.println("local " + address + " accepted connection from " + remote);
 
                     channel.configureBlocking(false);
                     channel.setOption(StandardSocketOptions.SO_KEEPALIVE, true);
                     channel.register(selector, SelectionKey.OP_READ, remote);
 
                     connections.put(remote, channel);
+                    System.out.println(address + " added " + remote);
 
                     Notification connectNoti = new TCPConnectionNotification(remote, true);
                     connector.notify(connectNoti);
@@ -143,13 +144,11 @@ public class TCP extends Network implements PersistantNetwork {
                     SocketChannel channel = (SocketChannel) selectableChannel;
 
                     if(channel.finishConnect()) {
-
                         key.interestOps(0);
 
                         channel.register(selector, SelectionKey.OP_READ);
 
                         InetSocketAddress remote = (InetSocketAddress) channel.getRemoteAddress();
-                        System.out.println("local " + address + " finished connecting to " + remote);
                         connections.put(remote, channel);
 
                         Notification connectNoti = new TCPConnectionNotification(remote, false);
@@ -164,9 +163,10 @@ public class TCP extends Network implements PersistantNetwork {
 
                     short type = buffer.getShort(0);
 
-                    Notification messageNoti = new MessageNotification(buffer);
-                    for(NetworkNotifiable node : listeners.get(type)) {
-                        node.notify(messageNoti);
+                    InetSocketAddress remote = (InetSocketAddress) channel.getRemoteAddress();
+                    Notification messageNoti = new MessageNotification(buffer, remote.getPort());
+                    for(NetworkNotifiable notifiable : listeners.get(type)) {
+                        notifiable.notify(messageNoti);
                     }
                 }
 
@@ -175,18 +175,21 @@ public class TCP extends Network implements PersistantNetwork {
         }
     }
 
+    @SuppressWarnings("all")
     @Override
     void fulfill() {
 
         // System.out.println("Fulfilling message " + request.type());
 
         while(true) {
-            MessageRequest request;
             try {
-                request = requests.take();
+                MessageRequest request = requests.take();
 
                 InetSocketAddress to = request.to();
                 SocketChannel channel = connections.get(to);
+
+                if(channel == null)
+                    System.out.println(address + " type " + request.type() + " to " + request.to());
 
                 channel.write(request.message());
             } catch(IOException | InterruptedException e) {

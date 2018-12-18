@@ -161,47 +161,6 @@ public class XBotNode implements OptimizerNode {
         notifications.add(notification);
     }
 
-    private void sendAcceptJoin(Message accept, InetSocketAddress sender) {
-        try {
-            tcp.send(accept.bytes(), sender);
-        } catch(IOException | InterruptedException e) {
-            // TODO
-            e.printStackTrace();
-        }
-    }
-
-    private void handleJoin(ByteBuffer bytes) {
-        JoinMessage msg = JoinMessage.parse(bytes);
-
-        if(addPeerToActiveView(msg.sender(), -1)) {
-            Message accept = new AcceptJoinMessage(id);
-            sendAcceptJoin(accept, msg.sender());
-        }
-
-        try {
-            activeView.forEach((peer) -> {
-                Message forwardMsg = new ForwardJoinMessage(id, msg.sender(), attl);
-
-                if(!peer.equals(msg.sender())) {
-                    try {
-                        tcp.send(forwardMsg.bytes(), peer);
-                    } catch(IOException | InterruptedException e) {
-                        // TODO
-                        e.printStackTrace();
-                    }
-                }
-            });
-        } catch(IllegalArgumentException e) {
-            // TODO
-            e.printStackTrace();
-        }
-    }
-
-    private void handleAcceptJoin(ByteBuffer bytes) {
-        AcceptJoinMessage msg = AcceptJoinMessage.parse(bytes);
-        addPeerToActiveView(msg.sender(), -1);
-    }
-
     private void handleForwardJoin(ByteBuffer bytes) {
         ForwardJoinMessage msg = ForwardJoinMessage.parse(bytes);
 
@@ -494,6 +453,49 @@ public class XBotNode implements OptimizerNode {
         }
     }
 
+    private void sendAcceptJoin(Message accept, InetSocketAddress sender) {
+        try {
+            tcp.send(accept.bytes(), sender);
+        } catch(IOException | InterruptedException e) {
+            // TODO
+            e.printStackTrace();
+        }
+    }
+
+    private void handleJoin(ByteBuffer bytes) {
+        JoinMessage msg = JoinMessage.parse(bytes);
+
+        System.out.println("sender of join -> " + msg.sender());
+
+        if(addPeerToActiveView(msg.sender(), -1)) {
+            Message accept = new AcceptJoinMessage(id);
+            sendAcceptJoin(accept, msg.sender());
+        }
+
+        try {
+            activeView.forEach((peer) -> {
+                Message forwardMsg = new ForwardJoinMessage(id, msg.sender(), attl);
+
+                if(!peer.equals(msg.sender())) {
+                    try {
+                        tcp.send(forwardMsg.bytes(), peer);
+                    } catch(IOException | InterruptedException e) {
+                        // TODO
+                        e.printStackTrace();
+                    }
+                }
+            });
+        } catch(IllegalArgumentException e) {
+            // TODO
+            e.printStackTrace();
+        }
+    }
+
+    private void handleAcceptJoin(ByteBuffer bytes) {
+        AcceptJoinMessage msg = AcceptJoinMessage.parse(bytes);
+        addPeerToActiveView(msg.sender(), -1);
+    }
+
     private void handleConnection(Notification notification) {
         if(!(notification instanceof TCPConnectionNotification)) {
             System.out.println("??? Wrong connection notification");
@@ -524,11 +526,9 @@ public class XBotNode implements OptimizerNode {
 
         MessageNotification msgNoti = (MessageNotification) notification;
 
-        short type = msgNoti.type();
+        short type = msgNoti.msgType();
 
         ByteBuffer msg = msgNoti.message();
-        // remove type of message
-        msg.getShort();
 
         switch(type) {
             case JoinMessage.TYPE:
