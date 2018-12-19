@@ -110,6 +110,11 @@ public class PlumBotInstance implements PlumBot {
     }
 
     @Override
+    public void leave() {
+        xbot.leave();
+    }
+
+    @Override
     public Set<InetSocketAddress> peerActiveView() {
         return xbot.activeView();
     }

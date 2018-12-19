@@ -370,10 +370,7 @@ public class PlumtreeNode implements TreeBroadcastNode {
         }
     }
 
-    private void handleNeighbour(Notification notification) {
-
-    }
-
+    @SuppressWarnings("all")
     private void processNotification() {
         while(true)
             try {

@@ -32,4 +32,6 @@ public interface PeerSamplingNode extends Node, NetworkNotifiable {
     void initialize() throws NotReadyForInitException;
 
     void join(InetSocketAddress contact);
+
+    void leave();
 }

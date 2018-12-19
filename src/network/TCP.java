@@ -8,14 +8,9 @@ import notifications.MessageNotification;
 import notifications.Notification;
 import notifications.TCPConnectionNotification;
 
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.PrintStream;
 import java.net.InetSocketAddress;
-import java.net.SocketAddress;
 import java.net.StandardSocketOptions;
-import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.nio.channels.*;
 import java.util.*;
@@ -91,6 +86,7 @@ public class TCP extends Network implements PersistantNetwork {
 
         try {
             channel.connect(remote);
+            System.out.println(address + " connecting on " + remote);
         } catch(IOException e) {
             // TODO
             e.printStackTrace();
@@ -99,6 +95,7 @@ public class TCP extends Network implements PersistantNetwork {
         return null;
     }
 
+    // definitely not the best implementation, but oh well
     @Override
     public boolean disconnect(InetSocketAddress remote)
             throws IOException {
@@ -110,7 +107,10 @@ public class TCP extends Network implements PersistantNetwork {
         if(!channel.isConnected())
             return false;
 
+        channel.write(disconnectBuffer());
+
         channel.close();
+        connections.remove(remote);
 
         return true;
     }
@@ -123,6 +123,7 @@ public class TCP extends Network implements PersistantNetwork {
         while(true) {
             selector.select();
             Set<SelectionKey> keys = selector.selectedKeys();
+            System.out.println("selected keys -> " + keys.size());
             Iterator<SelectionKey> keyIt = keys.iterator();
 
             while(keyIt.hasNext()) {
@@ -131,9 +132,11 @@ public class TCP extends Network implements PersistantNetwork {
 
                 if(key.isAcceptable())
                     accept(selectableChannel);
-                else if(key.isConnectable())
+
+                if(key.isConnectable())
                     finishConnection(key, selectableChannel);
-                else if(key.isReadable())
+
+                if(key.isReadable())
                     read(selectableChannel);
 
                 keyIt.remove();
@@ -181,6 +184,9 @@ public class TCP extends Network implements PersistantNetwork {
         channel.read(buffer);
 
         buffer.flip();
+
+        if(buffer.getChar(0) == 'd')
+            channel.close();
 
         if(handleIdExchange(buffer, channel))
             return;
@@ -266,6 +272,12 @@ public class TCP extends Network implements PersistantNetwork {
         id.putChar(Message.EOS);
 
         return id.flip();
+    }
+
+    private ByteBuffer disconnectBuffer() {
+        ByteBuffer disconnect = ByteBuffer.allocate(2);
+        disconnect.putChar('d');
+        return disconnect.flip();
     }
 
     @SuppressWarnings("all")

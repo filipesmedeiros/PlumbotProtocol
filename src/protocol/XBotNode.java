@@ -313,12 +313,21 @@ public class XBotNode implements OptimizerNode {
     private void handleDisconnect(ByteBuffer bytes) {
         DisconnectMessage msg = DisconnectMessage.parse(bytes);
 
-        if(!removeFromActive(msg.sender()))
+        InetSocketAddress peer = msg.sender();
+
+        if(!removeFromActive(peer))
             return;
 
         if(msg.hasToWait()) {
             waiting = true;
             timerManager.addAction(WAIT, () -> this.waiting = false, waitTimeout);
+        }
+
+        try {
+            tcp.disconnect(peer);
+        } catch(IOException e) {
+            // TODO
+            e.printStackTrace();
         }
     }
 
@@ -451,6 +460,27 @@ public class XBotNode implements OptimizerNode {
             // TODO
             e.printStackTrace();
         }
+    }
+
+    @Override
+    public void leave() {
+        for(InetSocketAddress peer : activeView)
+            try {
+                tcp.disconnect(peer);
+            } catch(IOException e) {
+                // TODO
+                e.printStackTrace();
+            }
+
+        for(InetSocketAddress peer : passiveView)
+            try {
+                tcp.disconnect(peer);
+            } catch(IOException e) {
+                // TODO
+                e.printStackTrace();
+            }
+
+        System.exit(0);
     }
 
     private void sendAcceptJoin(Message accept, InetSocketAddress sender) {
@@ -752,6 +782,9 @@ public class XBotNode implements OptimizerNode {
 
             passiveView.remove(peer);
 
+            for(NeighbourhoodListener listener : neighbourhoodListeners)
+                listener.neighbourUp(peer);
+
             return true;
         } else if(cost == -1)
             try {
@@ -770,6 +803,9 @@ public class XBotNode implements OptimizerNode {
             biasedActiveView.add(new BiasedInetAddress(peer, cost));
             activeView.add(peer);
 
+            for(NeighbourhoodListener listener : neighbourhoodListeners)
+                listener.neighbourUp(peer);
+
             passiveView.remove(peer);
 
             return true;
@@ -786,6 +822,9 @@ public class XBotNode implements OptimizerNode {
 
         activeView.add(peer);
         biasedActiveView.add(new BiasedInetAddress(peer, cost));
+
+        for(NeighbourhoodListener listener : neighbourhoodListeners)
+            listener.neighbourUp(peer);
     }
 
     private void removeRandomFromActive() {
@@ -811,6 +850,10 @@ public class XBotNode implements OptimizerNode {
         InetSocketAddress chosen = random.fromSet(unbiasedActiveView);
         unbiasedActiveView.remove(chosen);
         activeView.remove(chosen);
+
+        for(NeighbourhoodListener listener : neighbourhoodListeners)
+            listener.neighbourDown(chosen);
+
         return chosen;
     }
 
@@ -818,6 +861,10 @@ public class XBotNode implements OptimizerNode {
         BiasedInetAddress worst = biasedActiveView.last();
         biasedActiveView.remove(worst);
         activeView.remove(worst.address);
+
+        for(NeighbourhoodListener listener : neighbourhoodListeners)
+            listener.neighbourDown(worst.address);
+
         return worst.address;
     }
 
@@ -838,6 +885,9 @@ public class XBotNode implements OptimizerNode {
         if(removed) {
             removeFromBiased(peer);
             unbiasedActiveView.remove(peer);
+
+            for(NeighbourhoodListener listener : neighbourhoodListeners)
+                listener.neighbourDown(peer);
         }
 
         addPeerToPassiveView(peer);
@@ -855,6 +905,9 @@ public class XBotNode implements OptimizerNode {
                 return biasedActiveView.remove(aPeer);
             }
         }
+
+        for(NeighbourhoodListener listener : neighbourhoodListeners)
+            listener.neighbourDown(peer);
 
         return false;
     }

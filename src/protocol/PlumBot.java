@@ -12,6 +12,8 @@ public interface PlumBot extends Node {
 
     void join(InetSocketAddress contact);
 
+    void leave();
+
     Set<InetSocketAddress> peerActiveView();
 
     Set<InetSocketAddress> treeActiveView();
