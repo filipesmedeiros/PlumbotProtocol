@@ -1,5 +1,6 @@
 package test;
 
+import message.plumtree.BodyMessage;
 import protocol.PlumBot;
 import protocol.PlumBotInstance;
 
@@ -9,8 +10,9 @@ import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.util.*;
 
-public class BasicApp {
-    public static void main(String[] args) {
+public class BasicApp implements Application {
+
+    private void init() {
         List<InetSocketAddress> addressList = new LinkedList<>();
         List<PlumBot> instances = new LinkedList<>();
 
@@ -22,12 +24,13 @@ public class BasicApp {
             e.printStackTrace();
             return;
         }
-        
+
         InetSocketAddress local = new InetSocketAddress(addr, 3000);
         addressList.add(local);
         System.out.println("Hosted at " + local.toString());
 
         PlumBot pb = new PlumBotInstance(local);
+        pb.addApp(this);
         instances.add(pb);
 
         Timer t = new Timer();
@@ -109,5 +112,14 @@ public class BasicApp {
                 System.exit(0);
             }
         }
+    }
+
+    @Override
+    public void deliver(BodyMessage message) {
+        System.out.println("Received message");
+    }
+
+    public static void main(String[] args) {
+        new BasicApp().init();
     }
 }

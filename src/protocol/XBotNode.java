@@ -671,6 +671,7 @@ public class XBotNode implements OptimizerNode {
 
         // optimizing = true;
         InetSocketAddress cand = random.fromSet(passiveView);
+
         try {
             oracle.getCost(cand);
             costsWaiting.put(cand, ITOC);
@@ -696,6 +697,15 @@ public class XBotNode implements OptimizerNode {
         this.cand = cand;
 
         BiasedInetAddress old = biasedActiveView.last();
+
+        for(NeighbourhoodListener listener : neighbourhoodListeners)
+            if(listener.canOptimize(id, old.address, null, null)) {
+                itoo = 0;
+                this.itoc = Long.MAX_VALUE;
+
+                this.cand = null;
+                this.init = null;
+            }
 
         this.itoo = old.cost;
         this.old = old.address;
@@ -728,6 +738,18 @@ public class XBotNode implements OptimizerNode {
     }
 
     private void optimizeStep3_3() {
+        for(NeighbourhoodListener listener : neighbourhoodListeners)
+            if(listener.canOptimize(null, null, cand, id)) {
+                itoo = 0;
+                this.itoc = Long.MAX_VALUE;
+                ctod = 0;
+                dtoo = 0;
+
+                this.old = null;
+                this.init = null;
+                this.cand = null;
+            }
+
         try {
             if(itsWorthOptimizing(this::basicComparer, itoo, itoc, ctod, dtoo)) {
 

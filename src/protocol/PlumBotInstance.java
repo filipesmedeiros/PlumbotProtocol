@@ -10,6 +10,7 @@ import network.UDP;
 import network.NetworkInterface;
 import protocol.oracle.Oracle;
 import protocol.oracle.TimeCostOracle;
+import test.Application;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -112,6 +113,11 @@ public class PlumBotInstance implements PlumBot {
     @Override
     public void leave() {
         xbot.leave();
+    }
+
+    @Override
+    public void addApp(Application application) {
+        plum.addApplication(application);
     }
 
     @Override

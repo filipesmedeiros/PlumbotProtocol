@@ -149,6 +149,21 @@ public class PlumtreeNode implements TreeBroadcastNode {
         return 0;
     }
 
+    // half the && are for confirmation of errors (cuz they should be symmetrical)
+    @Override
+    public boolean canOptimize(InetSocketAddress init, InetSocketAddress old,
+                               InetSocketAddress cand, InetSocketAddress disco) {
+        if(init != null && old != null)
+            return !(id.equals(init) && eagerPeers.contains(old)
+                    || id.equals(old) && eagerPeers.contains(init));
+
+        if(cand != null && disco != null)
+            return !(id.equals(cand) && eagerPeers.contains(disco)
+                    || id.equals(disco) && eagerPeers.contains(cand));
+
+        return true;
+    }
+
     @Override
     public void addApplication(Application app)
             throws IllegalArgumentException {
