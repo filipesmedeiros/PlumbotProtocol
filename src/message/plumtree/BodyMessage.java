@@ -1,7 +1,7 @@
 package message.plumtree;
 
 import message.Message;
-import message.PlumbotMessage;
+import network.TCP;
 
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
@@ -64,7 +64,7 @@ public class BodyMessage extends HopMessage {
     }
 
     public static BodyMessage parse(ByteBuffer bytes) {
-        InetSocketAddress sender = PlumbotMessage.parseAddress(bytes);
+        InetSocketAddress sender = TCP.parseAddress(bytes);
 
         byte[] body = new byte[bytes.getInt()];
 

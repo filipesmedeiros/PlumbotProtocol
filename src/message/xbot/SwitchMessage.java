@@ -1,6 +1,7 @@
 package message.xbot;
 
 import message.PlumbotMessage;
+import network.TCP;
 
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
@@ -45,8 +46,8 @@ public class SwitchMessage extends PlumbotMessage {
     }
 
     public static SwitchMessage parse(ByteBuffer bytes) {
-        InetSocketAddress sender = parseAddress(bytes);
-        InetSocketAddress init = parseAddress(bytes);
+        InetSocketAddress sender = TCP.parseAddress(bytes);
+        InetSocketAddress init = TCP.parseAddress(bytes);
 
         long dtoo = bytes.getLong();
 

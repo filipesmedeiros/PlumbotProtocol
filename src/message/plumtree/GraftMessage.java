@@ -1,6 +1,7 @@
 package message.plumtree;
 
 import message.PlumbotMessage;
+import network.TCP;
 
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
@@ -46,7 +47,7 @@ public class GraftMessage extends PlumbotMessage {
     }
 
     public static GraftMessage parse(ByteBuffer bytes) {
-        InetSocketAddress sender = parseAddress(bytes);
+        InetSocketAddress sender = TCP.parseAddress(bytes);
 
         int hash = bytes.getInt();
 

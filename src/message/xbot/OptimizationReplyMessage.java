@@ -1,6 +1,7 @@
 package message.xbot;
 
 import message.PlumbotMessage;
+import network.TCP;
 
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
@@ -45,7 +46,7 @@ public class OptimizationReplyMessage extends PlumbotMessage {
     }
 
     public static OptimizationReplyMessage parse(ByteBuffer bytes) {
-        InetSocketAddress sender = parseAddress(bytes);
+        InetSocketAddress sender = TCP.parseAddress(bytes);
 
         boolean accept = bytes.get() == 1;
 

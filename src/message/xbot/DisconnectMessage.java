@@ -1,6 +1,7 @@
 package message.xbot;
 
 import message.PlumbotMessage;
+import network.TCP;
 
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
@@ -38,7 +39,7 @@ public class DisconnectMessage extends PlumbotMessage {
     }
 
     public static DisconnectMessage parse(ByteBuffer bytes) {
-        InetSocketAddress sender = parseAddress(bytes);
+        InetSocketAddress sender = TCP.parseAddress(bytes);
 
         boolean wait = bytes.get() == 1;
 

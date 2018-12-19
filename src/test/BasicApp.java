@@ -48,7 +48,7 @@ public class BasicApp {
             }
         };
 
-        t.schedule(task, 0, 3000);
+        t.schedule(task, 3000, 3000);
 
         Scanner in = new Scanner(new BufferedInputStream(System.in));
 

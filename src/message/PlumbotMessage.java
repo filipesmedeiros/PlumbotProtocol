@@ -33,36 +33,6 @@ public abstract class PlumbotMessage implements Message {
         return type;
     }
 
-    // Will not work in the real world(?)
-    public static InetSocketAddress parseAddress(ByteBuffer bytes) {
-        StringBuilder hostStr = new StringBuilder();
-
-        try {
-            while (true) {
-                char c = bytes.getChar();
-                if (c == ':')
-                    break;
-                hostStr.append(c);
-            }
-        } catch(BufferUnderflowException e) {
-            System.out.println("host + " + hostStr.toString().length());
-        }
-
-        StringBuilder portStr = new StringBuilder();
-
-        while(true) {
-            char c = bytes.getChar();
-            if(c == Message.EOS)
-                break;
-            portStr.append(c);
-        }
-
-        int port = Integer.parseInt(portStr.toString());
-
-        // remove the slash from the string
-        return new InetSocketAddress(hostStr.toString().substring(1), port);
-    }
-
     public ByteBuffer putSenderInBuffer() {
         ByteBuffer buffer = ByteBuffer.allocate(size());
 

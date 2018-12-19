@@ -8,9 +8,14 @@ import notifications.MessageNotification;
 import notifications.Notification;
 import notifications.TCPConnectionNotification;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 import java.net.StandardSocketOptions;
+import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.nio.channels.*;
 import java.util.*;
@@ -137,27 +142,21 @@ public class TCP extends Network implements PersistantNetwork {
     }
 
     private void accept(SelectableChannel selectableChannel)
-            throws IOException, InterruptedException {
+            throws IOException {
 
         ServerSocketChannel ssChannel = (ServerSocketChannel) selectableChannel;
 
         SocketChannel channel = ssChannel.accept();
 
-        InetSocketAddress remote = (InetSocketAddress) channel.getRemoteAddress();
-
         channel.configureBlocking(false);
         channel.setOption(StandardSocketOptions.SO_KEEPALIVE, true);
-        channel.register(selector, SelectionKey.OP_READ, remote);
+        channel.register(selector, SelectionKey.OP_READ);
 
-        connections.put(remote, channel);
-        System.out.println(address + " added " + remote);
-
-        Notification connectNoti = new TCPConnectionNotification(remote, true);
-        connector.notify(connectNoti);
+        System.out.println(address + " is reading from " + channel.getRemoteAddress());
     }
 
     private void finishConnection(SelectionKey key, SelectableChannel selectableChannel)
-            throws IOException, InterruptedException {
+            throws IOException {
         SocketChannel channel = (SocketChannel) selectableChannel;
 
         if(channel.finishConnect()) {
@@ -165,28 +164,108 @@ public class TCP extends Network implements PersistantNetwork {
 
             channel.register(selector, SelectionKey.OP_READ);
 
-            InetSocketAddress remote = (InetSocketAddress) channel.getRemoteAddress();
-            connections.put(remote, channel);
+            System.out.println(address + " is reading (and " + channel.getLocalAddress() + " is sending id to) from " + channel.getRemoteAddress());
 
-            Notification connectNoti = new TCPConnectionNotification(remote, false);
-            connector.notify(connectNoti);
+            // exchange "real" ids, so we store the id of the peer, and not the specific port (on the hash map)
+            // this makes it easier for upper layers, because they don't have to know specific ports
+            channel.write(idBuffer(true));
         }
     }
 
     private void read(SelectableChannel selectableChannel)
             throws IOException, InterruptedException {
+        System.out.println("???");
         SocketChannel channel = (SocketChannel) selectableChannel;
 
         ByteBuffer buffer = ByteBuffer.allocate(msgSize);
         channel.read(buffer);
+
         buffer.flip();
+
+        if(handleIdExchange(buffer, channel))
+            return;
 
         short type = buffer.getShort(0);
 
-        InetSocketAddress remote = (InetSocketAddress) channel.getRemoteAddress();
-        Notification messageNoti = new MessageNotification(buffer, remote.getPort());
+        Notification messageNoti = new MessageNotification(buffer);
         for(NetworkNotifiable notifiable : listeners.get(type))
             notifiable.notify(messageNoti);
+    }
+
+    private boolean handleIdExchange(ByteBuffer buffer, SocketChannel channel)
+            throws IOException, InterruptedException {
+
+        System.out.println(address + " handling id");
+
+        char whatExchange = buffer.getChar(0);
+
+        // accepting == a, connecting == c
+        if(whatExchange == 'a' || whatExchange == 'c') {
+            buffer.getChar();
+
+            InetSocketAddress id = parseAddress(buffer);
+            connections.put(id, channel);
+
+            Notification connectNoti;
+
+            if(whatExchange == 'c') {
+                connectNoti = new TCPConnectionNotification(id, true);
+
+                channel.write(idBuffer(false));
+            } else
+                connectNoti = new TCPConnectionNotification(id, false);
+
+            System.out.println(address + " exchanged ids with " + id);
+
+            connector.notify(connectNoti);
+
+            return true;
+        }
+
+        return false;
+    }
+
+    // Will not work in the real world(?)
+    public static InetSocketAddress parseAddress(ByteBuffer bytes) {
+        StringBuilder hostStr = new StringBuilder();
+
+        while(true) {
+            char c = bytes.getChar();
+            if (c == ':')
+                break;
+            hostStr.append(c);
+        }
+
+        StringBuilder portStr = new StringBuilder();
+
+        while(true) {
+            char c = bytes.getChar();
+            if (c == Message.EOS)
+                break;
+            portStr.append(c);
+        }
+
+        int port = Integer.parseInt(portStr.toString());
+
+        // remove the slash from the string
+        return new InetSocketAddress(hostStr.toString().substring(1), port);
+    }
+
+    private ByteBuffer idBuffer(boolean connecting) {
+        String addrStr = address.toString();
+        ByteBuffer id = ByteBuffer.allocate(2 + addrStr.length() * 2 + 2);
+
+        if(connecting)
+            id.putChar('c');
+        else
+            id.putChar('a');
+
+        for(char c : addrStr.toCharArray())
+            id.putChar(c);
+
+        id.putChar(Message.EOS);
+
+        return id.flip();
     }
 
     @SuppressWarnings("all")

@@ -1,5 +1,7 @@
 package message.plumtree;
 
+import network.TCP;
+
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 
@@ -56,9 +58,9 @@ public class IHaveMessage extends HopMessage {
     }
 
     public static IHaveMessage parse(ByteBuffer bytes) {
-        InetSocketAddress sender = parseAddress(bytes);
+        InetSocketAddress sender = TCP.parseAddress(bytes);
 
-        InetSocketAddress original = parseAddress(bytes);
+        InetSocketAddress original = TCP.parseAddress(bytes);
 
         int hash = bytes.getInt();
 

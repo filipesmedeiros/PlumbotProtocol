@@ -1,6 +1,7 @@
 package message.xbot;
 
 import message.PlumbotMessage;
+import network.TCP;
 
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
@@ -50,8 +51,8 @@ public class ForwardJoinMessage extends PlumbotMessage {
     }
 
     public static ForwardJoinMessage parse(ByteBuffer bytes) {
-        InetSocketAddress sender = parseAddress(bytes);
-        InetSocketAddress joiner = parseAddress(bytes);
+        InetSocketAddress sender = TCP.parseAddress(bytes);
+        InetSocketAddress joiner = TCP.parseAddress(bytes);
 
         int ttl = bytes.getInt();
 

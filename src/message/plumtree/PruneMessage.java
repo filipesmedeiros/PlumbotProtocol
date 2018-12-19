@@ -1,6 +1,7 @@
 package message.plumtree;
 
 import message.PlumbotMessage;
+import network.TCP;
 
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
@@ -23,7 +24,7 @@ public class PruneMessage extends PlumbotMessage {
     }
 
     public static PruneMessage parse(ByteBuffer bytes) {
-        InetSocketAddress sender = parseAddress(bytes);
+        InetSocketAddress sender = TCP.parseAddress(bytes);
 
         return new PruneMessage(sender);
     }

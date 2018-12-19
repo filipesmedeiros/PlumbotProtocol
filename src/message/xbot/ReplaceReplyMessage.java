@@ -1,6 +1,7 @@
 package message.xbot;
 
 import message.PlumbotMessage;
+import network.TCP;
 
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
@@ -37,7 +38,7 @@ public class ReplaceReplyMessage extends PlumbotMessage {
     }
 
     public static ReplaceReplyMessage parse(ByteBuffer bytes) {
-        InetSocketAddress sender = parseAddress(bytes);
+        InetSocketAddress sender = TCP.parseAddress(bytes);
 
         boolean accept = bytes.get() == 1;
 
