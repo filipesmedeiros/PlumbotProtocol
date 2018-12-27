@@ -177,7 +177,7 @@ public class TCP extends Network implements PersistantNetwork {
 
     private void read(SelectableChannel selectableChannel)
             throws IOException, InterruptedException {
-        System.out.println("???");
+        System.out.println(address + " reading");
         SocketChannel channel = (SocketChannel) selectableChannel;
 
         ByteBuffer buffer = ByteBuffer.allocate(msgSize);
@@ -201,12 +201,11 @@ public class TCP extends Network implements PersistantNetwork {
     private boolean handleIdExchange(ByteBuffer buffer, SocketChannel channel)
             throws IOException, InterruptedException {
 
-        System.out.println(address + " handling id");
-
         char whatExchange = buffer.getChar(0);
 
         // accepting == a, connecting == c
         if(whatExchange == 'a' || whatExchange == 'c') {
+            System.out.println(address + " handling id");
             buffer.getChar();
 
             InetSocketAddress id = parseAddress(buffer);
@@ -283,9 +282,6 @@ public class TCP extends Network implements PersistantNetwork {
     @SuppressWarnings("all")
     @Override
     void fulfill() {
-
-        // System.out.println("Fulfilling message " + request.type());
-
         while(true) {
             try {
                 MessageRequest request = requests.take();

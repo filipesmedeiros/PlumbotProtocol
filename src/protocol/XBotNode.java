@@ -161,32 +161,6 @@ public class XBotNode implements OptimizerNode {
         notifications.add(notification);
     }
 
-    private void handleForwardJoin(ByteBuffer bytes) {
-        ForwardJoinMessage msg = ForwardJoinMessage.parse(bytes);
-
-        try {
-            if(msg.ttl() == 0 || activeView.size() <= 1) {
-                if(addPeerToActiveView(msg.joiner(), -1)) {
-                    Message accept = new AcceptJoinMessage(id);
-                    sendAcceptJoin(accept, msg.sender());
-                }
-            } else {
-                if(msg.ttl() == pttl)
-                    addPeerToPassiveView(msg.joiner());
-
-                InetSocketAddress peer = random.fromSet(activeView);
-
-                while(peer.equals(msg.sender()) || peer.equals(msg.joiner()))
-                    peer = random.fromSet(activeView);
-
-                tcp.send(msg.next(id).bytes(), peer);
-            }
-        } catch(IllegalArgumentException | IOException | InterruptedException e) {
-            // TODO
-            e.printStackTrace();
-        }
-    }
-
     private void handleOptimization(ByteBuffer bytes) {
         OptimizationMessage msg = OptimizationMessage.parse(bytes);
 
@@ -498,6 +472,7 @@ public class XBotNode implements OptimizerNode {
         System.out.println("sender of join -> " + msg.sender());
 
         if(addPeerToActiveView(msg.sender(), -1)) {
+            System.out.println("uiglgli");
             Message accept = new AcceptJoinMessage(id);
             sendAcceptJoin(accept, msg.sender());
         }
@@ -521,6 +496,33 @@ public class XBotNode implements OptimizerNode {
         }
     }
 
+    private void handleForwardJoin(ByteBuffer bytes) {
+        ForwardJoinMessage msg = ForwardJoinMessage.parse(bytes);
+
+        try {
+            if(msg.ttl() == 0 || activeView.size() <= 1) {
+                if(addPeerToActiveView(msg.joiner(), -1)) {
+                    Message accept = new AcceptJoinMessage(id);
+                    sendAcceptJoin(accept, msg.sender());
+                    tcp.connect(msg.sender());
+                }
+            } else {
+                if(msg.ttl() == pttl)
+                    addPeerToPassiveView(msg.joiner());
+
+                InetSocketAddress peer = random.fromSet(activeView);
+
+                while(peer.equals(msg.sender()) || peer.equals(msg.joiner()))
+                    peer = random.fromSet(activeView);
+
+                tcp.send(msg.next(id).bytes(), peer);
+            }
+        } catch(IllegalArgumentException | IOException | InterruptedException e) {
+            // TODO
+            e.printStackTrace();
+        }
+    }
+
     private void handleAcceptJoin(ByteBuffer bytes) {
         AcceptJoinMessage msg = AcceptJoinMessage.parse(bytes);
         addPeerToActiveView(msg.sender(), -1);
@@ -534,8 +536,12 @@ public class XBotNode implements OptimizerNode {
 
         TCPConnectionNotification tcpNoti = (TCPConnectionNotification) notification;
 
+        System.out.println(id + " handling connection from " + tcpNoti.peer());
+
         if(tcpNoti.accept())
             return;
+
+        System.out.println(id + " and it's a new node");
 
         Message joinMsg = new JoinMessage(id);
 
@@ -608,7 +614,7 @@ public class XBotNode implements OptimizerNode {
         InetSocketAddress sender = costNoti.sender();
         long cost = costNoti.cost();
 
-        Integer code = costsWaiting.remove(sender);
+        Integer code = costsWaiting.get(sender);
 
         if(code == null)
             return;
@@ -618,6 +624,8 @@ public class XBotNode implements OptimizerNode {
                 addPeerToActiveView(sender, cost);
                 Message acceptMsg = new AcceptJoinMessage(id);
                 tcp.send(acceptMsg.bytes(), sender);
+
+                tcp.connect(sender);
             } catch(IOException | InterruptedException e) {
                 // TODO
                 e.printStackTrace();
@@ -795,7 +803,8 @@ public class XBotNode implements OptimizerNode {
             e.printStackTrace();
         }
 
-        if((activeView.size() == activeViewMaxSize - 1 && waiting) || activeView.size() == activeViewMaxSize)
+        if((activeView.size() == activeViewMaxSize - 1 && waiting)
+                || activeView.size() == activeViewMaxSize)
             removeRandomFromActive();
 
         if(unbiasedActiveView.size() < unbiasedViewMaxSize) {
@@ -806,6 +815,13 @@ public class XBotNode implements OptimizerNode {
 
             for(NeighbourhoodListener listener : neighbourhoodListeners)
                 listener.neighbourUp(peer);
+
+            try {
+                tcp.connect(peer);
+            } catch(IOException e) {
+                // TODO
+                e.printStackTrace();
+            }
 
             return true;
         } else if(cost == -1)
@@ -830,6 +846,13 @@ public class XBotNode implements OptimizerNode {
 
             passiveView.remove(peer);
 
+            try {
+                tcp.connect(peer);
+            } catch(IOException e) {
+                // TODO
+                e.printStackTrace();
+            }
+
             return true;
         }
     }
@@ -844,6 +867,13 @@ public class XBotNode implements OptimizerNode {
 
         activeView.add(peer);
         biasedActiveView.add(new BiasedInetAddress(peer, cost));
+
+        try {
+            tcp.connect(peer);
+        } catch(IOException e) {
+            // TODO
+            e.printStackTrace();
+        }
 
         for(NeighbourhoodListener listener : neighbourhoodListeners)
             listener.neighbourUp(peer);
@@ -898,7 +928,16 @@ public class XBotNode implements OptimizerNode {
     }
 
     private void removeRandomFromPassiveView() {
-        random.removeFromSet(passiveView);
+        InetSocketAddress peer = random.fromSet(passiveView);
+
+        try {
+            tcp.disconnect(peer);
+        } catch(IOException e) {
+            // TODO
+            e.printStackTrace();
+        }
+
+        passiveView.remove(peer);
     }
 
     private boolean removeFromActive(InetSocketAddress peer) {

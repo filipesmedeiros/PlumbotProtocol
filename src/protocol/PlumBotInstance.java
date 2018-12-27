@@ -39,9 +39,9 @@ public class PlumBotInstance implements PlumBot {
 
             tcp = new TCP(local);
 
-            xbot = new XBotNode(local, 5, 1, 10, 1000 * 30, ONE_MINUTE, 4, 2);
+            xbot = new XBotNode(local, 7, 2, 10, 1000 * 30, ONE_MINUTE, 4, 2);
 
-            plum = new PlumtreeNode(local, 3, 5, FIVE_MINUTES, ONE_MINUTE, FIVE_MINUTES);
+            plum = new PlumtreeNode(local, 3, 7, FIVE_MINUTES, ONE_MINUTE, FIVE_MINUTES);
 
             Oracle oracle = new TimeCostOracle(local, udp, 10, 10, FIVE_MINUTES);
 
