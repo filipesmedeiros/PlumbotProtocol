@@ -6,8 +6,6 @@ import java.net.InetSocketAddress;
 
 class XBotOld implements XBotSupport {
 
-    private static final String WAIT = "W";
-
     private InetSocketAddress cycle;
     private XBotNode xBotNode;
 
@@ -26,11 +24,14 @@ class XBotOld implements XBotSupport {
         // To make code more readable
         InetSocketAddress init = cycle;
 
-        xBotNode.removeFromActive(init);
-        xBotNode.addPeerToBiasedActiveView(disco, discoToOld);
+        xBotNode.movePeerToPassiveView(init);
+        xBotNode.movePeerToActiveView(disco, discoToOld);
+
+        timerManager.stop(XBotNode.WAIT + cycle.toString());
     }
 
     void handleDisconnectWait() {
-        timerManager.addAction(WAIT, () -> xBotNode.setWaitingFalse(), waitTimeout);
+        timerManager.addAction(XBotNode.WAIT + cycle.toString(),
+                () -> xBotNode.fireConnectionTimeout(cycle), waitTimeout);
     }
 }

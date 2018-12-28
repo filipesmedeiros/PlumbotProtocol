@@ -214,11 +214,11 @@ public class TCP extends Network implements PersistantNetwork {
             Notification connectNoti;
 
             if(whatExchange == 'c') {
-                connectNoti = new TCPConnectionNotification(id, true);
+                connectNoti = new TCPConnectionNotification(id);
 
                 channel.write(idBuffer(false));
             } else
-                connectNoti = new TCPConnectionNotification(id, false);
+                connectNoti = new TCPConnectionNotification(id);
 
             System.out.println(address + " exchanged ids with " + id);
 

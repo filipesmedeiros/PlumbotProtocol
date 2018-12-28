@@ -17,70 +17,29 @@ import notifications.TCPConnectionNotification;
 import protocol.oracle.Oracle;
 
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
+import java.sql.Time;
 import java.util.*;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
 public class XBotNode implements OptimizerNode {
 
-    // Names for the timers (threads)
-    private static final String OPTI = "O";
+    private class ConnectionInfo {
 
-    final private InetSocketAddress address;
+        private long cost;
+        private boolean active;
 
-    private Set<InetSocketAddress> unbiasedActiveView;
-    private SortedSet<BiasedInetAddress> biasedActiveView;
-    private Set<InetSocketAddress> activeView;
-    private Set<InetSocketAddress> passiveView;
+        private ConnectionInfo(long cost, boolean active, XBotNode xBotNode,
+                               TimerManager timerManager, InetSocketAddress peer) {
+            this.cost = cost;
+            this.active = active;
 
-    private int activeViewMaxSize;
-    private int unbiasedViewMaxSize;
-    private int passiveViewMaxSize;
-
-    private RandomChooser<InetSocketAddress> random;
-
-    private TimerManager timerManager;
-
-    private Oracle oracle;
-    private BlockingQueue<Notification> notifications;
-    private long optimizationPeriod;
-
-    // used in previous versions for allowing a node to only participate in an optimizing cycle at a time
-    // private boolean optimizing;
-
-    private boolean waiting;
-    private long waitTimeout;
-
-    // All these are for remembering stuff during asynch optimization
-    private Map<InetSocketAddress, XBotSupportEdge> costsWaiting;
-
-    // Each constant integer is a code for what has to be done
-    // private static final int ITOO = 1;
-    static final int I_TO_C = 2;
-    static final int C_TO_D = 3;
-    static final int D_TO_O = 4;
-    static final int JOIN = 5;
-    // static final int NEW = 6;
-
-    // Lists of "states" being used by this node for optimizations, currently
-    // The cycle each one belongs to is identified by its initiator
-    private XBotInit init;
-    private Map<InetSocketAddress, XBotCand> cands;
-    private Map<InetSocketAddress, XBotDisco> discos;
-    private Map<InetSocketAddress, XBotOld> olds;
-
-    private int attl;
-    private int pttl;
-
-    private PersistantNetwork tcp;
-
-    private Set<NeighbourhoodListener> neighbourhoodListeners;
-
-    // For testing, every node waits a random (relatively low) amount of time
-    // when answering pings
-    private long pingSleepTime;
+            timerManager.addAction(WAIT, xBotNode::fireConnectionTimeout, peer, waitTimeout);
+        }
+    }
 
     static class BiasedInetAddress implements Comparable<BiasedInetAddress> {
 
@@ -103,15 +62,68 @@ public class XBotNode implements OptimizerNode {
         }
     }
 
+    // Names for the timers (threads)
+    static final String WAIT = "W";
+    private static final String OPTI = "O";
+
+    final private InetSocketAddress address;
+
+    private boolean joining;
+
+    private Set<InetSocketAddress> unbiasedActiveView;
+    private SortedSet<BiasedInetAddress> biasedActiveView;
+    private Set<InetSocketAddress> activeView;
+    private Set<InetSocketAddress> passiveView;
+
+    private int activeViewMaxSize;
+    private int unbiasedViewMaxSize;
+    private int passiveViewMaxSize;
+
+    private RandomChooser<InetSocketAddress> random;
+
+    private TimerManager timerManager;
+
+    private Oracle oracle;
+    private BlockingQueue<Notification> notifications;
+    private long optimizationPeriod;
+
+    private long waitTimeout;
+
+    private Map<InetSocketAddress, ConnectionInfo> futureConnections;
+
+    // All these are for remembering stuff during asynch optimization
+    private Map<InetSocketAddress, XBotSupportEdge> costsWaiting;
+
+    // Lists of "states" being used by this node for optimizations, currently
+    // The cycle each one belongs to is identified by its initiator
+    private XBotInit init;
+    private Map<InetSocketAddress, XBotCand> cands;
+    private Map<InetSocketAddress, XBotDisco> discos;
+    private Map<InetSocketAddress, XBotOld> olds;
+
+    private int attl;
+    private int pttl;
+
+    private PersistantNetwork tcp;
+
+    private Set<NeighbourhoodListener> neighbourhoodListeners;
+
+    // For testing, every node waits a random (relatively low) amount of time
+    // when answering pings
+    private long pingSleepTime;
+
     public XBotNode(InetSocketAddress address, int activeViewMaxSize,
-             int unbiasedViewMaxSize, int passiveViewMaxSize,
-             int optimizationPeriod, long waitTimeOut, int attl, int pttl)
+                    int unbiasedViewMaxSize, int passiveViewMaxSize,
+                    int optimizationPeriod, long waitTimeOut, int attl, int pttl)
             throws IllegalArgumentException {
 
         if(activeViewMaxSize <= 0 || address == null)
             throw new IllegalArgumentException();
 
         this.address = address;
+
+        joining = true;
+
         this.unbiasedViewMaxSize = unbiasedViewMaxSize;
         this.activeViewMaxSize = activeViewMaxSize;
         this.passiveViewMaxSize = passiveViewMaxSize;
@@ -124,11 +136,11 @@ public class XBotNode implements OptimizerNode {
         this.attl = attl;
         this.pttl = pttl;
 
-        // optimizing = false;
         this.optimizationPeriod = optimizationPeriod;
 
-        waiting = false;
         this.waitTimeout = waitTimeOut;
+
+        futureConnections = new HashMap<>();
 
         costsWaiting = new HashMap<>();
         timerManager = new MappedTimerManager();
@@ -235,12 +247,15 @@ public class XBotNode implements OptimizerNode {
 
         InetSocketAddress peer = msg.sender();
 
-        if(!removeFromActive(peer))
-            return;
+        movePeerToPassiveView(peer);
 
         if(msg.hasToWait()) {
             XBotOld old = createOld(msg.sender());
-            waiting = true;
+
+            // This is putting the init as the future, but it symbolises
+            // we are waiting for the corresponding disconnect node,
+            // because we don't know its ID
+            futureConnections.put(msg.sender(), null);
             old.handleDisconnectWait();
         }
     }
@@ -370,6 +385,7 @@ public class XBotNode implements OptimizerNode {
 
         try {
             tcp.connect(contact);
+            futureConnections.put(contact, new ConnectionInfo(-1, true, this, timerManager, contact));
         } catch(IllegalArgumentException | IOException e) {
             // TODO
             e.printStackTrace();
@@ -411,11 +427,7 @@ public class XBotNode implements OptimizerNode {
 
         System.out.println("sender of join -> " + msg.sender());
 
-        if(addPeerToActiveView(msg.sender(), -1)) {
-            System.out.println("uiglgli");
-            Message accept = new AcceptJoinMessage(address);
-            sendAcceptJoin(accept, msg.sender());
-        }
+        addNewPeerToActiveView(msg.sender());
 
         try {
             activeView.forEach((peer) -> {
@@ -441,11 +453,7 @@ public class XBotNode implements OptimizerNode {
 
         try {
             if(msg.ttl() == 0 || activeView.size() <= 1) {
-                if(addPeerToActiveView(msg.joiner(), -1)) {
-                    Message accept = new AcceptJoinMessage(address);
-                    sendAcceptJoin(accept, msg.sender());
-                    tcp.connect(msg.sender());
-                }
+                addPeerToActiveView(msg.joiner(), -1);
             } else {
                 if(msg.ttl() == pttl)
                     addPeerToPassiveView(msg.joiner());
@@ -465,7 +473,7 @@ public class XBotNode implements OptimizerNode {
 
     private void handleAcceptJoin(ByteBuffer bytes) {
         AcceptJoinMessage msg = AcceptJoinMessage.parse(bytes);
-        addPeerToActiveView(msg.sender(), -1);
+        addNewPeerToActiveView(msg.sender());
     }
 
     private void handleConnection(Notification notification) {
@@ -476,21 +484,17 @@ public class XBotNode implements OptimizerNode {
 
         TCPConnectionNotification tcpNoti = (TCPConnectionNotification) notification;
 
-        System.out.println(address + " handling connection from " + tcpNoti.peer());
+        finishConnection(tcpNoti.peer());
 
-        if(tcpNoti.accept())
-            return;
-
-        System.out.println(address + " and it's a new node");
-
-        Message joinMsg = new JoinMessage(address);
-
-        try {
-            tcp.send(joinMsg.bytes(), tcpNoti.peer());
-        } catch(IOException | InterruptedException e) {
-            // TODO
-            e.printStackTrace();
-        }
+        // We just joined the network (this is such an ugly way but wtv...)
+        if(joining)
+            try {
+                Message joinMsg = new JoinMessage(address);
+                tcp.send(joinMsg.bytes(), tcpNoti.peer());
+            } catch(IOException | InterruptedException e) {
+                // TODO
+                e.printStackTrace();
+            }
     }
 
     @SuppressWarnings("all")
@@ -557,17 +561,10 @@ public class XBotNode implements OptimizerNode {
         if(costsWaiting.containsKey(sender)) {
             XBotSupportEdge xBotSupportEdge = costsWaiting.get(sender);
 
-            if(xBotSupportEdge == null) {
-                try {
-                    addPeerToActiveView(sender, cost);
-                    tcp.connect(sender);
-                } catch(IOException e) {
-                    // TODO
-                    e.printStackTrace();
-                }
-            } else {
+            if(xBotSupportEdge == null)
+                addPeerToActiveView(sender, cost);
+            else
                 xBotSupportEdge.handleCost(sender, cost);
-            }
         }
 
     }
@@ -607,78 +604,63 @@ public class XBotNode implements OptimizerNode {
         init.optimize();
     }
 
-    private boolean addPeerToActiveView(InetSocketAddress peer, long cost) {
+    // Is there a way to know where the peer is coming from
+    // so we don't have to search both active views?
+    void movePeerToPassiveView(InetSocketAddress peer) {
+        if(!activeView.remove(peer))
+            return;
+
+        for(BiasedInetAddress biasedInetAddress : biasedActiveView)
+            if(biasedInetAddress.address.equals(peer)) {
+                biasedActiveView.remove(biasedInetAddress);
+                break;
+            }
+        unbiasedActiveView.remove(peer);
+
+        for(NeighbourhoodListener listener : neighbourhoodListeners)
+            listener.neighbourDown(peer);
+
+        passiveView.add(peer);
+
+        Message discoMsg = new DisconnectMessage(address, false);
         try {
-            if(peer.equals(address))
-                throw new IllegalArgumentException();
-        } catch(IllegalArgumentException e) {
+            tcp.send(discoMsg.bytes(), peer);
+        } catch(IOException | InterruptedException e) {
+            // TODO
             e.printStackTrace();
         }
+    }
 
-        if((activeView.size() == activeViewMaxSize - 1 && waiting)
-                || activeView.size() == activeViewMaxSize)
-            removeRandomFromActive();
+    void movePeerToActiveView(InetSocketAddress peer) {
+        if(!passiveView.remove(peer))
+            return;
 
         if(unbiasedActiveView.size() < unbiasedViewMaxSize) {
             unbiasedActiveView.add(peer);
             activeView.add(peer);
 
-            passiveView.remove(peer);
-
             for(NeighbourhoodListener listener : neighbourhoodListeners)
                 listener.neighbourUp(peer);
+        } else
+            addPeerToBiasedActiveView(peer);
+    }
 
-            try {
-                tcp.connect(peer);
-            } catch(IOException e) {
-                // TODO
-                e.printStackTrace();
-            }
+    void movePeerToActiveView(InetSocketAddress peer, long cost) {
+        if(!passiveView.remove(peer))
+            return;
 
-            return true;
-        } else if(cost == -1)
-            try {
-                oracle.getCost(peer);
-
-                costsWaiting.put(peer, null);
-
-                return false;
-            } catch(IOException | InterruptedException e) {
-                // TODO
-                e.printStackTrace();
-
-                return false;
-            }
-        else {
-            biasedActiveView.add(new BiasedInetAddress(peer, cost));
+        if(unbiasedActiveView.size() < unbiasedViewMaxSize) {
+            unbiasedActiveView.add(peer);
             activeView.add(peer);
 
             for(NeighbourhoodListener listener : neighbourhoodListeners)
                 listener.neighbourUp(peer);
-
-            passiveView.remove(peer);
-
-            try {
-                tcp.connect(peer);
-            } catch(IOException e) {
-                // TODO
-                e.printStackTrace();
-            }
-
-            return true;
-        }
+        } else
+            addPeerToBiasedActiveView(peer, cost);
     }
 
-    void addPeerToBiasedActiveView(InetSocketAddress peer, long cost) {
-        try {
-            if (peer.equals(address))
-                throw new IllegalArgumentException();
-        } catch(IllegalArgumentException e) {
-            e.printStackTrace();
-        }
-
-        activeView.add(peer);
-        biasedActiveView.add(new BiasedInetAddress(peer, cost));
+    private void beginConnection(InetSocketAddress peer, long cost, boolean active) {
+        futureConnections.put(peer, new ConnectionInfo(cost, active, this, timerManager, peer));
 
         try {
             tcp.connect(peer);
@@ -686,103 +668,89 @@ public class XBotNode implements OptimizerNode {
             // TODO
             e.printStackTrace();
         }
-
-        for(NeighbourhoodListener listener : neighbourhoodListeners)
-            listener.neighbourUp(peer);
     }
 
-    private void removeRandomFromActive() {
-        int choose = random.integer(2);
+    private void finishConnection(InetSocketAddress peer) {
+        ConnectionInfo info = futureConnections.remove(peer);
 
-        InetSocketAddress disconnect = choose == 0 ?
-                removeRandomFromUnbiased()
-                : removeWorstActivePeer();
+        if(info == null)
+            return;
 
-        addPeerToPassiveView(disconnect);
+        if(!info.active)
+            addNewPeerToPassiveView(peer);
+        else
+            addNewPeerToActiveView(peer, info);
+    }
 
-        Message msg = new DisconnectMessage(address, false);
+    private void addPeerToBiasedActiveView(InetSocketAddress peer, long cost) {
+        if(activeView.size() == activeViewMaxSize - futureConnections.size())
+            movePeerToPassiveView(biasedActiveView.last().address);
+
+        biasedActiveView.add(new BiasedInetAddress(peer, cost));
+        activeView.add(peer);
+    }
+
+    private void addPeerToBiasedActiveView(InetSocketAddress peer) {
+        if(activeView.size() == activeViewMaxSize - futureConnections.size())
+            movePeerToPassiveView(biasedActiveView.last().address);
 
         try {
-            tcp.send(msg.bytes(), disconnect);
-        } catch(IllegalArgumentException | IOException | InterruptedException e) {
+            getCost(peer, null);
+            costsWaiting.put(peer, null);
+        } catch (IOException | InterruptedException e) {
             // TODO
             e.printStackTrace();
         }
     }
 
-    private InetSocketAddress removeRandomFromUnbiased() {
-        InetSocketAddress chosen = random.fromSet(unbiasedActiveView);
-        unbiasedActiveView.remove(chosen);
-        activeView.remove(chosen);
-
-        for(NeighbourhoodListener listener : neighbourhoodListeners)
-            listener.neighbourDown(chosen);
-
-        return chosen;
+    private void addNewPeerToActiveView(InetSocketAddress peer) {
+        if(unbiasedActiveView.size() < unbiasedViewMaxSize) {
+            unbiasedActiveView.add(peer);
+            activeView.add(peer);
+        } else
+            addPeerToBiasedActiveView(peer);
     }
 
-    private InetSocketAddress removeWorstActivePeer() {
-        BiasedInetAddress worst = biasedActiveView.last();
-        biasedActiveView.remove(worst);
-        activeView.remove(worst.address);
+    private void addNewPeerToActiveView(InetSocketAddress peer, ConnectionInfo info) {
+        if(unbiasedActiveView.size() < unbiasedViewMaxSize) {
+            unbiasedActiveView.add(peer);
+            activeView.add(peer);
+        } else {
+            if(activeView.size() == activeViewMaxSize - futureConnections.size())
+                movePeerToPassiveView(biasedActiveView.last().address);
 
-        for(NeighbourhoodListener listener : neighbourhoodListeners)
-            listener.neighbourDown(worst.address);
-
-        return worst.address;
+            if(info.cost < 0)
+                try {
+                    getCost(peer, null);
+                    costsWaiting.put(peer, null);
+                } catch (IOException | InterruptedException e) {
+                    // TODO
+                    e.printStackTrace();
+                }
+            else {
+                biasedActiveView.add(new BiasedInetAddress(peer, info.cost));
+                activeView.add(peer);
+            }
+        }
     }
 
-    private void addPeerToPassiveView(InetSocketAddress id) {
+    private void addNewPeerToPassiveView(InetSocketAddress peer) {
         if(passiveView.size() == passiveViewMaxSize)
             removeRandomFromPassiveView();
 
-        passiveView.add(id);
+        passiveView.add(peer);
     }
 
     private void removeRandomFromPassiveView() {
-        InetSocketAddress peer = random.fromSet(passiveView);
+        InetSocketAddress chosen = random.fromSet(passiveView);
+        passiveView.remove(chosen);
 
         try {
-            tcp.disconnect(peer);
+            tcp.disconnect(chosen);
         } catch(IOException e) {
             // TODO
             e.printStackTrace();
         }
-
-        passiveView.remove(peer);
-    }
-
-    boolean removeFromActive(InetSocketAddress peer) {
-        boolean removed = activeView.remove(peer);
-
-        if(removed) {
-            removeFromBiased(peer);
-            unbiasedActiveView.remove(peer);
-
-            for(NeighbourhoodListener listener : neighbourhoodListeners)
-                listener.neighbourDown(peer);
-        }
-
-        addPeerToPassiveView(peer);
-
-        return removed;
-    }
-
-    boolean removeFromBiased(InetSocketAddress peer) {
-        activeView.remove(peer);
-
-        for(BiasedInetAddress aPeer : biasedActiveView) {
-            if(aPeer.address.equals(peer)) {
-                addPeerToPassiveView(peer);
-
-                return biasedActiveView.remove(aPeer);
-            }
-        }
-
-        for(NeighbourhoodListener listener : neighbourhoodListeners)
-            listener.neighbourDown(peer);
-
-        return false;
     }
 
     boolean isBiasedActiveViewEmpty() {
@@ -809,6 +777,9 @@ public class XBotNode implements OptimizerNode {
     }
 
     void finishCycle(InetSocketAddress cycle) {
+        if(cycle.equals(address))
+            init = null;
+
         cands.remove(cycle);
         discos.remove(cycle);
         olds.remove(cycle);
@@ -821,7 +792,11 @@ public class XBotNode implements OptimizerNode {
         return random.fromSet(passiveView);
     }
 
-    void setWaitingFalse() {
-        waiting = false;
+    void fireConnectionTimeout(Object peer) {
+        if(peer instanceof InetSocketAddress) {
+            InetSocketAddress address = (InetSocketAddress) peer;
+
+            // TODO
+        }
     }
 }
