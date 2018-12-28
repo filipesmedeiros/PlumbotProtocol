@@ -1,4 +1,4 @@
-package protocol.rework;
+package protocol.xbot;
 
 import message.Message;
 import message.xbot.*;
@@ -7,18 +7,18 @@ import network.PersistantNetwork;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 
-public class XBotCand {
+class XBotCand {
 
     private InetSocketAddress cycle;
-    private XBotMain xBotMain;
+    private XBotNode xBotNode;
     private PersistantNetwork tcp;
 
     private InetSocketAddress init;
     private long initToCand;
 
-    XBotCand(InetSocketAddress cycle, XBotMain xBotMain, PersistantNetwork tcp) {
+    XBotCand(InetSocketAddress cycle, XBotNode xBotNode, PersistantNetwork tcp) {
         this.cycle = cycle;
-        this.xBotMain = xBotMain;
+        this.xBotNode = xBotNode;
         this.tcp = tcp;
 
         init = null;
@@ -26,9 +26,9 @@ public class XBotCand {
     }
 
     void handleOptimization(OptimizationMessage optimizationMessage) {
-        if(xBotMain.isBiasedActiveViewEmpty())
+        if(xBotNode.isBiasedActiveViewEmpty())
             try {
-                Message reply = new OptimizationReplyMessage(xBotMain.id(), false, false);
+                Message reply = new OptimizationReplyMessage(xBotNode.id(), false, false);
                 tcp.send(reply.bytes(), optimizationMessage.sender());
             } catch(IOException | InterruptedException e) {
                 // TODO
@@ -42,8 +42,8 @@ public class XBotCand {
                 InetSocketAddress old = optimizationMessage.old();
                 long initToOld = optimizationMessage.itoo();
 
-                Message replace = new ReplaceMessage(xBotMain.id(), init, old, initToOld, initToCand);
-                tcp.send(replace.bytes(), xBotMain.worstBiasedPeer().address);
+                Message replace = new ReplaceMessage(xBotNode.id(), init, old, initToOld, initToCand);
+                tcp.send(replace.bytes(), xBotNode.worstBiasedPeer().address);
             } catch(IOException | InterruptedException e) {
                 // TODO
                 e.printStackTrace();
@@ -54,13 +54,13 @@ public class XBotCand {
         boolean removed = false;
 
         if(replaceReplyMessage.accept()) {
-            removed = xBotMain.removeFromBiased(replaceReplyMessage.sender());
+            removed = xBotNode.removeFromBiased(replaceReplyMessage.sender());
 
-            xBotMain.addPeerToBiasedActiveView(init, initToCand);
+            xBotNode.addPeerToBiasedActiveView(init, initToCand);
         }
 
         try {
-            Message optimizationReply = new OptimizationReplyMessage(xBotMain.id(), replaceReplyMessage.accept(), removed);
+            Message optimizationReply = new OptimizationReplyMessage(xBotNode.id(), replaceReplyMessage.accept(), removed);
 
             tcp.send(optimizationReply.bytes(), init);
         } catch(IOException | InterruptedException e) {

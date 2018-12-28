@@ -1,4 +1,4 @@
-package protocol.rework;
+package protocol.xbot;
 
 import message.Message;
 import message.xbot.OptimizationMessage;
@@ -8,30 +8,30 @@ import network.PersistantNetwork;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 
-public class XBotInit implements XBotSupportEdge {
+class XBotInit implements XBotSupportEdge {
 
     private InetSocketAddress cycle;
-    private XBotMain xBotMain;
+    private XBotNode xBotNode;
     private PersistantNetwork tcp;
 
     private InetSocketAddress cand;
 
-    XBotInit(XBotMain xBotMain, PersistantNetwork tcp) {
-        this.cycle = xBotMain.id();
-        this.xBotMain = xBotMain;
+    XBotInit(XBotNode xBotNode, PersistantNetwork tcp) {
+        this.cycle = xBotNode.id();
+        this.xBotNode = xBotNode;
         this.tcp = tcp;
 
         cand = null;
     }
 
     void optimize() {
-        if(xBotMain.isBiasedActiveViewEmpty())
+        if(xBotNode.isBiasedActiveViewEmpty())
             return;
 
-        cand = xBotMain.chooseCand();
+        cand = xBotNode.chooseCand();
 
         try {
-            xBotMain.getCost(cand, this);
+            xBotNode.getCost(cand, this);
         } catch(IOException | InterruptedException e) {
             // TODO
             e.printStackTrace();
@@ -45,17 +45,17 @@ public class XBotInit implements XBotSupportEdge {
     @Override
     public boolean handleCost(InetSocketAddress peer, long cost) {
         if(peer.equals(cand)) {
-            if(xBotMain.isBiasedActiveViewEmpty())
+            if(xBotNode.isBiasedActiveViewEmpty())
                 return false;
 
-            XBotMain.BiasedInetAddress old = xBotMain.worstBiasedPeer();
+            XBotNode.BiasedInetAddress old = xBotNode.worstBiasedPeer();
 
-            if(!xBotMain.canOptimize(xBotMain.id(), old.address)) {
-                xBotMain.finishCycle(cycle);
+            if(xBotNode.cantOptimize(xBotNode.id(), old.address)) {
+                xBotNode.finishCycle(cycle);
                 return false;
             }
 
-            Message msg = new OptimizationMessage(xBotMain.id(), old.address, old.cost, cost);
+            Message msg = new OptimizationMessage(xBotNode.id(), old.address, old.cost, cost);
 
             try {
                 tcp.send(msg.bytes(), cand);

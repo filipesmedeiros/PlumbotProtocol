@@ -1,4 +1,4 @@
-package protocol.rework;
+package protocol.xbot;
 
 import interfaces.CostComparer;
 import message.Message;
@@ -10,10 +10,10 @@ import network.PersistantNetwork;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 
-public class XBotDisco implements XBotSupportEdge {
+class XBotDisco implements XBotSupportEdge {
 
     private InetSocketAddress cycle;
-    private XBotMain xBotMain;
+    private XBotNode xBotNode;
     private PersistantNetwork tcp;
 
     private long initToCand;
@@ -25,9 +25,9 @@ public class XBotDisco implements XBotSupportEdge {
     private InetSocketAddress cand;
     private long candToDisconnect;
 
-    XBotDisco(InetSocketAddress cycle, XBotMain xBotMain, PersistantNetwork tcp) {
+    XBotDisco(InetSocketAddress cycle, XBotNode xBotNode, PersistantNetwork tcp) {
         this.cycle = cycle;
-        this.xBotMain = xBotMain;
+        this.xBotNode = xBotNode;
         this.tcp = tcp;
 
         initToCand = 0;
@@ -48,8 +48,8 @@ public class XBotDisco implements XBotSupportEdge {
         initToOld = replaceMessage.itoo();
 
         try {
-            xBotMain.getCost(replaceMessage.old(), this);
-            xBotMain.getCost(replaceMessage.sender(), this);
+            xBotNode.getCost(replaceMessage.old(), this);
+            xBotNode.getCost(replaceMessage.sender(), this);
         } catch(IOException | InterruptedException e) {
             // TODO
             e.printStackTrace();
@@ -82,31 +82,31 @@ public class XBotDisco implements XBotSupportEdge {
         InetSocketAddress init = cycle;
 
         try {
-            if(!xBotMain.canOptimize(cycle, old) || !xBotMain.canOptimize(cand, xBotMain.id())) {
-                Message replaceReply = new ReplaceReplyMessage(xBotMain.id(), init, false);
+            if(xBotNode.cantOptimize(cycle, old) || xBotNode.cantOptimize(cand, xBotNode.id())) {
+                Message replaceReply = new ReplaceReplyMessage(xBotNode.id(), init, false);
                 tcp.send(replaceReply.bytes(), cand);
 
-                xBotMain.finishCycle(cycle);
+                xBotNode.finishCycle(cycle);
                 return;
             }
 
             if(itsWorthOptimizing(this::basicComparer, initToOld, initToCand, candToDisconnect, disconnectToOld)) {
 
-                Message replaceReply = new ReplaceReplyMessage(xBotMain.id(), init, true);
-                Message switchMessage = new SwitchMessage(xBotMain.id(), init, disconnectToOld);
+                Message replaceReply = new ReplaceReplyMessage(xBotNode.id(), init, true);
+                Message switchMessage = new SwitchMessage(xBotNode.id(), init, disconnectToOld);
 
                 tcp.send(replaceReply.bytes(), cand);
                 tcp.send(switchMessage.bytes(), old);
 
-                xBotMain.removeFromBiased(cand);
+                xBotNode.removeFromBiased(cand);
 
-                xBotMain.addPeerToBiasedActiveView(old, disconnectToOld);
+                xBotNode.addPeerToBiasedActiveView(old, disconnectToOld);
             } else {
-                Message replaceReply = new ReplaceReplyMessage(xBotMain.id(), init, false);
+                Message replaceReply = new ReplaceReplyMessage(xBotNode.id(), init, false);
                 tcp.send(replaceReply.bytes(), cand);
             }
 
-            xBotMain.finishCycle(cycle);
+            xBotNode.finishCycle(cycle);
         } catch(IllegalArgumentException | IOException | InterruptedException e) {
             // TODO
             e.printStackTrace();

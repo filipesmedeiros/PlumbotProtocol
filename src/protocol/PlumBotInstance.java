@@ -10,6 +10,7 @@ import network.UDP;
 import network.NetworkInterface;
 import protocol.oracle.Oracle;
 import protocol.oracle.TimeCostOracle;
+import protocol.xbot.XBotNode;
 import test.Application;
 
 import java.io.IOException;

@@ -1,4 +1,4 @@
-package protocol.rework;
+package protocol.xbot;
 
 public interface XBotSupport {
 }
