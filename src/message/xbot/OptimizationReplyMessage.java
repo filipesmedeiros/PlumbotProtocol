@@ -48,8 +48,6 @@ public class OptimizationReplyMessage extends PlumbotMessage {
     public static OptimizationReplyMessage parse(ByteBuffer bytes) {
         InetSocketAddress sender = TCP.parseAddress(bytes);
 
-        short cycle = bytes.getShort();
-
         boolean accept = bytes.get() == 1;
 
         boolean removed = bytes.get() == 1;

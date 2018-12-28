@@ -54,8 +54,6 @@ public class OptimizationMessage extends PlumbotMessage {
     public static OptimizationMessage parse(ByteBuffer bytes) {
         InetSocketAddress sender = TCP.parseAddress(bytes);
 
-        short cycle = bytes.getShort();
-
         InetSocketAddress old = TCP.parseAddress(bytes);
 
         long itoo = bytes.getLong();

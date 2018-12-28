@@ -41,8 +41,6 @@ public class DisconnectMessage extends PlumbotMessage {
     public static DisconnectMessage parse(ByteBuffer bytes) {
         InetSocketAddress sender = TCP.parseAddress(bytes);
 
-        short cycle = bytes.getShort();
-
         boolean wait = bytes.get() == 1;
 
         return new DisconnectMessage(sender, wait);

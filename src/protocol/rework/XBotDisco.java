@@ -83,7 +83,7 @@ public class XBotDisco implements XBotSupportEdge {
 
         try {
             if(!xBotMain.canOptimize(cycle, old) || !xBotMain.canOptimize(cand, xBotMain.id())) {
-                Message replaceReply = new ReplaceReplyMessage(xBotMain.id(), false);
+                Message replaceReply = new ReplaceReplyMessage(xBotMain.id(), init, false);
                 tcp.send(replaceReply.bytes(), cand);
 
                 xBotMain.finishCycle(cycle);
@@ -92,7 +92,7 @@ public class XBotDisco implements XBotSupportEdge {
 
             if(itsWorthOptimizing(this::basicComparer, initToOld, initToCand, candToDisconnect, disconnectToOld)) {
 
-                Message replaceReply = new ReplaceReplyMessage(xBotMain.id(), true);
+                Message replaceReply = new ReplaceReplyMessage(xBotMain.id(), init, true);
                 Message switchMessage = new SwitchMessage(xBotMain.id(), init, disconnectToOld);
 
                 tcp.send(replaceReply.bytes(), cand);
@@ -102,7 +102,7 @@ public class XBotDisco implements XBotSupportEdge {
 
                 xBotMain.addPeerToBiasedActiveView(old, disconnectToOld);
             } else {
-                Message replaceReply = new ReplaceReplyMessage(xBotMain.id(), false);
+                Message replaceReply = new ReplaceReplyMessage(xBotMain.id(), init, false);
                 tcp.send(replaceReply.bytes(), cand);
             }
 

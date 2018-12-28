@@ -10,10 +10,13 @@ public class ReplaceReplyMessage extends PlumbotMessage {
 
     public final static short TYPE = 10;
 
+    private InetSocketAddress init;
+
     private boolean accept;
 
-    public ReplaceReplyMessage(InetSocketAddress sender, boolean accept) {
+    public ReplaceReplyMessage(InetSocketAddress sender, InetSocketAddress init, boolean accept) {
         super(sender, TYPE);
+        this.init = init;
         this.accept = accept;
     }
 
@@ -21,11 +24,17 @@ public class ReplaceReplyMessage extends PlumbotMessage {
     public ByteBuffer bytes() {
         ByteBuffer buffer = putSenderInBuffer();
 
+        putAddressInBuffer(buffer, init);
+
         buffer.put(accept ? (byte) 1 : (byte) 0);
 
         buffer.put(EOT).flip();
 
         return buffer;
+    }
+
+    public InetSocketAddress init() {
+        return init;
     }
 
     public boolean accept() {
@@ -40,10 +49,10 @@ public class ReplaceReplyMessage extends PlumbotMessage {
     public static ReplaceReplyMessage parse(ByteBuffer bytes) {
         InetSocketAddress sender = TCP.parseAddress(bytes);
 
-        short cycle = bytes.getShort();
+        InetSocketAddress init = TCP.parseAddress(bytes);
 
         boolean accept = bytes.get() == 1;
 
-        return new ReplaceReplyMessage(sender, accept);
+        return new ReplaceReplyMessage(sender, init, accept);
     }
 }

@@ -176,13 +176,13 @@ public class XBotMain implements OptimizerNode {
         XBotDisco disco = new XBotDisco(msg.init(), this, tcp);
         disco.handleReplace(msg);
 
-        discos.put(msg.cycle(), disco);
+        discos.put(msg.init(), disco);
     }
 
     private void handleReplaceReply(ByteBuffer bytes) {
         ReplaceReplyMessage msg = ReplaceReplyMessage.parse(bytes);
 
-        cands.get(msg.cycle()).handleReplaceReply(msg);
+        cands.get(msg.init()).handleReplaceReply(msg);
     }
 
     private void handlePing(ByteBuffer bytes) {
