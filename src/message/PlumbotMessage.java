@@ -1,12 +1,7 @@
 package message;
 
-import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.net.SocketAddress;
-import java.net.UnknownHostException;
-import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
-import java.nio.channels.SelectionKey;
 
 public abstract class PlumbotMessage implements Message {
 

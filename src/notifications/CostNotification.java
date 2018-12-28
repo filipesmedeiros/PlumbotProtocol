@@ -17,7 +17,7 @@ public class CostNotification implements Notification {
 
     @Override
     public short type() {
-        return 0;
+        return TYPE;
     }
 
     public InetSocketAddress sender() {

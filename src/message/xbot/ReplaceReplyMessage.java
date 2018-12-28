@@ -40,6 +40,8 @@ public class ReplaceReplyMessage extends PlumbotMessage {
     public static ReplaceReplyMessage parse(ByteBuffer bytes) {
         InetSocketAddress sender = TCP.parseAddress(bytes);
 
+        short cycle = bytes.getShort();
+
         boolean accept = bytes.get() == 1;
 
         return new ReplaceReplyMessage(sender, accept);

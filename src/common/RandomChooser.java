@@ -34,6 +34,10 @@ public class RandomChooser<T> {
         return r.nextInt(bound);
     }
 
+    public short shorteger() {
+        return (short) r.nextInt(Integer.MAX_VALUE / 2);
+    }
+
     public long nLong() {
         return r.nextLong();
     }

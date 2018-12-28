@@ -47,6 +47,9 @@ public class SwitchMessage extends PlumbotMessage {
 
     public static SwitchMessage parse(ByteBuffer bytes) {
         InetSocketAddress sender = TCP.parseAddress(bytes);
+
+        short cycle = bytes.getShort();
+
         InetSocketAddress init = TCP.parseAddress(bytes);
 
         long dtoo = bytes.getLong();

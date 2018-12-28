@@ -151,15 +151,10 @@ public class PlumtreeNode implements TreeBroadcastNode {
 
     // half the && are for confirmation of errors (cuz they should be symmetrical)
     @Override
-    public boolean canOptimize(InetSocketAddress init, InetSocketAddress old,
-                               InetSocketAddress cand, InetSocketAddress disco) {
-        if(init != null && old != null)
-            return !(id.equals(init) && eagerPeers.contains(old)
-                    || id.equals(old) && eagerPeers.contains(init));
-
-        if(cand != null && disco != null)
-            return !(id.equals(cand) && eagerPeers.contains(disco)
-                    || id.equals(disco) && eagerPeers.contains(cand));
+    public boolean canOptimize(InetSocketAddress peer1, InetSocketAddress peer2) {
+        if(peer1 != null && peer2 != null)
+            return !(id.equals(peer1) && eagerPeers.contains(peer2)
+                    || id.equals(peer2) && eagerPeers.contains(peer1));
 
         return true;
     }

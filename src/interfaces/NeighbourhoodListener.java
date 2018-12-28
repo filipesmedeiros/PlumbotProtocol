@@ -8,5 +8,5 @@ public interface NeighbourhoodListener extends Node {
 
     void neighbourDown(InetSocketAddress peer);
 
-    boolean canOptimize(InetSocketAddress init, InetSocketAddress old, InetSocketAddress cand, InetSocketAddress disco);
+    boolean canOptimize(InetSocketAddress peer1, InetSocketAddress peer2);
 }

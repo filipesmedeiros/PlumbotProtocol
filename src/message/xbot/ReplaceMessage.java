@@ -67,6 +67,8 @@ public class ReplaceMessage extends PlumbotMessage {
     public static ReplaceMessage parse(ByteBuffer bytes) {
         InetSocketAddress sender = TCP.parseAddress(bytes);
 
+        short cycle = bytes.getShort();
+
         InetSocketAddress init = TCP.parseAddress(bytes);
 
         InetSocketAddress old = TCP.parseAddress(bytes);
