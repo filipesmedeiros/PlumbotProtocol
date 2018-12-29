@@ -20,6 +20,11 @@ class XBotOld implements XBotSupport {
         this.waitTimeout = waitTimeout;
     }
 
+    @Override
+    public InetSocketAddress cycle() {
+        return cycle;
+    }
+
     void handleSwitch(InetSocketAddress disco, long discoToOld) {
         // To make code more readable
         InetSocketAddress init = cycle;

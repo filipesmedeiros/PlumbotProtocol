@@ -7,7 +7,7 @@ import network.PersistantNetwork;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 
-class XBotCand {
+class XBotCand implements XBotSupport {
 
     private InetSocketAddress cycle;
     private XBotNode xBotNode;
@@ -25,10 +25,23 @@ class XBotCand {
         initToCand = 0;
     }
 
+    @Override
+    public InetSocketAddress cycle() {
+        return cycle;
+    }
+
     void handleOptimization(OptimizationMessage optimizationMessage) {
         if(xBotNode.isBiasedActiveViewEmpty())
             try {
                 Message reply = new OptimizationReplyMessage(xBotNode.id(), false, false);
+                tcp.send(reply.bytes(), optimizationMessage.sender());
+            } catch(IOException | InterruptedException e) {
+                // TODO
+                e.printStackTrace();
+            }
+        else if(xBotNode.isntActiveViewFull())
+            try {
+                Message reply = new OptimizationReplyMessage(xBotNode.id(), true, false);
                 tcp.send(reply.bytes(), optimizationMessage.sender());
             } catch(IOException | InterruptedException e) {
                 // TODO
@@ -54,9 +67,9 @@ class XBotCand {
         boolean removed = false;
 
         if(replaceReplyMessage.accept()) {
-            removed = xBotNode.removeFromBiased(replaceReplyMessage.sender());
+            removed = xBotNode.movePeerToPassiveView(replaceReplyMessage.sender());
 
-            xBotNode.addPeerToBiasedActiveView(init, initToCand);
+            xBotNode.movePeerToActiveView(init, initToCand);
         }
 
         try {

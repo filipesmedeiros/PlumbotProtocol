@@ -16,6 +16,7 @@ class XBotInit implements XBotSupportEdge {
 
     private InetSocketAddress cand;
     private InetSocketAddress old;
+    private long initToOld;
 
     XBotInit(XBotNode xBotNode, PersistantNetwork tcp) {
         this.cycle = xBotNode.id();
@@ -24,11 +25,26 @@ class XBotInit implements XBotSupportEdge {
 
         cand = null;
         old = null;
+        initToOld = 0;
     }
 
-    void optimize() {
+    @Override
+    public InetSocketAddress cycle() {
+        return cycle;
+    }
+
+    boolean optimize() {
         if(xBotNode.isBiasedActiveViewEmpty())
-            return;
+            return false;
+
+        XBotNode.BiasedInetAddress maybeThisOne = xBotNode.worstBiasedPeer();
+        while(maybeThisOne != null && xBotNode.cantOptimize(xBotNode.id(), maybeThisOne.address))
+            maybeThisOne = xBotNode.beforeWorstBiasedPeer(maybeThisOne);
+
+        if(maybeThisOne == null)
+            return false;
+
+        old = maybeThisOne.address;
 
         cand = xBotNode.chooseCand();
 
@@ -38,6 +54,8 @@ class XBotInit implements XBotSupportEdge {
             // TODO
             e.printStackTrace();
         }
+
+        return true;
     }
 
     void handleOptimizationReply(OptimizationReplyMessage optimizationReplyMessage) {
@@ -55,15 +73,7 @@ class XBotInit implements XBotSupportEdge {
             if(xBotNode.isBiasedActiveViewEmpty())
                 return false;
 
-            XBotNode.BiasedInetAddress old = xBotNode.worstBiasedPeer();
-            this.old = old.address;
-
-            if(xBotNode.cantOptimize(xBotNode.id(), this.old)) {
-                xBotNode.finishCycle(cycle);
-                return false;
-            }
-
-            Message msg = new OptimizationMessage(xBotNode.id(), this.old, old.cost, cost);
+            Message msg = new OptimizationMessage(xBotNode.id(), this.old, initToOld, cost);
 
             try {
                 tcp.send(msg.bytes(), cand);

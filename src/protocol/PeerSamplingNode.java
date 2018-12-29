@@ -16,9 +16,9 @@ public interface PeerSamplingNode extends Node, NetworkNotifiable {
 
     int setUnbiasedSize(int size) throws IllegalArgumentException;
 
-    int setAViewSize(int size) throws IllegalArgumentException;
+    int setActiveViewSize(int size) throws IllegalArgumentException;
 
-    int setPViewSize(int size) throws IllegalArgumentException;
+    int setPassiveViewSize(int size) throws IllegalArgumentException;
 
     boolean setNeighbourhoodListener(NeighbourhoodListener listener)
             throws IllegalArgumentException;

@@ -40,6 +40,11 @@ class XBotDisco implements XBotSupportEdge {
         candToDisconnect = 0;
     }
 
+    @Override
+    public InetSocketAddress cycle() {
+        return cycle;
+    }
+
     void handleReplace(ReplaceMessage replaceMessage) {
         cand = replaceMessage.sender();
         initToCand = replaceMessage.itoc();
@@ -91,16 +96,13 @@ class XBotDisco implements XBotSupportEdge {
             }
 
             if(itsWorthOptimizing(this::basicComparer, initToOld, initToCand, candToDisconnect, disconnectToOld)) {
-
                 Message replaceReply = new ReplaceReplyMessage(xBotNode.id(), init, true);
-                Message switchMessage = new SwitchMessage(xBotNode.id(), init, disconnectToOld);
 
                 tcp.send(replaceReply.bytes(), cand);
-                tcp.send(switchMessage.bytes(), old);
 
-                xBotNode.removeFromBiased(cand);
+                xBotNode.movePeerToPassiveView(cand);
 
-                xBotNode.addPeerToBiasedActiveView(old, disconnectToOld);
+                xBotNode.beginConnection(old, disconnectToOld, true, this);
             } else {
                 Message replaceReply = new ReplaceReplyMessage(xBotNode.id(), init, false);
                 tcp.send(replaceReply.bytes(), cand);
@@ -108,6 +110,17 @@ class XBotDisco implements XBotSupportEdge {
 
             xBotNode.finishCycle(cycle);
         } catch(IllegalArgumentException | IOException | InterruptedException e) {
+            // TODO
+            e.printStackTrace();
+        }
+    }
+
+    void handleConnectionToOld() {
+        try {
+            Message switchMessage = new SwitchMessage(xBotNode.id(), cycle, disconnectToOld);
+            tcp.send(switchMessage.bytes(), old);
+            xBotNode.addNewPeerToActiveView(old, disconnectToOld);
+        } catch(IOException | InterruptedException e) {
             // TODO
             e.printStackTrace();
         }
