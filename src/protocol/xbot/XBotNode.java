@@ -94,7 +94,7 @@ public class XBotNode implements OptimizerNode {
 
     private Map<InetSocketAddress, ConnectionInfo> futureConnections;
 
-    // All these are for remembering stuff during asynch optimization
+    // All these are for remembering stuff during async optimization
     private Map<InetSocketAddress, XBotSupportEdge> costsWaiting;
 
     // Lists of "states" being used by this node for optimizations, currently
@@ -368,7 +368,7 @@ public class XBotNode implements OptimizerNode {
 
         timerManager.addTimer(OPTI, this::optimize, optimizationPeriod);
 
-        new Thread(() -> oracle.init());
+        new Thread(() -> oracle.init()).start();
 
         processNotification();
     }

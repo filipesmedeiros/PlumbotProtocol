@@ -289,8 +289,12 @@ public class TCP extends Network implements PersistantNetwork {
                 InetSocketAddress to = request.to();
                 SocketChannel channel = connections.get(to);
 
-                if(channel == null)
+                if(channel == null) {
                     System.out.println(address + " type " + request.type() + " to " + request.to());
+
+                    for(Map.Entry<InetSocketAddress, SocketChannel> entry : connections.entrySet())
+                        System.out.println(entry.getKey());
+                }
 
                 channel.write(request.message());
             } catch(IOException | InterruptedException e) {

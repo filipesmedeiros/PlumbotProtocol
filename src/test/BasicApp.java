@@ -9,6 +9,7 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.util.*;
+import java.util.function.Consumer;
 
 public class BasicApp implements Application {
 
@@ -25,29 +26,32 @@ public class BasicApp implements Application {
             return;
         }
 
-        InetSocketAddress local = new InetSocketAddress(addr, 3000);
-        addressList.add(local);
-        System.out.println("Hosted at " + local.toString());
+        InetSocketAddress node = new InetSocketAddress(addr, 3000);
+        addressList.add(node);
+        System.out.println("Hosted at " + node.toString());
 
-        PlumBot pb = new PlumBotInstance(local);
+        PlumBot pb = new PlumBotInstance(node);
         pb.addApp(this);
         instances.add(pb);
+
+        Consumer<InetSocketAddress> addNode = nodeToAdd -> {
+            InetSocketAddress contact = addressList.get(new Random().nextInt(addressList.size()));
+            addressList.add(nodeToAdd);
+            System.out.println("Hosted at" + nodeToAdd);
+
+            PlumBot newPb = new PlumBotInstance(nodeToAdd);
+            instances.add(newPb);
+
+            System.out.println("Joining at " + contact);
+            newPb.join(contact);
+        };
 
         Timer t = new Timer();
         TimerTask task = new TimerTask() {
             @Override
             public void run() {
-                InetSocketAddress local = new InetSocketAddress(addr, new Random().nextInt(5000) + 2000);
-
-                InetSocketAddress contact = addressList.get(new Random().nextInt(addressList.size()));
-                addressList.add(local);
-                System.out.println("Hosted at" + local);
-
-                PlumBot newPb = new PlumBotInstance(local);
-                instances.add(newPb);
-
-                System.out.println("Joining at " + contact);
-                newPb.join(contact);
+                InetSocketAddress node = new InetSocketAddress(addr, new Random().nextInt(5000) + 2000);
+                addNode.accept(node);
             }
         };
 
@@ -75,21 +79,12 @@ public class BasicApp implements Application {
                     System.out.println("------ x ------");
                 }
             else if(input.equals("step")) {
-                local = new InetSocketAddress(addr, new Random().nextInt(5000) + 2000);
-
-                InetSocketAddress contact = addressList.get(new Random().nextInt(addressList.size()));
-                addressList.add(local);
-                System.out.println("Hosted at" + local);
-
-                PlumBot newPb = new PlumBotInstance(local);
-                instances.add(newPb);
-
-                System.out.println("Joining at " + contact);
-                newPb.join(contact);
+                node = new InetSocketAddress(addr, new Random().nextInt(5000) + 2000);
+                addNode.accept(node);
             } else if(input.equals("start")) {
                 t = new Timer();
 
-                TimerTask task1 = new TimerTask() {
+                /*TimerTask task1 = new TimerTask() {
                     @Override
                     public void run() {
                         InetSocketAddress local = new InetSocketAddress(addr, new Random().nextInt(5000) + 2000);
@@ -104,9 +99,9 @@ public class BasicApp implements Application {
                         System.out.println("Joining at " + contact);
                         newPb.join(contact);
                     }
-                };
+                };*/
 
-                t.schedule(task1, 0, 3000);
+                t.schedule(task, 0, 3000);
             } else if(input.equals("quit")) {
                 in.close();
                 System.exit(0);

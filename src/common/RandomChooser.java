@@ -21,7 +21,6 @@ public class RandomChooser<T> {
         return (T) set.toArray()[r.nextInt(set.size())];
     }
 
-    @SuppressWarnings("unchecked")
     public boolean removeFromSet(Set<T> set) {
         return set.remove(fromSet(set));
     }
