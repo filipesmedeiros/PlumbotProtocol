@@ -13,31 +13,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="6ebea15c-d9ed-4a6c-8a76-149a119fd88a" name="Default Changelist" comment="I think this is finished. Tests have to be done. A lot of them, but I don't know if I will be able to in time. We'll see.">
-      <change afterPath="$PROJECT_DIR$/.idea/encodings.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/modules.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/plumbotprotocol.iml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/uiDesigner.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/refactor/GlobalSettings.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/refactor/exception/AlreadyConnectedException.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/refactor/exception/ConnectionNotEstablishedException.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/refactor/exception/InvalidMessageTypeException.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/refactor/exception/MessageHasNoDestinationException.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/refactor/exception/MessageTooLargeException.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/refactor/exception/NullMessageException.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/refactor/message/Message.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/refactor/message/MessageDecoder.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/refactor/message/MessageMetadata.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/refactor/message/MessageRouter.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/refactor/message/MessageWithSender.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/refactor/network/TCP.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/refactor/protocol/MessageListener.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/refactor/protocol/Node.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/refactor/protocol/oracle/Oracle.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/refactor/test/TCPMessageTest.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/refactor/utils/Constants.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -344,7 +320,7 @@
     <property name="Repository.Attach.Sources" value="false" />
     <property name="WebServerToolWindowFactoryState" value="false" />
     <property name="aspect.path.notification.shown" value="true" />
-    <property name="com.android.tools.idea.instantapp.provision.ProvisionBeforeRunTaskProvider.myTimeStamp" value="1561482921610" />
+    <property name="com.android.tools.idea.instantapp.provision.ProvisionBeforeRunTaskProvider.myTimeStamp" value="1561483052714" />
     <property name="last_opened_file_path" value="$PROJECT_DIR$" />
     <property name="nodejs_interpreter_path.stuck_in_default_project" value="undefined stuck path" />
     <property name="nodejs_npm_path_reset_for_default_project" value="true" />
@@ -479,7 +455,7 @@
       <workItem from="1561150320724" duration="6446000" />
       <workItem from="1561200429220" duration="16509000" />
       <workItem from="1561294492697" duration="3351000" />
-      <workItem from="1561467257906" duration="8524000" />
+      <workItem from="1561467257906" duration="8805000" />
     </task>
     <task id="LOCAL-00001" summary="Some stuff related to graft, cast is maybe not the best choice, but ok">
       <created>1544580285770</created>
@@ -667,7 +643,7 @@
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="208983000" />
+    <option name="totallyTimeSpent" value="209264000" />
   </component>
   <component name="TodoView">
     <todo-panel id="selected-file">
@@ -681,7 +657,7 @@
   <component name="ToolWindowManager">
     <frame x="-8" y="-8" width="1936" height="1056" extended-state="6" />
     <layout>
-      <window_info active="true" content_ui="combo" id="Project" order="0" sideWeight="0.49757674" visible="true" weight="0.16577825" />
+      <window_info content_ui="combo" id="Project" order="0" sideWeight="0.49757674" visible="true" weight="0.16577825" />
       <window_info id="Structure" order="1" sideWeight="0.5024233" side_tool="true" weight="0.13859275" />
       <window_info id="Image Layers" order="2" />
       <window_info id="Designer" order="3" />
@@ -698,7 +674,7 @@
       <window_info anchor="bottom" id="Docker" order="7" show_stripe_button="false" />
       <window_info anchor="bottom" id="Version Control" order="8" weight="0.16468039" />
       <window_info anchor="bottom" id="Database Changes" order="9" />
-      <window_info anchor="bottom" id="Terminal" order="10" visible="true" weight="0.32936078" />
+      <window_info active="true" anchor="bottom" id="Terminal" order="10" visible="true" weight="0.32936078" />
       <window_info anchor="bottom" id="Event Log" order="11" sideWeight="0.50053304" side_tool="true" weight="0.32936078" />
       <window_info anchor="bottom" id="Messages" order="12" weight="0.32936078" />
       <window_info anchor="bottom" id="Duplicate detector" order="13" weight="0.32936078" />
@@ -785,13 +761,6 @@
     <option name="LAST_COMMIT_MESSAGE" value="Started a whole new Refactor, trying to make everything simpler and the code more manageable" />
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/src/notifications/Notification.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="34">
-          <caret line="2" column="17" selection-start-line="2" selection-start-column="17" selection-end-line="2" selection-end-column="17" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/src/common/RandomChooser.java">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="357">
@@ -1143,6 +1112,15 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="667">
           <caret line="58" column="53" selection-start-line="58" selection-start-column="53" selection-end-line="58" selection-end-column="53" />
+          <folding>
+            <element signature="imports" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../gossip-protocol-test-app/src/Main.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state>
           <folding>
             <element signature="imports" expanded="true" />
           </folding>
