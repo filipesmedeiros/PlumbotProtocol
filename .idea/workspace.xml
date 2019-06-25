@@ -1,0 +1,1262 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AnalysisUIOptions">
+    <option name="SCOPE_TYPE" value="3" />
+  </component>
+  <component name="ArtifactsWorkspaceSettings">
+    <artifacts-to-build>
+      <artifact name="plumbotprotocol:jar" />
+    </artifacts-to-build>
+  </component>
+  <component name="BookmarkManager">
+    <bookmark url="file://$PROJECT_DIR$/src/protocol/xbot/XBotInit.java" line="52" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="6ebea15c-d9ed-4a6c-8a76-149a119fd88a" name="Default Changelist" comment="I think this is finished. Tests have to be done. A lot of them, but I don't know if I will be able to in time. We'll see.">
+      <change afterPath="$PROJECT_DIR$/.idea/encodings.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/modules.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/plumbotprotocol.iml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/uiDesigner.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/refactor/GlobalSettings.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/refactor/exception/AlreadyConnectedException.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/refactor/exception/ConnectionNotEstablishedException.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/refactor/exception/InvalidMessageTypeException.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/refactor/exception/MessageHasNoDestinationException.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/refactor/exception/MessageTooLargeException.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/refactor/exception/NullMessageException.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/refactor/message/Message.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/refactor/message/MessageDecoder.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/refactor/message/MessageMetadata.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/refactor/message/MessageRouter.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/refactor/message/MessageWithSender.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/refactor/network/TCP.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/refactor/protocol/MessageListener.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/refactor/protocol/Node.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/refactor/protocol/oracle/Oracle.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/refactor/test/TCPMessageTest.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/refactor/utils/Constants.java" afterDir="false" />
+    </list>
+    <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileEditorManager">
+    <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/refactor/message/MessageRouter.java">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="669">
+              <caret line="33" column="30" selection-start-line="33" selection-start-column="30" selection-end-line="33" selection-end-column="30" />
+              <folding>
+                <element signature="imports" expanded="true" />
+                <element signature="e#599#600#0" expanded="true" />
+                <element signature="e#628#629#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/refactor/message/Message.java">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="4218">
+              <caret line="224" column="46" selection-start-line="224" selection-start-column="46" selection-end-line="224" selection-end-column="46" />
+              <folding>
+                <element signature="imports" expanded="true" />
+                <element signature="e#5453#5454#0" expanded="true" />
+                <element signature="e#5484#5485#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/refactor/GlobalSettings.java">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="-126">
+              <caret line="13" column="15" selection-start-line="13" selection-start-column="15" selection-end-line="13" selection-end-column="15" />
+              <folding>
+                <element signature="imports" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/refactor/protocol/Node.java">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="84">
+              <caret line="4" selection-start-line="4" selection-end-line="4" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/refactor/protocol/oracle/Oracle.java">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="105">
+              <caret line="5" column="47" selection-start-line="5" selection-start-column="47" selection-end-line="5" selection-end-column="47" />
+              <folding>
+                <element signature="imports" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/refactor/network/TCP.java">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="667">
+              <caret line="58" column="53" selection-start-line="58" selection-start-column="53" selection-end-line="58" selection-end-column="53" />
+              <folding>
+                <element signature="imports" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/src/refactor/test/TCPMessageTest.java">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="294">
+              <caret line="14" column="63" selection-start-line="14" selection-start-column="63" selection-end-line="14" selection-end-column="63" />
+              <folding>
+                <element signature="imports" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/refactor/message/MessageWithSender.java">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="252">
+              <caret line="12" column="5" selection-start-line="12" selection-start-column="5" selection-end-line="12" selection-end-column="5" />
+              <folding>
+                <element signature="e#435#436#0" expanded="true" />
+                <element signature="e#464#465#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/refactor/message/MessageDecoder.java">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="604">
+              <caret line="112" selection-start-line="112" selection-end-line="112" />
+              <folding>
+                <element signature="imports" expanded="true" />
+                <element signature="e#7740#7741#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+    </leaf>
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="package-info" />
+        <option value="Singleton" />
+        <option value="Interface" />
+        <option value="Class" />
+      </list>
+    </option>
+  </component>
+  <component name="FindInProjectRecents">
+    <findStrings>
+      <find>join</find>
+      <find>receiveCost</find>
+      <find>ini</find>
+      <find>bind</find>
+      <find>Sys</find>
+      <find>connections.get</find>
+      <find>handleD</find>
+      <find>set</find>
+      <find>neighbourhoodListeners</find>
+      <find>activeView.ad</find>
+      <find>activeView.remo</find>
+      <find>handleop</find>
+      <find>basic</find>
+      <find>wors</find>
+      <find>getCost</find>
+      <find>handled</find>
+      <find>cantOptimize</find>
+      <find>addPeerToActiveView</find>
+      <find>tcp.c</find>
+      <find>passive</find>
+      <find>passiveView.a</find>
+      <find>addPeerToP</find>
+      <find>nectw</find>
+      <find>optimize()</find>
+      <find>futureConnections</find>
+      <find>tcp.con</find>
+      <find>fireConnectionTimeout</find>
+      <find>begin</find>
+      <find>system</find>
+      <find>NullMessageException</find>
+    </findStrings>
+  </component>
+  <component name="Git.Settings">
+    <option name="UPDATE_TYPE" value="MERGE" />
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="IdeDocumentHistory">
+    <option name="CHANGED_PATHS">
+      <list>
+        <option value="$PROJECT_DIR$/src/message/xbot/ReplaceMessage.java" />
+        <option value="$PROJECT_DIR$/src/message/xbot/OptimizationReplyMessage.java" />
+        <option value="$PROJECT_DIR$/src/message/xbot/OptimizationMessage.java" />
+        <option value="$PROJECT_DIR$/src/message/xbot/DisconnectMessage.java" />
+        <option value="$PROJECT_DIR$/src/protocol/rework/XBotDisco.java" />
+        <option value="$PROJECT_DIR$/src/message/xbot/ReplaceReplyMessage.java" />
+        <option value="$PROJECT_DIR$/src/protocol/rework/XBotMain.java" />
+        <option value="$PROJECT_DIR$/src/protocol/rework/XBotNode.java" />
+        <option value="$PROJECT_DIR$/src/notifications/TCPConnectionNotification.java" />
+        <option value="$PROJECT_DIR$/src/protocol/xbot/XBotSupport.java" />
+        <option value="$PROJECT_DIR$/src/protocol/xbot/XBotInit.java" />
+        <option value="$PROJECT_DIR$/src/protocol/xbot/XBotCand.java" />
+        <option value="$PROJECT_DIR$/src/protocol/xbot/XBotOld.java" />
+        <option value="$PROJECT_DIR$/src/protocol/xbot/XBotDisco.java" />
+        <option value="$PROJECT_DIR$/src/test/BasicApp.java" />
+        <option value="$PROJECT_DIR$/src/protocol/PlumBotInstance.java" />
+        <option value="$PROJECT_DIR$/src/common/Pair.java" />
+        <option value="$PROJECT_DIR$/src/common/RandomChooser.java" />
+        <option value="$PROJECT_DIR$/remake/Test.java" />
+        <option value="$PROJECT_DIR$/remake/AsyncTask.java" />
+        <option value="$PROJECT_DIR$/remake/AsyncCosumer.java" />
+        <option value="$PROJECT_DIR$/remake/AsyncConsumer.java" />
+        <option value="$PROJECT_DIR$/src/protocol/xbot/XBotNode.java" />
+        <option value="$PROJECT_DIR$/src/refactor/Message.java" />
+        <option value="$PROJECT_DIR$/src/refactor/message/MessageTypeDecoder.java" />
+        <option value="$PROJECT_DIR$/src/refactor/message/JoinMessageMetadata.java" />
+        <option value="$PROJECT_DIR$/src/refactor/message/Message.kt" />
+        <option value="$PROJECT_DIR$/src/message/Message.java" />
+        <option value="$PROJECT_DIR$/src/refactor/exception/InvalidMessageTypeException.java" />
+        <option value="$PROJECT_DIR$/src/refactor/exception/NullMessageException.java" />
+        <option value="$PROJECT_DIR$/src/refactor/utils/multithreading/PeriodicExecutor.java" />
+        <option value="$PROJECT_DIR$/src/refactor/utils/Constants.java" />
+        <option value="$PROJECT_DIR$/src/refactor/message/decoder/MessageDecoder.java" />
+        <option value="$PROJECT_DIR$/src/refactor/exception/MessageTooLargeException.java" />
+        <option value="$PROJECT_DIR$/src/refactor/Settings.java" />
+        <option value="$PROJECT_DIR$/src/network/TCP.java" />
+        <option value="$PROJECT_DIR$/src/refactor/GlobalSettings.java" />
+        <option value="$PROJECT_DIR$/src/refactor/exception/MessageHasNoDestinationException.java" />
+        <option value="$PROJECT_DIR$/src/refactor/exception/AlreadyConnectedException.java" />
+        <option value="$PROJECT_DIR$/src/refactor/exception/ConnectionNotEstablishedException.java" />
+        <option value="$PROJECT_DIR$/src/refactor/tests/unit/MessageMetadataUnitTest.java" />
+        <option value="$PROJECT_DIR$/src/refactor/message/MessageMetadata.java" />
+        <option value="$PROJECT_DIR$/src/refactor/message/Message.java" />
+        <option value="$PROJECT_DIR$/src/refactor/protocol/MessageListener.java" />
+        <option value="$PROJECT_DIR$/src/refactor/protocol/Node.java" />
+        <option value="$PROJECT_DIR$/src/refactor/protocol/oracle/Oracle.java" />
+        <option value="$PROJECT_DIR$/src/refactor/message/MessageDecoder.java" />
+        <option value="$PROJECT_DIR$/src/refactor/message/MessageWithSender.java" />
+        <option value="$PROJECT_DIR$/src/refactor/message/MessageRouter.java" />
+        <option value="$PROJECT_DIR$/src/refactor/network/TCP.java" />
+        <option value="$PROJECT_DIR$/src/refactor/test/TCPMessageTest.java" />
+      </list>
+    </option>
+  </component>
+  <component name="ProjectFrameBounds" extendedState="6">
+    <option name="x" value="-8" />
+    <option name="y" value="-8" />
+    <option name="width" value="1936" />
+    <option name="height" value="1056" />
+  </component>
+  <component name="ProjectLevelVcsManager">
+    <ConfirmationsSetting value="1" id="Add" />
+  </component>
+  <component name="ProjectView">
+    <navigator proportions="" version="1">
+      <foldersAlwaysOnTop value="true" />
+    </navigator>
+    <panes>
+      <pane id="PackagesPane">
+        <subPane>
+          <expand>
+            <path>
+              <item name="plumbotprotocol" type="58d84e3e:PackageViewProjectNode" />
+              <item name="plumbotprotocol" type="616d4139:PackageViewModuleNode" />
+            </path>
+            <path>
+              <item name="plumbotprotocol" type="58d84e3e:PackageViewProjectNode" />
+              <item name="plumbotprotocol" type="616d4139:PackageViewModuleNode" />
+              <item name="Libraries" type="5c3f07af:PackageViewLibrariesNode" />
+            </path>
+          </expand>
+          <select />
+        </subPane>
+      </pane>
+      <pane id="Scope" />
+      <pane id="ProjectPane">
+        <subPane>
+          <expand>
+            <path>
+              <item name="plumbotprotocol" type="b2602c69:ProjectViewProjectNode" />
+              <item name="plumbotprotocol" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="plumbotprotocol" type="b2602c69:ProjectViewProjectNode" />
+              <item name="plumbotprotocol" type="462c0819:PsiDirectoryNode" />
+              <item name="src" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="plumbotprotocol" type="b2602c69:ProjectViewProjectNode" />
+              <item name="plumbotprotocol" type="462c0819:PsiDirectoryNode" />
+              <item name="src" type="462c0819:PsiDirectoryNode" />
+              <item name="refactor" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="plumbotprotocol" type="b2602c69:ProjectViewProjectNode" />
+              <item name="plumbotprotocol" type="462c0819:PsiDirectoryNode" />
+              <item name="src" type="462c0819:PsiDirectoryNode" />
+              <item name="refactor" type="462c0819:PsiDirectoryNode" />
+              <item name="utils" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="plumbotprotocol" type="b2602c69:ProjectViewProjectNode" />
+              <item name="plumbotprotocol" type="462c0819:PsiDirectoryNode" />
+              <item name="src" type="462c0819:PsiDirectoryNode" />
+              <item name="test" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="plumbotprotocol" type="b2602c69:ProjectViewProjectNode" />
+              <item name="External Libraries" type="cb654da1:ExternalLibrariesNode" />
+            </path>
+          </expand>
+          <select />
+        </subPane>
+      </pane>
+    </panes>
+  </component>
+  <component name="PropertiesComponent">
+    <property name="Downloaded.Files.Path.Enabled" value="false" />
+    <property name="Repository.Attach.Annotations" value="false" />
+    <property name="Repository.Attach.JavaDocs" value="false" />
+    <property name="Repository.Attach.Sources" value="false" />
+    <property name="WebServerToolWindowFactoryState" value="false" />
+    <property name="aspect.path.notification.shown" value="true" />
+    <property name="com.android.tools.idea.instantapp.provision.ProvisionBeforeRunTaskProvider.myTimeStamp" value="1561482921610" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+    <property name="nodejs_interpreter_path.stuck_in_default_project" value="undefined stuck path" />
+    <property name="nodejs_npm_path_reset_for_default_project" value="true" />
+    <property name="nodejs_package_manager_path" value="npm" />
+    <property name="project.structure.last.edited" value="Modules" />
+    <property name="project.structure.proportion" value="0.0" />
+    <property name="project.structure.side.proportion" value="0.2" />
+    <property name="restartRequiresConfirmation" value="false" />
+    <property name="settings.editor.selected.configurable" value="reference.settingsdialog.IDE.editor.colors.Java" />
+  </component>
+  <component name="RecentsManager">
+    <key name="MoveMembersDialog.RECENTS_KEY">
+      <recent name="network.TCP" />
+    </key>
+  </component>
+  <component name="RunDashboard">
+    <option name="ruleStates">
+      <list>
+        <RuleState>
+          <option name="name" value="ConfigurationTypeDashboardGroupingRule" />
+        </RuleState>
+        <RuleState>
+          <option name="name" value="StatusDashboardGroupingRule" />
+        </RuleState>
+      </list>
+    </option>
+  </component>
+  <component name="RunManager" selected="Application.BasicApp">
+    <configuration name="BasicApp" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
+      <option name="MAIN_CLASS_NAME" value="test.BasicApp" />
+      <module name="plumbotprotocol" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="test.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="dummy (1)" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
+      <option name="MAIN_CLASS_NAME" value="test.dummy" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="test.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="dummy" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
+      <option name="MAIN_CLASS_NAME" value="test.dummy" />
+      <module name="plumbotprotocol" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="test.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <recent_temporary>
+      <list>
+        <item itemvalue="Application.BasicApp" />
+        <item itemvalue="Application.dummy" />
+        <item itemvalue="Application.dummy (1)" />
+      </list>
+    </recent_temporary>
+  </component>
+  <component name="SvnConfiguration">
+    <configuration />
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="6ebea15c-d9ed-4a6c-8a76-149a119fd88a" name="Default Changelist" comment="" />
+      <created>1544567864988</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1544567864988</updated>
+      <workItem from="1544567866119" duration="630000" />
+      <workItem from="1544568736309" duration="988000" />
+      <workItem from="1544570027441" duration="2372000" />
+      <workItem from="1544575673145" duration="3953000" />
+      <workItem from="1544612666997" duration="4100000" />
+      <workItem from="1544621403965" duration="7861000" />
+      <workItem from="1544706700378" duration="6683000" />
+      <workItem from="1544790384779" duration="18423000" />
+      <workItem from="1544921490215" duration="6353000" />
+      <workItem from="1545093234980" duration="5219000" />
+      <workItem from="1545136526690" duration="624000" />
+      <workItem from="1545152087927" duration="9733000" />
+      <workItem from="1545178714457" duration="4013000" />
+      <workItem from="1545221316926" duration="18118000" />
+      <workItem from="1545505905871" duration="192000" />
+      <workItem from="1545753775650" duration="599000" />
+      <workItem from="1545928519752" duration="8863000" />
+      <workItem from="1545949752889" duration="207000" />
+      <workItem from="1545950235599" duration="12039000" />
+      <workItem from="1546006204255" duration="6334000" />
+      <workItem from="1546020814526" duration="4108000" />
+      <workItem from="1546046004724" duration="5504000" />
+      <workItem from="1549552165364" duration="599000" />
+      <workItem from="1550708823364" duration="5000" />
+      <workItem from="1553434859492" duration="35000" />
+      <workItem from="1553708575565" duration="381000" />
+      <workItem from="1553711533495" duration="2000" />
+      <workItem from="1553810970039" duration="5000" />
+      <workItem from="1553958047637" duration="36000" />
+      <workItem from="1554418645026" duration="599000" />
+      <workItem from="1554581881160" duration="95000" />
+      <workItem from="1554645306488" duration="746000" />
+      <workItem from="1557008062592" duration="2562000" />
+      <workItem from="1557053414987" duration="2220000" />
+      <workItem from="1557316829200" duration="350000" />
+      <workItem from="1557319861953" duration="2452000" />
+      <workItem from="1557347882338" duration="21000" />
+      <workItem from="1557351673875" duration="5921000" />
+      <workItem from="1557432103680" duration="1308000" />
+      <workItem from="1557491876207" duration="1840000" />
+      <workItem from="1557511497858" duration="599000" />
+      <workItem from="1559168806545" duration="599000" />
+      <workItem from="1559590850629" duration="500000" />
+      <workItem from="1559925172825" duration="11474000" />
+      <workItem from="1560171250210" duration="74000" />
+      <workItem from="1561027336855" duration="11959000" />
+      <workItem from="1561125600425" duration="2855000" />
+      <workItem from="1561150320724" duration="6446000" />
+      <workItem from="1561200429220" duration="16509000" />
+      <workItem from="1561294492697" duration="3351000" />
+      <workItem from="1561467257906" duration="8524000" />
+    </task>
+    <task id="LOCAL-00001" summary="Some stuff related to graft, cast is maybe not the best choice, but ok">
+      <created>1544580285770</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1544580285770</updated>
+    </task>
+    <task id="LOCAL-00002" summary="Made a HopMessage to count hops in the tree overlay">
+      <created>1544617199663</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1544617199663</updated>
+    </task>
+    <task id="LOCAL-00003" summary="Changed dynamics of the lazy push to support piggybacking, and more">
+      <created>1544625359449</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1544625359449</updated>
+    </task>
+    <task id="LOCAL-00004" summary="In process of transforming the entire way of communication between layers, hope it doesn't break anything. Introduced TCP!">
+      <created>1544712236619</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1544712236619</updated>
+    </task>
+    <task id="LOCAL-00005" summary="Some interface changes, naming and organization, its WIP to get TCP to work, and to make the notification queue system work too">
+      <created>1544746126249</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1544746126249</updated>
+    </task>
+    <task id="LOCAL-00006" summary="XBot TCP mostly done but not tested, still gonna do everything else of TCP">
+      <created>1544803492878</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1544803492878</updated>
+    </task>
+    <task id="LOCAL-00007" summary="Nothing tested, but everything remodeled, a big big update.&#10;Should have done it in smaller increments but whateveeer">
+      <created>1544813330585</created>
+      <option name="number" value="00007" />
+      <option name="presentableId" value="LOCAL-00007" />
+      <option name="project" value="LOCAL" />
+      <updated>1544813330585</updated>
+    </task>
+    <task id="LOCAL-00008" summary="Small bug fix on Plumbot instance creation">
+      <created>1544813556093</created>
+      <option name="number" value="00008" />
+      <option name="presentableId" value="LOCAL-00008" />
+      <option name="project" value="LOCAL" />
+      <updated>1544813556093</updated>
+    </task>
+    <task id="LOCAL-00009" summary="Fixed bug where I was blocking the main Thread (App)">
+      <created>1544814012155</created>
+      <option name="number" value="00009" />
+      <option name="presentableId" value="LOCAL-00009" />
+      <option name="project" value="LOCAL" />
+      <updated>1544814012155</updated>
+    </task>
+    <task id="LOCAL-00010" summary="Fixed bug where TCP layer wasn't accepting new connections (nothing happened obviously)">
+      <created>1544928911205</created>
+      <option name="number" value="00010" />
+      <option name="presentableId" value="LOCAL-00010" />
+      <option name="project" value="LOCAL" />
+      <updated>1544928911205</updated>
+    </task>
+    <task id="LOCAL-00011" summary="Code is ugly.&#10;Fixed bug where I forgot to add OP_READ to newly accepted socket, and blocking to false.">
+      <created>1544929285517</created>
+      <option name="number" value="00011" />
+      <option name="presentableId" value="LOCAL-00011" />
+      <option name="project" value="LOCAL" />
+      <updated>1544929285517</updated>
+    </task>
+    <task id="LOCAL-00012" summary="Things about connections and channels have to be fixed. Later...">
+      <created>1544930466922</created>
+      <option name="number" value="00012" />
+      <option name="presentableId" value="LOCAL-00012" />
+      <option name="project" value="LOCAL" />
+      <updated>1544930466922</updated>
+    </task>
+    <task id="LOCAL-00013" summary="Small rollback">
+      <created>1544930489899</created>
+      <option name="number" value="00013" />
+      <option name="presentableId" value="LOCAL-00013" />
+      <option name="project" value="LOCAL" />
+      <updated>1544930489900</updated>
+    </task>
+    <task id="LOCAL-00014" summary="Broke everything, and don't know how to fix, but know I'm on the right track. I need to make sure the TCP connections are being opened and the upper layers (protocols) are aware of them.">
+      <created>1545099014972</created>
+      <option name="number" value="00014" />
+      <option name="presentableId" value="LOCAL-00014" />
+      <option name="project" value="LOCAL" />
+      <updated>1545099014972</updated>
+    </task>
+    <task id="LOCAL-00015" summary="A bit closer, but have to look more into the join/accept mechanism">
+      <created>1545100299854</created>
+      <option name="number" value="00015" />
+      <option name="presentableId" value="LOCAL-00015" />
+      <option name="project" value="LOCAL" />
+      <updated>1545100299854</updated>
+    </task>
+    <task id="LOCAL-00016" summary="Think I found solution: exchange IDs on connection so that the upper layers don't have to know specific ports, but only the id of the peer">
+      <created>1545160347654</created>
+      <option name="number" value="00016" />
+      <option name="presentableId" value="LOCAL-00016" />
+      <option name="project" value="LOCAL" />
+      <updated>1545160347654</updated>
+    </task>
+    <task id="LOCAL-00017" summary="On my way to implement that, just organized code a bit">
+      <created>1545160684542</created>
+      <option name="number" value="00017" />
+      <option name="presentableId" value="LOCAL-00017" />
+      <option name="project" value="LOCAL" />
+      <updated>1545160684542</updated>
+    </task>
+    <task id="LOCAL-00018" summary="Almost worked, but some things are still bugged :(">
+      <created>1545182396010</created>
+      <option name="number" value="00018" />
+      <option name="presentableId" value="LOCAL-00018" />
+      <option name="project" value="LOCAL" />
+      <updated>1545182396010</updated>
+    </task>
+    <task id="LOCAL-00019" summary="Added leave functionality. Gonna work on stabilizing network for Plumtree">
+      <created>1545234810970</created>
+      <option name="number" value="00019" />
+      <option name="presentableId" value="LOCAL-00019" />
+      <option name="project" value="LOCAL" />
+      <updated>1545234810970</updated>
+    </task>
+    <task id="LOCAL-00020" summary="Introduced the Tree check for optimizations. I think if TCP works, this is done, and it's all bug fixing. Need to run tests still.">
+      <created>1545249519558</created>
+      <option name="number" value="00020" />
+      <option name="presentableId" value="LOCAL-00020" />
+      <option name="project" value="LOCAL" />
+      <updated>1545249519558</updated>
+    </task>
+    <task id="LOCAL-00021" summary="Huge remake of the XBot class. Divided the 4 &quot;states&quot; of the XBot layer into 4 classes, so their behaviour is easier to understand, predict and code.">
+      <created>1545964274755</created>
+      <option name="number" value="00021" />
+      <option name="presentableId" value="LOCAL-00021" />
+      <option name="project" value="LOCAL" />
+      <updated>1545964274755</updated>
+    </task>
+    <task id="LOCAL-00022" summary="Still remaking, still haven't tested anything">
+      <created>1545964669689</created>
+      <option name="number" value="00022" />
+      <option name="presentableId" value="LOCAL-00022" />
+      <option name="project" value="LOCAL" />
+      <updated>1545964669689</updated>
+    </task>
+    <task id="LOCAL-00023" summary="More remake, on my way to make this a bit better I think, and easier to debug. Still left: waiting for and reacting to TCP connections">
+      <created>1545966480316</created>
+      <option name="number" value="00023" />
+      <option name="presentableId" value="LOCAL-00023" />
+      <option name="project" value="LOCAL" />
+      <updated>1545966480316</updated>
+    </task>
+    <task id="LOCAL-00024" summary="A lot more stuff made, nothing tested, as usual... sorry, myself from the future">
+      <created>1546025659556</created>
+      <option name="number" value="00024" />
+      <option name="presentableId" value="LOCAL-00024" />
+      <option name="project" value="LOCAL" />
+      <updated>1546025659556</updated>
+    </task>
+    <task id="LOCAL-00025" summary="I think this is finished. Tests have to be done. A lot of them, but I don't know if I will be able to in time. We'll see.">
+      <created>1546052514070</created>
+      <option name="number" value="00025" />
+      <option name="presentableId" value="LOCAL-00025" />
+      <option name="project" value="LOCAL" />
+      <updated>1546052514070</updated>
+    </task>
+    <task id="LOCAL-00026" summary="Started a whole new Refactor, trying to make everything simpler and the code more manageable">
+      <created>1561482637886</created>
+      <option name="number" value="00026" />
+      <option name="presentableId" value="LOCAL-00026" />
+      <option name="project" value="LOCAL" />
+      <updated>1561482637886</updated>
+    </task>
+    <option name="localTasksCounter" value="27" />
+    <servers />
+  </component>
+  <component name="TimeTrackingManager">
+    <option name="totallyTimeSpent" value="208983000" />
+  </component>
+  <component name="TodoView">
+    <todo-panel id="selected-file">
+      <is-autoscroll-to-source value="true" />
+    </todo-panel>
+    <todo-panel id="all">
+      <are-packages-shown value="true" />
+      <is-autoscroll-to-source value="true" />
+    </todo-panel>
+  </component>
+  <component name="ToolWindowManager">
+    <frame x="-8" y="-8" width="1936" height="1056" extended-state="6" />
+    <layout>
+      <window_info active="true" content_ui="combo" id="Project" order="0" sideWeight="0.49757674" visible="true" weight="0.16577825" />
+      <window_info id="Structure" order="1" sideWeight="0.5024233" side_tool="true" weight="0.13859275" />
+      <window_info id="Image Layers" order="2" />
+      <window_info id="Designer" order="3" />
+      <window_info id="UI Designer" order="4" />
+      <window_info id="Capture Tool" order="5" />
+      <window_info id="Favorites" order="6" side_tool="true" />
+      <window_info anchor="bottom" id="Message" order="0" />
+      <window_info anchor="bottom" id="Find" order="1" weight="0.32936078" />
+      <window_info anchor="bottom" id="Run" order="2" sideWeight="0.49946696" weight="0.32936078" />
+      <window_info anchor="bottom" id="Debug" order="3" weight="0.4" />
+      <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
+      <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
+      <window_info anchor="bottom" id="TODO" order="6" weight="0.32936078" />
+      <window_info anchor="bottom" id="Docker" order="7" show_stripe_button="false" />
+      <window_info anchor="bottom" id="Version Control" order="8" weight="0.16468039" />
+      <window_info anchor="bottom" id="Database Changes" order="9" />
+      <window_info anchor="bottom" id="Terminal" order="10" visible="true" weight="0.32936078" />
+      <window_info anchor="bottom" id="Event Log" order="11" sideWeight="0.50053304" side_tool="true" weight="0.32936078" />
+      <window_info anchor="bottom" id="Messages" order="12" weight="0.32936078" />
+      <window_info anchor="bottom" id="Duplicate detector" order="13" weight="0.32936078" />
+      <window_info anchor="right" id="Commander" internal_type="SLIDING" order="0" type="SLIDING" weight="0.4" />
+      <window_info anchor="right" id="Ant Build" order="1" weight="0.25" />
+      <window_info anchor="right" content_ui="combo" id="Hierarchy" order="2" weight="0.25" />
+      <window_info anchor="right" id="Palette" order="3" />
+      <window_info anchor="right" id="Theme Preview" order="4" />
+      <window_info anchor="right" id="Maven" order="5" />
+      <window_info anchor="right" id="Capture Analysis" order="6" />
+      <window_info anchor="right" id="Palette&#9;" order="7" />
+      <window_info anchor="right" id="Database" order="8" />
+    </layout>
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="1" />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State>
+              <option name="RECENTLY_FILTERED_USER_GROUPS">
+                <collection />
+              </option>
+              <option name="RECENTLY_FILTERED_BRANCH_GROUPS">
+                <collection />
+              </option>
+              <option name="COLUMN_ORDER">
+                <list>
+                  <option value="0" />
+                  <option value="1" />
+                  <option value="2" />
+                  <option value="3" />
+                </list>
+              </option>
+            </State>
+          </value>
+        </entry>
+      </map>
+    </option>
+    <option name="RECENT_FILTERS">
+      <map>
+        <entry key="Branch">
+          <value>
+            <list />
+          </value>
+        </entry>
+        <entry key="User">
+          <value>
+            <list />
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="Changed dynamics of the lazy push to support piggybacking, and more" />
+    <MESSAGE value="In process of transforming the entire way of communication between layers, hope it doesn't break anything. Introduced TCP!" />
+    <MESSAGE value="Some interface changes, naming and organization, its WIP to get TCP to work, and to make the notification queue system work too" />
+    <MESSAGE value="XBot TCP mostly doen but not tested, still gonna do everything else of TCP" />
+    <MESSAGE value="XBot TCP mostly done but not tested, still gonna do everything else of TCP" />
+    <MESSAGE value="Nothing tested, but everything remodeled, a big big update.&#10;Should have done it in smaller increments but whateveeer" />
+    <MESSAGE value="Small bug fix on Plumbot instance creation" />
+    <MESSAGE value="Fixed bug where I was blocking the main Thread (App)" />
+    <MESSAGE value="Fixed bug where TCP layer wasn't accepting new connections (nothing happened obviously)" />
+    <MESSAGE value="Code is ugly.&#10;Fixed bug where I forgot to add OP_READ to newly accepted socket, and blocking to false." />
+    <MESSAGE value="Things about connections and channels have to be fixed. Later..." />
+    <MESSAGE value="Small rollback" />
+    <MESSAGE value="Broke everything, and don't know how to fix, but know I'm on the right track. I need to make sure the TCP connections are being opened and the upper layers (protocols) are aware of them." />
+    <MESSAGE value="A bit closer, but have to look more into the join/accept mechanism" />
+    <MESSAGE value="Think I found solution: exchange IDs on connection so that the upper layers don't have to know specific ports, but only the id of the peer" />
+    <MESSAGE value="On my way to implement that, just organized code a bit" />
+    <MESSAGE value="Almost worked, but some things are still bugged :(" />
+    <MESSAGE value="Added leave functionality. Gonna work on stabilizing network for Plumtree" />
+    <MESSAGE value="Introduced the Tree check for optimizations. I think if TCP works, this is done, and it's all bug fixing. Need to run tests still." />
+    <MESSAGE value="Huge remake of the XBot class. Divided the 4 &quot;states&quot; of the XBot layer into 4 classes, so their behaviour is easier to understand, predict and code." />
+    <MESSAGE value="Still remaking, still haven't tested anything" />
+    <MESSAGE value="More remake, on my way to make this a bit better I think, and easier to debug. Still left: waiting for and reacting to TCP connections" />
+    <MESSAGE value="A lot more stuff made, nothing tested, as usual... sorry, myself from the future" />
+    <MESSAGE value="I think this is finished. Tests have to be done. A lot of them, but I don't know if I will be able to in time. We'll see." />
+    <MESSAGE value="Started a whole new Refactor, trying to make everything simpler and the code more manageable" />
+    <option name="LAST_COMMIT_MESSAGE" value="Started a whole new Refactor, trying to make everything simpler and the code more manageable" />
+  </component>
+  <component name="editorHistoryManager">
+    <entry file="file://$PROJECT_DIR$/src/notifications/Notification.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="34">
+          <caret line="2" column="17" selection-start-line="2" selection-start-column="17" selection-end-line="2" selection-end-column="17" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/common/RandomChooser.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="357">
+          <caret line="36" column="10" selection-start-line="36" selection-start-column="10" selection-end-line="36" selection-end-column="10" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/protocol/xbot/XBotNode.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="9690">
+          <caret line="601" column="19" selection-start-line="601" selection-start-column="19" selection-end-line="601" selection-end-column="19" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/protocol/xbot/XBotInit.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="567">
+          <caret line="35" column="12" selection-start-line="35" selection-start-column="12" selection-end-line="35" selection-end-column="12" />
+          <folding>
+            <element signature="imports" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/protocol/xbot/XBotDisco.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="2331">
+          <caret line="121" column="44" selection-start-line="121" selection-start-column="44" selection-end-line="121" selection-end-column="44" />
+          <folding>
+            <element signature="imports" expanded="true" />
+            <element signature="e#3867#3868#0" expanded="true" />
+            <element signature="e#3915#3916#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/protocol/xbot/XBotSupportEdge.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="168">
+          <caret line="8" selection-start-line="8" selection-end-line="8" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/protocol/xbot/XBotOld.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="441">
+          <caret line="25" column="5" selection-start-line="25" selection-start-column="5" selection-end-line="25" selection-end-column="5" />
+          <folding>
+            <element signature="imports" expanded="true" />
+            <element signature="e#574#575#0" expanded="true" />
+            <element signature="e#602#603#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/protocol/xbot/XBotSupport.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="126">
+          <caret line="6" column="21" selection-start-line="6" selection-start-column="21" selection-end-line="6" selection-end-column="21" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/protocol/oracle/TimeCostOracle.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="189">
+          <caret line="23" column="35" selection-start-line="23" selection-start-column="35" selection-end-line="23" selection-end-column="35" />
+          <folding>
+            <element signature="e#1845#1846#0" expanded="true" />
+            <element signature="e#1882#1883#0" expanded="true" />
+            <element signature="method#notify#0;class#TimeCostOracle#0" />
+            <element signature="class#CostWithTTL#0;class#TimeCostOracle#0" />
+            <element signature="method#CostWithTTL#0;class#CostWithTTL#0;class#TimeCostOracle#0" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/protocol/PlumBotInstance.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="252">
+          <caret line="30" column="16" selection-start-line="30" selection-start-column="16" selection-end-line="30" selection-end-column="16" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/protocol/xbot/XBotCand.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="283">
+          <caret line="26" lean-forward="true" selection-start-line="26" selection-end-line="26" />
+          <folding>
+            <element signature="imports" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/message/plumtree/GraftMessage.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="357">
+          <caret line="17" column="26" selection-start-line="17" selection-start-column="26" selection-end-line="17" selection-end-column="26" />
+          <folding>
+            <element signature="imports" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/message/plumtree/RequestMessage.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="84">
+          <caret line="8" column="13" selection-start-line="8" selection-start-column="13" selection-end-line="8" selection-end-column="13" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/message/plumtree/PruneMessage.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="84">
+          <caret line="8" column="13" selection-start-line="8" selection-start-column="13" selection-end-line="8" selection-end-column="13" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/message/plumtree/IHaveMessage.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="84">
+          <caret line="7" column="13" selection-start-line="7" selection-start-column="13" selection-end-line="7" selection-end-column="13" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/refactor/message/JoinMessageMetadata.java" />
+    <entry file="file://$PROJECT_DIR$/src/message/Message.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="126">
+          <caret line="9" column="6" selection-start-line="9" selection-start-column="6" selection-end-line="9" selection-end-column="6" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/output/index.html" />
+    <entry file="file://$PROJECT_DIR$/src/network/NetworkInterface.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="198">
+          <caret line="19" column="9" selection-start-line="19" selection-start-column="9" selection-end-line="19" selection-end-column="9" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/refactor/xbot.java" />
+    <entry file="file://$PROJECT_DIR$/src/refactor/exception/NullMessageException.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="399">
+          <caret line="19" column="7" selection-start-line="19" selection-start-column="7" selection-end-line="19" selection-end-column="7" />
+          <folding>
+            <element signature="e#651#652#0" expanded="true" />
+            <element signature="e#681#682#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/refactor/utils/multithreading/PeriodicExecutor.java" />
+    <entry file="file://$PROJECT_DIR$/src/refactor/utils/Constants.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="63">
+          <caret line="3" column="105" selection-start-line="3" selection-start-column="105" selection-end-line="3" selection-end-column="105" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/refactor/l.java" />
+    <entry file="file://$PROJECT_DIR$/src/protocol/oracle/Oracle.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="84">
+          <caret line="9" column="17" selection-start-line="9" selection-start-column="17" selection-end-line="9" selection-end-column="17" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/message/plumtree/HopMessage.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="294">
+          <caret line="18" lean-forward="true" selection-start-line="18" selection-end-line="18" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/exceptions/CantResizeQueueException.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="42">
+          <caret line="2" column="13" selection-start-line="2" selection-start-column="13" selection-end-line="2" selection-end-column="13" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/network/PersistantNetwork.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="84">
+          <caret line="8" column="17" selection-start-line="8" selection-start-column="17" selection-end-line="8" selection-end-column="17" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/refactor/exception/InvalidMessageTypeException.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="294">
+          <caret line="14" column="4" lean-forward="true" selection-start-line="14" selection-start-column="4" selection-end-line="25" selection-end-column="5" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/network/Network.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="2247">
+          <caret line="107" column="18" selection-start-line="107" selection-start-column="18" selection-end-line="107" selection-end-column="18" />
+          <folding>
+            <element signature="imports" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/network/TCP.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-1855">
+          <caret line="182" column="50" selection-start-line="182" selection-start-column="50" selection-end-line="182" selection-end-column="50" />
+          <folding>
+            <element signature="imports" expanded="true" />
+            <element signature="method#TCP#1;class#TCP#0" />
+            <element signature="e#8322#8346#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/refactor/tests/package-info.java" />
+    <entry file="file://$PROJECT_DIR$/src/refactor/tests/l.java" />
+    <entry file="file://$PROJECT_DIR$/src/refactor/tests/unit/MessageMetadataUnitTest.java" />
+    <entry file="file://$PROJECT_DIR$/src/refactor/protocol/rhsd.java" />
+    <entry file="file://$PROJECT_DIR$/src/refactor/message/MessageMetadata.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1302">
+          <caret line="74" column="95" selection-start-line="74" selection-start-column="95" selection-end-line="74" selection-end-column="95" />
+          <folding>
+            <element signature="imports" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/refactor/protocol/MessageListener.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="126">
+          <caret line="6" column="33" selection-start-line="6" selection-start-column="33" selection-end-line="6" selection-end-column="33" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/refactor/exception/ConnectionNotEstablishedException.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="357">
+          <caret line="17" column="66" selection-start-line="17" selection-start-column="66" selection-end-line="17" selection-end-column="66" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/refactor/exception/MessageHasNoDestinationException.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state>
+          <caret column="27" selection-start-column="27" selection-end-column="27" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/refactor/exception/AlreadyConnectedException.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state>
+          <caret selection-end-line="26" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/refactor/exception/MessageTooLargeException.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state>
+          <caret selection-end-line="28" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/refactor/message/MessageDecoder.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="604">
+          <caret line="112" selection-start-line="112" selection-end-line="112" />
+          <folding>
+            <element signature="imports" expanded="true" />
+            <element signature="e#7740#7741#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/refactor/message/MessageWithSender.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="252">
+          <caret line="12" column="5" selection-start-line="12" selection-start-column="5" selection-end-line="12" selection-end-column="5" />
+          <folding>
+            <element signature="e#435#436#0" expanded="true" />
+            <element signature="e#464#465#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/refactor/message/MessageRouter.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="669">
+          <caret line="33" column="30" selection-start-line="33" selection-start-column="30" selection-end-line="33" selection-end-column="30" />
+          <folding>
+            <element signature="imports" expanded="true" />
+            <element signature="e#599#600#0" expanded="true" />
+            <element signature="e#628#629#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/refactor/message/Message.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="4218">
+          <caret line="224" column="46" selection-start-line="224" selection-start-column="46" selection-end-line="224" selection-end-column="46" />
+          <folding>
+            <element signature="imports" expanded="true" />
+            <element signature="e#5453#5454#0" expanded="true" />
+            <element signature="e#5484#5485#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/refactor/GlobalSettings.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-126">
+          <caret line="13" column="15" selection-start-line="13" selection-start-column="15" selection-end-line="13" selection-end-column="15" />
+          <folding>
+            <element signature="imports" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/refactor/protocol/Node.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="84">
+          <caret line="4" selection-start-line="4" selection-end-line="4" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/test/Application.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="84">
+          <caret line="4" column="17" selection-start-line="4" selection-start-column="17" selection-end-line="4" selection-end-column="17" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/refactor/protocol/oracle/Oracle.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="105">
+          <caret line="5" column="47" selection-start-line="5" selection-start-column="47" selection-end-line="5" selection-end-column="47" />
+          <folding>
+            <element signature="imports" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/refactor/network/TCP.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="667">
+          <caret line="58" column="53" selection-start-line="58" selection-start-column="53" selection-end-line="58" selection-end-column="53" />
+          <folding>
+            <element signature="imports" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/refactor/test/TCPMessageTest.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="294">
+          <caret line="14" column="63" selection-start-line="14" selection-start-column="63" selection-end-line="14" selection-end-column="63" />
+          <folding>
+            <element signature="imports" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+  </component>
+  <component name="masterDetails">
+    <states>
+      <state key="ArquillianSettingsConfigurable.UI">
+        <settings>
+          <splitter-proportions>
+            <option name="proportions">
+              <list>
+                <option value="0.2" />
+              </list>
+            </option>
+          </splitter-proportions>
+        </settings>
+      </state>
+      <state key="ArtifactsStructureConfigurable.UI">
+        <settings>
+          <artifact-editor />
+          <last-edited>plumbotprotocol:jar</last-edited>
+          <splitter-proportions>
+            <option name="proportions">
+              <list>
+                <option value="0.2" />
+                <option value="0.5" />
+              </list>
+            </option>
+          </splitter-proportions>
+        </settings>
+      </state>
+      <state key="FacetStructureConfigurable.UI">
+        <settings>
+          <last-edited>No facets are configured</last-edited>
+          <splitter-proportions>
+            <option name="proportions">
+              <list>
+                <option value="0.2" />
+              </list>
+            </option>
+          </splitter-proportions>
+        </settings>
+      </state>
+      <state key="GlobalLibrariesConfigurable.UI">
+        <settings>
+          <splitter-proportions>
+            <option name="proportions">
+              <list>
+                <option value="0.2" />
+              </list>
+            </option>
+          </splitter-proportions>
+        </settings>
+      </state>
+      <state key="JdkListConfigurable.UI">
+        <settings>
+          <last-edited>JDK11</last-edited>
+          <splitter-proportions>
+            <option name="proportions">
+              <list>
+                <option value="0.2" />
+              </list>
+            </option>
+          </splitter-proportions>
+        </settings>
+      </state>
+      <state key="ModuleStructureConfigurable.UI">
+        <settings>
+          <last-edited>plumbotprotocol</last-edited>
+          <splitter-proportions>
+            <option name="proportions">
+              <list>
+                <option value="0.2" />
+              </list>
+            </option>
+          </splitter-proportions>
+        </settings>
+      </state>
+      <state key="ProjectJDKs.UI">
+        <settings>
+          <last-edited>JDK11</last-edited>
+          <splitter-proportions>
+            <option name="proportions">
+              <list>
+                <option value="0.2" />
+              </list>
+            </option>
+          </splitter-proportions>
+        </settings>
+      </state>
+      <state key="ProjectLibrariesConfigurable.UI">
+        <settings>
+          <splitter-proportions>
+            <option name="proportions">
+              <list>
+                <option value="0.2" />
+              </list>
+            </option>
+          </splitter-proportions>
+        </settings>
+      </state>
+    </states>
+  </component>
+</project>
