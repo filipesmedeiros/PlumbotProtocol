@@ -16,8 +16,10 @@ import java.net.StandardSocketOptions;
 import java.nio.ByteBuffer;
 import java.nio.channels.*;
 import java.nio.channels.AlreadyConnectedException;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
 // TODO Javadoc this class
@@ -31,20 +33,39 @@ public class TCP {
     private Map<SocketAddress, SocketChannel> connections;
 
     private BlockingQueue<Message> messagesToSend;
-
-    public TCP(InetSocketAddress serverAddress)
-            throws IOException {
-        initServerSocketChannel(serverAddress);
+    
+    public static TCP tcp;
+    
+    public static final TCP getTCP()
+    		throws SingletonIsNullException {
+    	if(tcp == null)
+    		throw new SingletonIsNullException(TCP.class.getName());
+    	return tcp;
+    }
+    
+    public static void initTCP()
+    		throws IOException {
+    	if(tcp != null)
+    		return;
+    	tcp = new TCP();
     }
 
-    private void initServerSocketChannel(InetSocketAddress serverAddress)
+    private TCP()
+            throws IOException {
+    	connections = new HashMap<>();
+    	messagesToSend = new ArrayBlockingQueue<>(10);
+        initServerSocketChannel();
+    }
+
+    private void initServerSocketChannel()
             throws IOException {
         serverSocketChannel = ServerSocketChannel.open();
-        serverSocketChannel.bind(serverAddress);
+        serverSocketChannel.bind(GlobalSettings.localAddress());
         serverSocketChannel.configureBlocking(false);
         serverSocketChannel.register(selector, SelectionKey.OP_ACCEPT);
 
         GlobalSettings.FIXED_THREAD_POOL.submit(this::listenToSelector);
+        GlobalSettings.FIXED_THREAD_POOL.submit(this::sendMessages);
     }
 
     private void accept()
@@ -84,12 +105,13 @@ public class TCP {
         // If exactly 4 bytes couldn't be read, something went wrong
         if(socketChannel.read(totalSizeBuffer) != 4)
             throw new IOException();
-        ByteBuffer messageBuffer = ByteBuffer.allocate(totalSizeBuffer.flip().getInt());
+        ByteBuffer messageBuffer = ByteBuffer.allocate(((ByteBuffer)totalSizeBuffer.flip()).getInt());
         socketChannel.read(messageBuffer);
         try {
             MessageWithSender messageWithSender = (MessageWithSender) MessageDecoder.decodeMessage(
                     messageBuffer, true, (InetSocketAddress) sender);
-            MessageRouter.getRouter().deliverMessage(messageWithSender);
+				GlobalSettings.FLEX_THREAD_POOL.submit(() -> 
+						MessageRouter.getRouter().deliverMessage(messageWithSender));
         } catch(NullMessageException | InvalidMessageTypeException e) {
             // TODO
             System.exit(1);
@@ -159,7 +181,7 @@ public class TCP {
                 throw new AlreadyConnectedException();
 
             channel = SocketChannel.open();
-            channel.bind(GlobalSettings.LOCAL_ADDRESS);
+            channel.bind(GlobalSettings.localAddress());
             channel.configureBlocking(false);
             channel.setOption(StandardSocketOptions.SO_KEEPALIVE, true);
             // This is a non-blocking connect, and has to be, because this is the same thread that is reading
@@ -169,5 +191,17 @@ public class TCP {
             // TODO
             System.exit(1);
         }
+    }
+    
+    public void sendMessage(Message message)
+    		throws IOException {
+    	if(message.getDestination() == null)
+    		throw new IOException();
+    	try {
+			messagesToSend.put(message);
+		} catch (InterruptedException e) {
+			// TODO
+			System.exit(1);
+		}
     }
 }

@@ -20,21 +20,23 @@ import java.nio.ByteBuffer;
  * @since 20.06.2019
  */
 public class Message {
+	
+	public final static String SENDER_LABEL = "snd";
 
     /**
      * Helper exception message for when a metadata entry's provided label is empty or {@code null}
      */
-    static final String NULL_ARGUMENT_LABEL = "Null or empty label not allowed";
+    public static final String NULL_ARGUMENT_LABEL = "Null or empty label not allowed";
 
     /**
      * Helper exception message for when a metadata entry's provided label is
      */
-    static final String BAD_ARGUMENT_LABEL_LENGTH = "Label length can't be greater than " + GlobalSettings.MAX_LABEL_SIZE;
+    public static final String BAD_ARGUMENT_LABEL_LENGTH = "Label length can't be greater than " + GlobalSettings.MAX_LABEL_SIZE;
 
     /**
      * Helper exception message for when a metadata entry's provided value is empty or {@code null}
      */
-    static final String NULL_ARGUMENT_DATA = "Null data not allowed";
+    public static final String NULL_ARGUMENT_DATA = "Null data not allowed";
 
     /**
      * Helper exception message for when the provided destination is empty, is {@code null} or is unresolved
@@ -113,7 +115,7 @@ public class Message {
         }
 
         // The Buffer has to be flipped to be read correctly elsewhere
-        return messageBuffer.flip();
+        return (ByteBuffer) messageBuffer.flip();
     }
 
     /**

@@ -1,8 +1,0 @@
-<component name="ArtifactManager">
-  <artifact type="jar" name="plumbotprotocol:jar">
-    <output-path>$PROJECT_DIR$/output/artifacts/plumbotprotocol_jar</output-path>
-    <root id="archive" name="plumbotprotocol.jar">
-      <element id="module-output" name="plumbotprotocol" />
-    </root>
-  </artifact>
-</component>

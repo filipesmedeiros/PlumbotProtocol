@@ -6,6 +6,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import refactor.exception.IllegalSettingChangeException;
+
 /**
  * This interface just stores important settings that are used throughout the whole protocol implementation
  * It serves as a kind of utility to avoid inconsistencies
@@ -18,15 +20,58 @@ public class GlobalSettings {
 
     /**
      * This field stores the local address of the local node, so it can be accessed throughout the whole program.
-     * It can be set and got at will, but is assumed to only be set once, at the beginning of execution
+     * It can be set and got at will, but is assumed to only be set once, at the beginning of execution. It is
+     * assumed also to be an address that all {@link Node}s can see and connect to
      */
-    public static InetSocketAddress LOCAL_ADDRESS;
+    private static InetSocketAddress LOCAL_ADDRESS;
+    
+    /**
+     * This field if used as a flag representing that the execution of the protocol in this {@link Node} has
+     * started, so some setting cannot be changed
+     */
+    private static boolean SETTINGS_LOCKED = false;
+    
+    /**
+     * This method is called when the execution of the protocol starts, and it locks certain settings from being
+     * changed from there on out
+     */
+    public static final void lockSettings() {
+    	SETTINGS_LOCKED = true;
+    }
+    
+    /**
+     * This method simply returns the {@code boolean} field {@link SETTINGS_LOCKED}
+     * @return The boolean field {@link SETTINGS_LOCKED}, which indicates if certain settings can be changed
+     */
+    public static final boolean areSettingsLocked() {
+    	return SETTINGS_LOCKED;
+    }
+    
+    /**
+     * Simple method to get the previously set local address.
+     * @return The local address of this {@link Node}
+     */
+    public static final InetSocketAddress localAddress() {
+    	return LOCAL_ADDRESS;
+    }
+    
+    /**
+     * Simple method to set the local address of this {@link Node}
+     * @param localAddress The local address to define as the address of the local {@link Node}
+     */
+    public static final void setLocalAddress(InetSocketAddress localAddress)
+    		throws IllegalSettingChangeException {
+    	if(SETTINGS_LOCKED)
+    		throw new IllegalSettingChangeException("Local Address");
+    	LOCAL_ADDRESS = localAddress;
+    }
 
     /**
      * Maximum time, in milliseconds, a thread can block in order to try to connect a node to another one. After this
-     * time, an exception will be thrown and the connection between the nodes will be assumed to have failed
+     * time, an exception will be thrown and the connection between the nodes will be assumed to have failed. Changing
+     * this setting mid-execution is permitted but discouraged and can lead to incorrect behaviors and errors
      */
-    public static final int CONNECT_TIMEOUT = 10 * 1000;
+    public static int CONNECT_TIMEOUT = 10 * 1000;
 
     /**
      * This is the first global Thread pool of the program. It is responsible for flexible tasks, such as sending pings
@@ -34,7 +79,7 @@ public class GlobalSettings {
      * same Thread pools but this can be changed in the future, if needed
      */
     public static final ExecutorService FLEX_THREAD_POOL = Executors.newCachedThreadPool();
-
+    
     /**
      * This is the second global Thread pool. It is responsible for the few fixed Threads the program has, like the
      * Threads of the {@link refactor.network.TCP} layer (receiving and sending), etc. The number of Threads is fixed
@@ -43,24 +88,26 @@ public class GlobalSettings {
     public static final ExecutorService FIXED_THREAD_POOL = Executors.newFixedThreadPool(3);
 
     /**
-     * Keeps information on what the current implementation charset is, for encoding messages
+     * Keeps information on what the current implementation charset is, for encoding messages. Changing this
+     * setting mid-execution is permitted but discouraged and can lead to incorrect behaviors and errors
      */
-    public static final Charset CHARSET = StandardCharsets.UTF_16;
+    public static Charset CHARSET = StandardCharsets.UTF_16;
 
     /**
      * Maximum size of a message, including metadata and data, in bytes.
      * Messages can have metadata of varying lengths, and most of the time, they will either have
      * a lot of metadata fields or a lot of data, but most likely never both, so having only a maximum
      * size for the whole message seems to be the most practical solution, or else resources would be wasted.
-     * The protocol will read messages in blocks (at max) of this size
+     * The protocol will read messages in blocks (at max) of this size. Changing this setting mid-execution
+     * is permitted but discouraged and can lead to incorrect behaviors and errors
      */
-    public static final int MAX_MESSAGE_SIZE = 1024 * 400;
+    public static int MAX_MESSAGE_SIZE = 1024 * 400;
 
     /**
      * Maximum size of the labels of the entries of metadata, in bytes. This is to somewhat standardize serialization
-     * across implementations
+     * across implementations. Changing this setting mid-execution is permitted but discouraged
      */
-    public static final int MAX_LABEL_SIZE = 32;
+    public static int MAX_LABEL_SIZE = 32;
 
     /**
      * Define what level of debugging logs is wanted for each run of the program.
@@ -69,5 +116,14 @@ public class GlobalSettings {
      * {@code 2} means all logs that can be potentially harmful, but may be OK
      * {@code 3} means all logs the program currently has
      */
-    public static final byte DEBUGGING_LEVEL = 2;
+    public static byte DEBUGGING_LEVEL = 2;
+    
+    /**
+     * Utility method for the protocol to check, before execution, that all settings set by the overlaying application
+     * are correct and can the program can run properly
+     */
+    public static boolean isValid() {
+    	return LOCAL_ADDRESS != null && MAX_MESSAGE_SIZE > 0
+    			&& MAX_LABEL_SIZE > 0 && CONNECT_TIMEOUT > 0;
+    }
 }
