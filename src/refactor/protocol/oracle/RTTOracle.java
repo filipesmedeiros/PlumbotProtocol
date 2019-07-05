@@ -9,9 +9,9 @@ import refactor.exception.SingletonIsNullException;
 import refactor.message.Message;
 import refactor.message.MessageDecoder.MessageType;
 import refactor.network.TCP;
-import refactor.protocol.AbstractMessageListener;
+import refactor.utils.AbstractNotificationListener;
 
-public class RTTOracle extends AbstractMessageListener implements AsyncOracle {
+public class RTTOracle extends AbstractNotificationListener implements AsyncOracle {
 	
 	private Map<InetSocketAddress, Long> sendTimes;
 	
@@ -34,10 +34,7 @@ public class RTTOracle extends AbstractMessageListener implements AsyncOracle {
 		try {
 			TCP.getTCP().sendMessage(pingMessage);
 			sendTimes.put(node, System.currentTimeMillis());
-		} catch (IOException e) {
-			// TODO
-			System.exit(1);
-		} catch (SingletonIsNullException e) {
+		} catch (IOException | SingletonIsNullException e) {
 			// TODO
 			System.exit(1);
 		}

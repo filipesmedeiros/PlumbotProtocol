@@ -2,7 +2,7 @@ package refactor.message;
 
 import refactor.GlobalSettings;
 import refactor.exception.SingletonIsNullException;
-import refactor.protocol.MessageListener;
+import refactor.utils.NotificationListener;
 import refactor.utils.BBInetSocketAddress;
 
 import java.net.InetSocketAddress;
@@ -19,7 +19,7 @@ public class MessageRouter {
 
 	private BlockingQueue<Message> messagesToDeliver;
 
-	private Map<MessageRoutingKey, MessageListener> routes;
+	private Map<MessageRoutingKey, NotificationListener> routes;
 
 	private static final MessageRouter router = new MessageRouter();
 
@@ -69,9 +69,9 @@ public class MessageRouter {
 		}
 	}
 
-	public void addRoute(MessageListener messageListener,
-			MessageDecoder.MessageType messageType, InetSocketAddress sender) {
-		routes.put(new MessageRoutingKey(messageType, sender), messageListener);
+	public void addRoute(NotificationListener notificationListener,
+                         MessageDecoder.MessageType messageType, InetSocketAddress sender) {
+		routes.put(new MessageRoutingKey(messageType, sender), notificationListener);
 	}
 
 	private static class MessageRoutingKey {

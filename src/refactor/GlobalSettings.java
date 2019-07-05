@@ -3,6 +3,7 @@ package refactor;
 import java.net.InetSocketAddress;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.util.Timer;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -21,13 +22,13 @@ public class GlobalSettings {
     /**
      * This field stores the local address of the local node, so it can be accessed throughout the whole program.
      * It can be set and got at will, but is assumed to only be set once, at the beginning of execution. It is
-     * assumed also to be an address that all {@link Node}s can see and connect to
+     * assumed also to be an address that all {@link refactor.protocol.Node}s can see and connect to
      */
     private static InetSocketAddress LOCAL_ADDRESS;
     
     /**
-     * This field if used as a flag representing that the execution of the protocol in this {@link Node} has
-     * started, so some setting cannot be changed
+     * This field if used as a flag representing that the execution of the protocol in this
+     * {@link refactor.protocol.Node} has started, so some setting cannot be changed
      */
     private static boolean SETTINGS_LOCKED = false;
     
@@ -35,31 +36,33 @@ public class GlobalSettings {
      * This method is called when the execution of the protocol starts, and it locks certain settings from being
      * changed from there on out
      */
-    public static final void lockSettings() {
+    public static void lockSettings() {
     	SETTINGS_LOCKED = true;
     }
     
     /**
-     * This method simply returns the {@code boolean} field {@link SETTINGS_LOCKED}
-     * @return The boolean field {@link SETTINGS_LOCKED}, which indicates if certain settings can be changed
+     * This method simply returns the {@code boolean} field {@code SETTINGS_LOCKED}
+     * @return The boolean field {@code SETTINGS_LOCKED}, which indicates if certain settings can be changed
      */
-    public static final boolean areSettingsLocked() {
+    public static boolean areSettingsLocked() {
     	return SETTINGS_LOCKED;
     }
     
     /**
      * Simple method to get the previously set local address.
-     * @return The local address of this {@link Node}
+     * @return The local address of this {@link refactor.protocol.Node}
      */
-    public static final InetSocketAddress localAddress() {
+    public static InetSocketAddress localAddress() {
     	return LOCAL_ADDRESS;
     }
     
     /**
-     * Simple method to set the local address of this {@link Node}
-     * @param localAddress The local address to define as the address of the local {@link Node}
+     * Simple method to set the local address of this {@link refactor.protocol.Node}
+     * @param localAddress The local address to define as the address of the local {@link refactor.protocol.Node}
+     * @throws IllegalSettingChangeException If the program or the overlaying app try to change this setting after
+     * execution has begun
      */
-    public static final void setLocalAddress(InetSocketAddress localAddress)
+    public static void setLocalAddress(InetSocketAddress localAddress)
     		throws IllegalSettingChangeException {
     	if(SETTINGS_LOCKED)
     		throw new IllegalSettingChangeException("Local Address");
@@ -81,11 +84,18 @@ public class GlobalSettings {
     public static final ExecutorService FLEX_THREAD_POOL = Executors.newCachedThreadPool();
     
     /**
-     * This is the second global Thread pool. It is responsible for the few fixed Threads the program has, like the
-     * Threads of the {@link refactor.network.TCP} layer (receiving and sending), etc. The number of Threads is fixed
-     * and depends on the implementation
+     * This is the second global {@link Thread} pool. It is responsible for the few fixed Threads the program has, like
+     * the Threads of the {@link refactor.network.TCP} layer (receiving and sending), etc. The number of {@link Thread}s
+     * is fixed and depends on the implementation
      */
     public static final ExecutorService FIXED_THREAD_POOL = Executors.newFixedThreadPool(3);
+
+    /**
+     * This is the single {@link Timer} used to manage all the periodic tasks the protocol has to execute. To use it,
+     * the program adds {@link java.util.TimerTask}s to this timer. They should complete quickly, as to not block other
+     * tasks in the timer
+     */
+    public static final Timer TIMER = new Timer();
 
     /**
      * Keeps information on what the current implementation charset is, for encoding messages. Changing this
@@ -121,6 +131,7 @@ public class GlobalSettings {
     /**
      * Utility method for the protocol to check, before execution, that all settings set by the overlaying application
      * are correct and can the program can run properly
+     * @return {@code True} if the settings are valid (ready for execution)
      */
     public static boolean isValid() {
     	return LOCAL_ADDRESS != null && MAX_MESSAGE_SIZE > 0

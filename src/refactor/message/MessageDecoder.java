@@ -85,31 +85,20 @@ public class MessageDecoder {
 
     /**
      * This method is used to decode a message that is encoded in a ByteBuffer into a {@link Message} object.
-     * It can also come in the form of a {@link MessageWithSender} object. It is dependant on the way the message was
-     * encoded, and in the future, would like to make this encoding process's settings into a readable object, as to
-     * make the program more consistent. Note that, while receiving, the first 4 bytes of the buffer are an {@code int}
-     * indicating the total size of the {@link Message}, however, this is not accounted for here because it is assumed
-     * that those 4 bytes are not included in this passed ByteBuffer
+     * It is dependant on the way the message was encoded, and in the future, would like to make this encoding process's
+     * settings into a readable object, as to make the program more consistent. Note that, while receiving, the first 4
+     * bytes of the buffer are an {@code int} indicating the total size of the {@link Message}, however, this is not
+     * accounted for here because it is assumed that those 4 bytes are not included in this passed ByteBuffer
      * @param encodedMessage The ByteBuffer containing all the encoded information about the {@link Message}
-     * @param withSender A {@code boolean} indicating if the returned {@link Message} should be of type
-     * {@link MessageWithSender} or not
-     * @param sender The {@link InetSocketAddress} of the sender, only used if {@code withSender} is {@code true}
      * @return The {@link Message} object, with all the decoded information
      * @throws NullMessageException If the {@link Message} is either {@code null} or empty
      * @throws InvalidMessageTypeException If the type of the {@link Message} (the first byte) is not defined in
      * {@link MessageType}
      */
-    public static Message decodeMessage(ByteBuffer encodedMessage, boolean withSender, InetSocketAddress sender)
+    public static Message decodeMessage(ByteBuffer encodedMessage)
             throws NullMessageException, InvalidMessageTypeException {
         // Creating the Message which will be return in the end
-        Message message;
-        if(!withSender)
-            message = new Message(decodeMessageType(encodedMessage));
-        else {
-            if(sender == null)
-                throw new IllegalArgumentException();
-            message = new MessageWithSender(decodeMessageType(encodedMessage), sender);
-        }
+        Message message = new Message(decodeMessageType(encodedMessage));
 
         // Advancing the Buffer to the second byte (first is MessageType)
         encodedMessage.get();

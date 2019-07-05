@@ -1,4 +1,4 @@
-package refactor.protocol;
+package refactor.utils;
 
 import java.net.InetSocketAddress;
 
@@ -6,7 +6,7 @@ import refactor.exception.SingletonIsNullException;
 import refactor.message.MessageRouter;
 import refactor.message.MessageDecoder.MessageType;
 
-public abstract class AbstractMessageListener implements MessageListener {
+public abstract class AbstractNotificationListener implements NotificationListener {
 	
 	@Override
 	public void listenToMessage(MessageType messageType, InetSocketAddress sender) {

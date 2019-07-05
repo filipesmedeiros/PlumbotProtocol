@@ -1,6 +1,8 @@
 package refactor.protocol;
 
-public interface Node extends MessageListener {
+import refactor.utils.NotificationListener;
 
+public interface Node extends NotificationListener {
 
+    void handleNotifications();
 }

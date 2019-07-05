@@ -5,7 +5,6 @@ import refactor.exception.*;
 import refactor.message.Message;
 import refactor.message.MessageDecoder;
 import refactor.message.MessageRouter;
-import refactor.message.MessageWithSender;
 import refactor.utils.Constants;
 
 import java.io.IOException;
@@ -36,7 +35,7 @@ public class TCP {
     
     public static TCP tcp;
     
-    public static final TCP getTCP()
+    public static TCP getTCP()
     		throws SingletonIsNullException {
     	if(tcp == null)
     		throw new SingletonIsNullException(TCP.class.getName());
@@ -59,6 +58,7 @@ public class TCP {
 
     private void initServerSocketChannel()
             throws IOException {
+        selector = Selector.open();
         serverSocketChannel = ServerSocketChannel.open();
         serverSocketChannel.bind(GlobalSettings.localAddress());
         serverSocketChannel.configureBlocking(false);
@@ -105,13 +105,12 @@ public class TCP {
         // If exactly 4 bytes couldn't be read, something went wrong
         if(socketChannel.read(totalSizeBuffer) != 4)
             throw new IOException();
-        ByteBuffer messageBuffer = ByteBuffer.allocate(((ByteBuffer)totalSizeBuffer.flip()).getInt());
+        ByteBuffer messageBuffer = ByteBuffer.allocate(totalSizeBuffer.flip().getInt());
         socketChannel.read(messageBuffer);
         try {
-            MessageWithSender messageWithSender = (MessageWithSender) MessageDecoder.decodeMessage(
-                    messageBuffer, true, (InetSocketAddress) sender);
+            Message message = MessageDecoder.decodeMessage(messageBuffer);
 				GlobalSettings.FLEX_THREAD_POOL.submit(() -> 
-						MessageRouter.getRouter().deliverMessage(messageWithSender));
+						MessageRouter.getRouter().deliverMessage(message));
         } catch(NullMessageException | InvalidMessageTypeException e) {
             // TODO
             System.exit(1);

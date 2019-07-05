@@ -11,7 +11,7 @@ public class BBInetSocketAddress {
 	public static final String MALFORMED_BUFFER = "The ByteBuffer doesn't contain correct information about"
 			+ "a TCP IP address";
 	
-	public static final InetSocketAddress fromByteBuffer(ByteBuffer buffer)
+	public static InetSocketAddress fromByteBuffer(ByteBuffer buffer)
 			throws UnknownHostException {
 		if(buffer.capacity() != 6)
 			throw new IllegalArgumentException(MALFORMED_BUFFER);
