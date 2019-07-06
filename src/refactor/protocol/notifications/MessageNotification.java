@@ -1,4 +1,4 @@
-package refactor.utils;
+package refactor.protocol.notifications;
 
 import refactor.message.Message;
 

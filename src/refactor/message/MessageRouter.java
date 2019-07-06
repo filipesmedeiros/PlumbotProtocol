@@ -2,7 +2,8 @@ package refactor.message;
 
 import refactor.GlobalSettings;
 import refactor.exception.SingletonIsNullException;
-import refactor.utils.NotificationListener;
+import refactor.protocol.notifications.MessageNotification;
+import refactor.protocol.notifications.Notifiable;
 import refactor.utils.BBInetSocketAddress;
 
 import java.net.InetSocketAddress;
@@ -19,7 +20,7 @@ public class MessageRouter {
 
 	private BlockingQueue<Message> messagesToDeliver;
 
-	private Map<MessageRoutingKey, NotificationListener> routes;
+	private Map<MessageRoutingKey, Notifiable> routes;
 
 	private static final MessageRouter router = new MessageRouter();
 
@@ -37,13 +38,16 @@ public class MessageRouter {
 		GlobalSettings.FIXED_THREAD_POOL.submit(this::routeMessages);
 	}
 
+
+	// TODO -------------------------^^^^^^^^^^^^^^^^^^
+
 	private void routeMessages() {
 		try {
 			Message message = messagesToDeliver.take();
 			MessageRoutingKey mrk = MessageRoutingKey.fromMessage(message);
 			new Thread(() -> {
 				try {
-					routes.get(mrk).notify(message);
+					routes.get(mrk).notify(new MessageNotification(message));
 				} catch (IllegalArgumentException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
@@ -69,9 +73,9 @@ public class MessageRouter {
 		}
 	}
 
-	public void addRoute(NotificationListener notificationListener,
+	public void addRoute(Notifiable notifiable,
                          MessageDecoder.MessageType messageType, InetSocketAddress sender) {
-		routes.put(new MessageRoutingKey(messageType, sender), notificationListener);
+		routes.put(new MessageRoutingKey(messageType, sender), notifiable);
 	}
 
 	private static class MessageRoutingKey {

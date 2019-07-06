@@ -5,7 +5,6 @@ import refactor.exception.*;
 import refactor.message.Message;
 import refactor.message.MessageDecoder;
 import refactor.message.MessageRouter;
-import refactor.utils.Constants;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -33,7 +32,7 @@ public class TCP {
 
     private BlockingQueue<Message> messagesToSend;
     
-    public static TCP tcp;
+    public static TCP tcp = new TCP();
     
     public static TCP getTCP()
     		throws SingletonIsNullException {
@@ -41,19 +40,16 @@ public class TCP {
     		throw new SingletonIsNullException(TCP.class.getName());
     	return tcp;
     }
-    
-    public static void initTCP()
-    		throws IOException {
-    	if(tcp != null)
-    		return;
-    	tcp = new TCP();
-    }
 
-    private TCP()
-            throws IOException {
+    private TCP() {
     	connections = new HashMap<>();
     	messagesToSend = new ArrayBlockingQueue<>(10);
-        initServerSocketChannel();
+    	try {
+            initServerSocketChannel();
+        } catch(IOException ioe) {
+    	    // TODO
+            System.exit(1);
+        }
     }
 
     private void initServerSocketChannel()
@@ -101,7 +97,7 @@ public class TCP {
         SocketAddress sender = socketChannel.getRemoteAddress();
         if(!(sender instanceof InetSocketAddress))
             throw new SocketException();
-        ByteBuffer totalSizeBuffer = ByteBuffer.allocate(Constants.SIZE_OF_INT);
+        ByteBuffer totalSizeBuffer = ByteBuffer.allocate(Integer.BYTES);
         // If exactly 4 bytes couldn't be read, something went wrong
         if(socketChannel.read(totalSizeBuffer) != 4)
             throw new IOException();
@@ -158,7 +154,7 @@ public class TCP {
                     throw new ConnectionNotEstablishedException();
                 ByteBuffer messageBuffer = messageToSend.encode();
                 // First send the total size of the Message, so the receiving Node's TCP layer knows how much to read
-                ByteBuffer totalSizeBuffer = ByteBuffer.allocate(Constants.SIZE_OF_INT);
+                ByteBuffer totalSizeBuffer = ByteBuffer.allocate(Integer.BYTES);
                 totalSizeBuffer.putInt(0, messageBuffer.capacity());
                 socketChannel.write(totalSizeBuffer);
                 // Then send the Message itself

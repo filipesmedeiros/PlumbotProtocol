@@ -1,10 +1,7 @@
 package refactor.message;
 
 import refactor.GlobalSettings;
-import refactor.exception.InvalidMessageTypeException;
 import refactor.exception.MessageTooLargeException;
-import refactor.protocol.Node;
-import refactor.utils.Constants;
 
 import java.net.InetSocketAddress;
 import java.nio.Buffer;
@@ -72,13 +69,22 @@ public class Message {
     }
 
     /**
+     * Convenience method to easily add a sender to this message
+     * @return This message
+     */
+    public Message withSender() {
+        addMetadataEntry(SENDER_LABEL, GlobalSettings.localAddressBytes());
+        return this;
+    }
+
+    /**
      * Size of this {@link Message} in bytes. Includes: type, number of metadata entries for decoding,
      * the metadata entries, and the data present (if any), plus its size in bytes
      * @return The size of this {@link Message} in bytes
      */
     public int sizeInBytes() {
-        return Constants.SIZE_OF_BYTE + Constants.SIZE_OF_SHORT +
-                metadata.sizeInBytes() + (data != null ? (Constants.SIZE_OF_INT + data.capacity()) : 0);
+        return Byte.BYTES + Short.BYTES +
+                metadata.sizeInBytes() + (data != null ? (Integer.BYTES + data.capacity()) : 0);
     }
 
     /**
@@ -153,19 +159,19 @@ public class Message {
     /**
      * Adds a new metadata entry to this {@link Message}'s metadata, with a given label and value
      * @param label The label to give to the metadata entry
-     * @param data The value of the new metadata entry
+     * @param value The value of the new metadata entry
      * @throws IllegalArgumentException If either the label or the data don't meet the standard requirements
      * (which means one of them is {@code null} or empty of the label's length is incorrect
      */
-    public void addMetadataEntry(String label, ByteBuffer data)
+    public void addMetadataEntry(String label, ByteBuffer value)
             throws IllegalArgumentException {
         if(label == null || label.length() == 0)
             throw new IllegalArgumentException(NULL_ARGUMENT_LABEL);
-        if(data == null || data.capacity() == 0)
+        if(value == null || value.capacity() == 0)
             throw new IllegalArgumentException(NULL_ARGUMENT_DATA);
 
         // This method throws the exception when the label's length is incorrect
-        metadata.addMetadata(label, data);
+        metadata.addMetadata(label, value);
     }
 
     /**

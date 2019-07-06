@@ -1,8 +1,6 @@
 package refactor.message;
 
 import refactor.GlobalSettings;
-import refactor.exception.InvalidMessageTypeException;
-import refactor.utils.Constants;
 
 import java.nio.ByteBuffer;
 import java.util.HashMap;
@@ -48,7 +46,7 @@ public class MessageMetadata {
             throw new IllegalArgumentException(Message.BAD_ARGUMENT_LABEL_LENGTH);
 
         metadata.put(labelAsBytes, value);
-        sizeInBytes += Constants.SIZE_OF_BYTE + Constants.SIZE_OF_SHORT + labelAsBytes.capacity() + value.capacity();
+        sizeInBytes += Byte.BYTES + Short.BYTES + labelAsBytes.capacity() + value.capacity();
     }
 
     public int sizeInBytes() {

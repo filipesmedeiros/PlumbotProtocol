@@ -1,6 +1,7 @@
 package refactor;
 
 import java.net.InetSocketAddress;
+import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Timer;
@@ -8,6 +9,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import refactor.exception.IllegalSettingChangeException;
+import refactor.utils.BBInetSocketAddress;
 
 /**
  * This interface just stores important settings that are used throughout the whole protocol implementation
@@ -25,7 +27,12 @@ public class GlobalSettings {
      * assumed also to be an address that all {@link refactor.protocol.Node}s can see and connect to
      */
     private static InetSocketAddress LOCAL_ADDRESS;
-    
+
+    /**
+     * Same as the local address field, but stored as a {@link ByteBuffer} for convenience purposes
+     */
+    private static ByteBuffer LOCAL_ADDRESS_BYTES;
+
     /**
      * This field if used as a flag representing that the execution of the protocol in this
      * {@link refactor.protocol.Node} has started, so some setting cannot be changed
@@ -35,9 +42,14 @@ public class GlobalSettings {
     /**
      * This method is called when the execution of the protocol starts, and it locks certain settings from being
      * changed from there on out
+     * @throws IllegalSettingChangeException If the protocol or the app try to lock the settings, but they are invalid
      */
-    public static void lockSettings() {
+    public static void lockSettings()
+            throws IllegalSettingChangeException {
+        if(!isValid())
+            throw new IllegalSettingChangeException("Can't lock invalid settings.");
     	SETTINGS_LOCKED = true;
+    	LOCAL_ADDRESS_BYTES = BBInetSocketAddress.localToByteBuffer();
     }
     
     /**
@@ -54,6 +66,14 @@ public class GlobalSettings {
      */
     public static InetSocketAddress localAddress() {
     	return LOCAL_ADDRESS;
+    }
+
+    /**
+     * Simple method to get the previously set local address, as a {@link ByteBuffer}.
+     * @return The local address of this {@link refactor.protocol.Node}, in the form of a {@link ByteBuffer}
+     */
+    public static ByteBuffer localAddressBytes() {
+        return LOCAL_ADDRESS_BYTES;
     }
     
     /**

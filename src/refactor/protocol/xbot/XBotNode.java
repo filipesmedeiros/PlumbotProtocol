@@ -2,17 +2,15 @@ package refactor.protocol.xbot;
 
 import java.net.InetSocketAddress;
 import java.util.TimerTask;
-import java.util.concurrent.BlockingQueue;
 
 import refactor.GlobalSettings;
 import refactor.message.Message;
-import refactor.utils.AbstractNotificationListener;
+import refactor.protocol.AbstractNode;
+import refactor.protocol.notifications.Notification;
+import refactor.protocol.notifications.TimerNotification;
+import refactor.utils.*;
 import refactor.protocol.Node;
 import refactor.protocol.oracle.AsyncOracle;
-import refactor.utils.MessageNotification;
-import refactor.utils.RandomList;
-import refactor.utils.Notification;
-import refactor.utils.TimerNotification;
 
 /**
  * To know more about the XBot protocol, read http://asc.di.fct.unl.pt/~jleitao/pdf/srds09-leitao.pdf
@@ -21,7 +19,7 @@ import refactor.utils.TimerNotification;
  * @version 1.0
  * @since 27.06.2019
  */
-public class XBotNode extends AbstractNotificationListener implements Node{
+public class XBotNode extends AbstractNode {
 
 	/**
 	 * This active view stores {@link Node}s with which the local {@link Node} communicates directly,
@@ -41,14 +39,23 @@ public class XBotNode extends AbstractNotificationListener implements Node{
 
 	private AsyncOracle oracle;
 
-	private BlockingQueue<Notification> notifications;
+	private static XBotNode xBotNode = new XBotNode();
 
-	public XBotNode() {
+	public static XBotNode xBotNode() {
+		return xBotNode;
+	}
+
+	private XBotNode() {
+		this(10);
+	}
+
+	private XBotNode(int initialCapacity) {
+		super(initialCapacity);
 		activeView = new RandomList<>();
 		passiveView = new RandomList<>();
 		currentRounds = new XBotRoundPool();
 
-		GlobalSettings.FIXED_THREAD_POOL.submit(this::handleNotifications);
+		GlobalSettings.FIXED_THREAD_POOL.submit(this::takeNotification);
 
 		TimerTask optimizationTask = new TimerTask() {
 			@Override
@@ -65,36 +72,18 @@ public class XBotNode extends AbstractNotificationListener implements Node{
 		notifications.add(new TimerNotification(this::tryOptimize));
 	}
 
-	@Override
-	public void notify(Notification notification) {
-		try {
-			notifications.put(notification);
-		} catch (InterruptedException e) {
-			// TODO
-			System.exit(1);
-		}
-	}
-
-	@Override
-	public void handleNotifications() {
-		for(;;) {
-			try {
-				Notification notification = notifications.take();
-				if(notification instanceof TimerNotification)
-					((TimerNotification) notification).runTask();
-				else
-					handleMessage(((MessageNotification) notification).message());
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-		}
-	}
-
 	private void tryOptimize() {
+		InetSocketAddress chosen = passiveView.getRandom();
+		oracle.getCost(chosen);
+	}
+
+	@Override
+	protected void handleMessage(Message message) {
 
 	}
 
-	private void handleMessage(Message message) {
+	@Override
+	public void handleNotification(Notification notification) {
 
 	}
 }

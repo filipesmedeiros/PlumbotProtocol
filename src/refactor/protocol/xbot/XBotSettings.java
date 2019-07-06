@@ -79,6 +79,21 @@ public class XBotSettings {
     public static long optimizationPeriod() {
     	return OPTIMIZATION_PERIOD;
     }
+
+    /**
+     * This field represents the minimum time the protocol has to wait for this {@link refactor.protocol.Node} to be
+     * able to ping the same neighbour twice, in seconds, i.e. if its value is 30, pinging the same neighbour within
+     * 30 seconds does nothing
+     */
+    public static long ORACLE_PING_INTERVAL = 30;
+
+    /**
+     * This fields represents how much time the protocol will wait for a response to a ping to a neighbour, in seconds,
+     * i.e. if the value is 60, after 60 seconds, the protocol will assume the neighbour will never respond. This should
+     * have implications on the overlay, such as, if enough nodes assume a neighbour is non-responsive, it is removed
+     * from the overlay
+     */
+    public static long ORACLE_PING_TIMEOUT = 60;
     
     /**
      * Simple method that sets the optimization period, given that the execution of the protocol hasn't started
