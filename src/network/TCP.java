@@ -270,13 +270,13 @@ public class TCP extends Network implements PersistantNetwork {
 
         id.putChar(Message.EOS);
 
-        return id.flip();
+        return (ByteBuffer) id.flip();
     }
 
     private ByteBuffer disconnectBuffer() {
         ByteBuffer disconnect = ByteBuffer.allocate(2);
         disconnect.putChar('d');
-        return disconnect.flip();
+        return (ByteBuffer) disconnect.flip();
     }
 
     @SuppressWarnings("all")

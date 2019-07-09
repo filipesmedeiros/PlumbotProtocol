@@ -7,7 +7,7 @@ import refactor.protocol.notifications.AbstractNotifiable;
 
 import java.net.InetSocketAddress;
 
-public class RoutedMessageListener extends AbstractNotifiable implements MessageListener {
+public abstract class RoutedMessageListener extends AbstractNotifiable implements MessageListener {
 
     public RoutedMessageListener() {
         this(10);

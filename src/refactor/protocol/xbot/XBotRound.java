@@ -6,8 +6,8 @@ class XBotRound {
 	
 	enum Role {
 		initiator,
-		old,
 		candidate,
+		old,
 		disconnected
 	}
 
@@ -15,4 +15,19 @@ class XBotRound {
 	InetSocketAddress old;
 	InetSocketAddress candidate;
 	InetSocketAddress disconnected;
+
+	public XBotRound addRole(Role role, InetSocketAddress node) {
+		switch(role) {
+			case candidate:
+				candidate = node;
+				break;
+			case old:
+				old = node;
+				break;
+			case disconnected:
+				disconnected = node;
+				break;
+		}
+		return this;
+	}
 }

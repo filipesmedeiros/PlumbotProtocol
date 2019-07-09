@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import refactor.GlobalSettings;
+import refactor.exception.SingletonIsNullException;
 import refactor.message.Message;
 import refactor.message.MessageDecoder;
 import refactor.network.TCP;
@@ -21,13 +22,19 @@ import refactor.utils.Utils;
 public class RTTOracle extends AbstractAsyncOracle {
 	
 	private Map<InetSocketAddress, Long> sendTimes;
+
+	private static RTTOracle rttOracle = new RTTOracle();
+
+	public static RTTOracle getRttOracle() {
+		return rttOracle;
+	}
 	
-	public RTTOracle(int initialCapacity) {
+	private RTTOracle(int initialCapacity) {
 		super(initialCapacity);
 		sendTimes = new HashMap<>(initialCapacity);
 	}
 
-	public RTTOracle() {
+	private RTTOracle() {
 		this(10);
 	}
 
@@ -40,29 +47,8 @@ public class RTTOracle extends AbstractAsyncOracle {
 				// TODO
 				System.exit(1);
 			}
-		else if(notification instanceof MessageNotification) {
-			Message pingBackMessage = ((MessageNotification) notification).message();
-			if(pingBackMessage.messageType() != MessageDecoder.MessageType.ping) {
-				if(GlobalSettings.DEBUGGING_LEVEL >= 3)
-					System.out.println("Wrong message received, expected ping back");
-				return;
-			}
-			try {
-				InetSocketAddress sender =
-						BBInetSocketAddress.fromByteBuffer(pingBackMessage.metadataEntry(Message.SENDER_LABEL));
-				Long sendTime = sendTimes.get(sender);
-				if(sendTime == null) {
-					if(GlobalSettings.DEBUGGING_LEVEL >= 4)
-						System.out.println("This oracle wasn't waiting for a ping back from this node");
-					return;
-				}
-				XBotNode.xBotNode().notify(new CostNotification(Utils.timeElapsedNano(sendTime)));
-				sendTimes.remove(sender);
-			} catch(UnknownHostException uhe) {
-				// TODO
-				System.exit(1);
-			}
-		}
+		else if(notification instanceof MessageNotification)
+			handleMessage(((MessageNotification) notification).message());
 	}
 
 	private void sendPing(InetSocketAddress node)
@@ -76,8 +62,37 @@ public class RTTOracle extends AbstractAsyncOracle {
 		Message pingMessage = new Message(MessageDecoder.MessageType.ping)
 				.withSender()
 				.setDestination(node);
-		TCP.tcp.sendMessage(pingMessage);
+		try {
+			TCP.tcp().notify(new MessageNotification(pingMessage));
+		} catch (SingletonIsNullException e) {
+			// TODO
+			System.exit(1);
+		}
 		listenToMessage(MessageDecoder.MessageType.ping, node);
 		sendTimes.put(node, System.nanoTime());
+	}
+
+	@Override
+	public void handleMessage(Message message) {
+		if(message.messageType() != MessageDecoder.MessageType.ping) {
+			if(GlobalSettings.DEBUGGING_LEVEL >= 3)
+				System.out.println("Wrong message received, expected ping back");
+			return;
+		}
+		try {
+			InetSocketAddress sender =
+					BBInetSocketAddress.fromByteBuffer(message.metadataEntry(Message.SENDER_LABEL));
+			Long sendTime = sendTimes.get(sender);
+			if(sendTime == null) {
+				if(GlobalSettings.DEBUGGING_LEVEL >= 4)
+					System.out.println("This oracle wasn't waiting for a ping back from this node");
+				return;
+			}
+			XBotNode.xBotNode().notify(new CostNotification(Utils.timeElapsedNano(sendTime), sender));
+			sendTimes.remove(sender);
+		} catch(UnknownHostException uhe) {
+			// TODO
+			System.exit(1);
+		}
 	}
 }

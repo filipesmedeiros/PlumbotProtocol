@@ -2,8 +2,10 @@ package refactor.message;
 
 import refactor.GlobalSettings;
 import refactor.exception.MessageTooLargeException;
+import refactor.utils.BBInetSocketAddress;
 
 import java.net.InetSocketAddress;
+import java.net.UnknownHostException;
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
 
@@ -75,6 +77,20 @@ public class Message {
     public Message withSender() {
         addMetadataEntry(SENDER_LABEL, GlobalSettings.localAddressBytes());
         return this;
+    }
+
+    /**
+     * Convenience method to easily get the sender of the message. This method assumes the metadata entry "snd" is there
+     * @return The sender of this message
+     */
+    public InetSocketAddress sender() {
+        try {
+            return BBInetSocketAddress.fromByteBuffer(metadataEntry(SENDER_LABEL));
+        } catch(UnknownHostException uhe) {
+            // TODO
+            System.exit(1);
+            return null;
+        }
     }
 
     /**
@@ -162,8 +178,9 @@ public class Message {
      * @param value The value of the new metadata entry
      * @throws IllegalArgumentException If either the label or the data don't meet the standard requirements
      * (which means one of them is {@code null} or empty of the label's length is incorrect
+     * @return This {@link Message} for convenience purposes and chaining
      */
-    public void addMetadataEntry(String label, ByteBuffer value)
+    public Message addMetadataEntry(String label, ByteBuffer value)
             throws IllegalArgumentException {
         if(label == null || label.length() == 0)
             throw new IllegalArgumentException(NULL_ARGUMENT_LABEL);
@@ -172,6 +189,7 @@ public class Message {
 
         // This method throws the exception when the label's length is incorrect
         metadata.addMetadata(label, value);
+        return this;
     }
 
     /**

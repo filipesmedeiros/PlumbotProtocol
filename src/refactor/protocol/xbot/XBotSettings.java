@@ -17,8 +17,8 @@ public class XBotSettings {
      * This field is used to set the size of the active view of the local {@link refactor.protocol.Node}. Changing this
      * setting mid-execution is permitted but discouraged and can lead to incorrect behaviors and errors
      */
-    private static short ACTIVE_VIEW_SIZE;
-    
+    private static short ACTIVE_VIEW_SIZE = 7;
+
     /**
      * Simple method that just returns the set active view size
      * @return The size of this node's active view (XBot-wise)
@@ -26,7 +26,7 @@ public class XBotSettings {
     public static short activeViewSize() {
     	return ACTIVE_VIEW_SIZE;
     }
-    
+
     /**
      * Simple method that sets the size of the active view, given that the execution of the protocol hasn't started
      * @param size The size of the active view of the {@link refactor.protocol.Node}
@@ -38,12 +38,40 @@ public class XBotSettings {
     		throw new IllegalSettingChangeException("Active View Size");
     	ACTIVE_VIEW_SIZE = size;
     }
+
+    /**
+     * This field is used to set the number of active neighbours of this {@link refactor.protocol.Node} that are
+     * unbiased. In other words, they are protected from being swapped out of its active view. Changing this setting
+     * mid-execution is permitted but discouraged and can lead to incorrect behaviors and errors
+     */
+    private static short UNBIASED_VIEW_SIZE = 2;
+
+    /**
+     * Simple method that just returns the set number of unbiased neighbours
+     * @return The number of unbiased neighbours this {@link refactor.protocol.Node} has
+     */
+    public static short unbiasedViewSize() {
+        return UNBIASED_VIEW_SIZE;
+    }
+
+    /**
+     * Simple method that sets the number of unbiased neighbours this {@link refactor.protocol.Node} has, given that the
+     * execution of the protocol hasn't started
+     * @param size The number of unbiased neighbours of the {@link refactor.protocol.Node}
+     * @throws IllegalSettingChangeException Thrown if the execution of the protocol has begun
+     */
+    public static void setUnbiasedViewSize(short size)
+            throws IllegalSettingChangeException {
+        if(GlobalSettings.areSettingsLocked())
+            throw new IllegalSettingChangeException("Unbiased View Size");
+        UNBIASED_VIEW_SIZE = size;
+    }
     
     /**
      * This field is used to set the size of the passive view of the local {@link refactor.protocol.Node}. Changing this
      * setting mid-execution is permitted but discouraged and can lead to incorrect behaviors and errors
      */
-    public static short PASSIVE_VIEW_SIZE;
+    public static short PASSIVE_VIEW_SIZE = 10;
     
     /**
      * Simple method that just returns the set passive view size
@@ -64,13 +92,27 @@ public class XBotSettings {
     		throw new IllegalSettingChangeException("Passive View Size");
     	PASSIVE_VIEW_SIZE = size;
     }
+
+    /**
+     * This value defines how many times a Join is spread across the network, through JoinForward
+     * {@link refactor.message.Message}s
+     */
+    public static short ACTIVE_RANDOM_WALK_LENGTH = 4;
+
+    /**
+     * This value defines at which point during the JoinForward spread, the {@link refactor.protocol.Node} is added to a
+     * passive view. Note that, since this is implemented with the help of the {@code ACTIVE_RANDOM_WALK_LENGTH}, this
+     * value actually represents how close to {@code 0} you have to be to do it, i.e. an ARWL of 10 and a PRWL of 3
+     * means that on the 7th "spread", the node will be added to a passive view
+     */
+    public static short PASSIVE_RANDOM_WALK_LENGTH = 2;
     
     /**
      * This field is used to set the time between optimization rounds that this {@link refactor.protocol.Node} starts,
      * in milliseconds. So, if this field has value 2.400.000, this {@link refactor.protocol.Node} will try to optimize
      * the network every 40 minutes.
      */
-    public static long OPTIMIZATION_PERIOD;
+    public static long OPTIMIZATION_PERIOD = 1000 * 60 * 20; // 20 minutes
     
     /**
      * Simple method that just returns the set optimization period

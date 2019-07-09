@@ -1,6 +1,10 @@
 package refactor.protocol;
 
-import refactor.protocol.notifications.Notifiable;
+import refactor.utils.MessageListener;
 
-public interface Node extends Notifiable {
+import java.net.InetSocketAddress;
+
+public interface Node extends MessageListener {
+
+    void join(InetSocketAddress contactNode);
 }

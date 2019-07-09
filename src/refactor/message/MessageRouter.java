@@ -4,23 +4,21 @@ import refactor.GlobalSettings;
 import refactor.exception.SingletonIsNullException;
 import refactor.protocol.notifications.MessageNotification;
 import refactor.protocol.notifications.Notifiable;
+import refactor.protocol.notifications.Notification;
 import refactor.utils.BBInetSocketAddress;
+import refactor.utils.MessageListener;
 
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
 
 // TODO Javadoc this class
 public class MessageRouter {
 
 	private static final int DEFAULT_MESSAGE_QUEUE_SIZE = 20;
 
-	private BlockingQueue<Message> messagesToDeliver;
-
-	private Map<MessageRoutingKey, Notifiable> routes;
+	private Map<MessageRoutingKey, MessageListener> routes;
 
 	private static final MessageRouter router = new MessageRouter();
 
@@ -32,50 +30,29 @@ public class MessageRouter {
 	}
 
 	private MessageRouter() {
-		messagesToDeliver = new ArrayBlockingQueue<>(DEFAULT_MESSAGE_QUEUE_SIZE);
 		routes = new HashMap<>();
-
-		GlobalSettings.FIXED_THREAD_POOL.submit(this::routeMessages);
 	}
 
-
-	// TODO -------------------------^^^^^^^^^^^^^^^^^^
-
-	private void routeMessages() {
+	public void routeMessage(Message message) {
 		try {
-			Message message = messagesToDeliver.take();
 			MessageRoutingKey mrk = MessageRoutingKey.fromMessage(message);
-			new Thread(() -> {
-				try {
-					routes.get(mrk).notify(new MessageNotification(message));
-				} catch (IllegalArgumentException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-			}).start();
+			Notifiable notifiable = routes.get(mrk);
+			if(notifiable == null) {
+				if(GlobalSettings.DEBUGGING_LEVEL >= 4)
+					System.out.println("No MessageListener was waiting for that message");
+				return;
+			}
+			routes.get(mrk).notify(new MessageNotification(message));
 			routes.remove(mrk);
-		} catch(InterruptedException | UnknownHostException | IllegalArgumentException ite) {
+		} catch(UnknownHostException | IllegalArgumentException ite) {
 			// TODO
 			System.exit(1);
 		}
 	}
 
-	public boolean deliverMessage(Message messageWithSender) {
-		if(messageWithSender == null)
-			return false;
-		try {
-			messagesToDeliver.put(messageWithSender);
-			return true;
-		} catch(InterruptedException ite) {
-			// TODO
-			System.exit(1);
-			return false;
-		}
-	}
-
-	public void addRoute(Notifiable notifiable,
-                         MessageDecoder.MessageType messageType, InetSocketAddress sender) {
-		routes.put(new MessageRoutingKey(messageType, sender), notifiable);
+	public void addRoute(MessageListener messageListener,
+						 MessageDecoder.MessageType messageType, InetSocketAddress sender) {
+		routes.put(new MessageRoutingKey(messageType, sender), messageListener);
 	}
 
 	private static class MessageRoutingKey {

@@ -1,0 +1,4 @@
+Manifest-Version: 1.0
+Class-Path: refactor.test.TestApp
+Main-Class: refactor.test.TestApp
+

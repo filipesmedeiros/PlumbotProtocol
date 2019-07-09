@@ -1,5 +1,7 @@
 package refactor.protocol.notifications;
 
+import refactor.GlobalSettings;
+
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
@@ -13,6 +15,8 @@ public abstract class AbstractNotifiable implements Notifiable {
 
 	public AbstractNotifiable(int initialCapacity) {
 		notifications = new ArrayBlockingQueue<>(initialCapacity);
+		System.out.println("Spawning Thread for " + this.getClass().getSimpleName() + "'s notification listening Thread.");
+		GlobalSettings.FIXED_THREAD_POOL.submit(this::takeNotification);
 	}
 
 	@Override

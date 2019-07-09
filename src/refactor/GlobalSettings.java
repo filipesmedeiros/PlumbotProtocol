@@ -108,7 +108,7 @@ public class GlobalSettings {
      * the Threads of the {@link refactor.network.TCP} layer (receiving and sending), etc. The number of {@link Thread}s
      * is fixed and depends on the implementation
      */
-    public static final ExecutorService FIXED_THREAD_POOL = Executors.newFixedThreadPool(3);
+    public static final ExecutorService FIXED_THREAD_POOL = Executors.newFixedThreadPool(5);
 
     /**
      * This is the single {@link Timer} used to manage all the periodic tasks the protocol has to execute. To use it,
@@ -146,7 +146,7 @@ public class GlobalSettings {
      * {@code 2} means all logs that can be potentially harmful, but may be OK
      * {@code 3} means all logs the program currently has
      */
-    public static byte DEBUGGING_LEVEL = 2;
+    public static byte DEBUGGING_LEVEL = 4;
     
     /**
      * Utility method for the protocol to check, before execution, that all settings set by the overlaying application

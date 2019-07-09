@@ -5,23 +5,21 @@ import refactor.exception.*;
 import refactor.message.Message;
 import refactor.message.MessageDecoder;
 import refactor.message.MessageRouter;
+import refactor.protocol.notifications.AbstractNotifiable;
+import refactor.protocol.notifications.MessageNotification;
+import refactor.protocol.notifications.Notification;
 
 import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.net.SocketAddress;
-import java.net.SocketException;
-import java.net.StandardSocketOptions;
+import java.net.*;
 import java.nio.ByteBuffer;
 import java.nio.channels.*;
 import java.nio.channels.AlreadyConnectedException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
 
 // TODO Javadoc this class
-public class TCP {
+public class TCP extends AbstractNotifiable {
 
     private ServerSocketChannel serverSocketChannel;
 
@@ -30,24 +28,22 @@ public class TCP {
     // Map of existing connections, and the channel responsible for them
     private Map<SocketAddress, SocketChannel> connections;
 
-    private BlockingQueue<Message> messagesToSend;
-    
-    public static TCP tcp = new TCP();
-    
-    public static TCP getTCP()
-    		throws SingletonIsNullException {
-    	if(tcp == null)
-    		throw new SingletonIsNullException(TCP.class.getName());
-    	return tcp;
+    private static TCP tcp = new TCP();
+
+    public static TCP tcp()
+            throws SingletonIsNullException {
+        if(tcp == null)
+            throw new SingletonIsNullException(TCP.class.getName());
+        return tcp;
     }
 
     private TCP() {
-    	connections = new HashMap<>();
-    	messagesToSend = new ArrayBlockingQueue<>(10);
-    	try {
+        super();
+        connections = new HashMap<>();
+        try {
             initServerSocketChannel();
         } catch(IOException ioe) {
-    	    // TODO
+            // TODO
             System.exit(1);
         }
     }
@@ -60,8 +56,8 @@ public class TCP {
         serverSocketChannel.configureBlocking(false);
         serverSocketChannel.register(selector, SelectionKey.OP_ACCEPT);
 
+        System.out.println("Spawning Thread for TCP to listen to socket.");
         GlobalSettings.FIXED_THREAD_POOL.submit(this::listenToSelector);
-        GlobalSettings.FIXED_THREAD_POOL.submit(this::sendMessages);
     }
 
     private void accept()
@@ -101,13 +97,12 @@ public class TCP {
         // If exactly 4 bytes couldn't be read, something went wrong
         if(socketChannel.read(totalSizeBuffer) != 4)
             throw new IOException();
-        ByteBuffer messageBuffer = ByteBuffer.allocate(totalSizeBuffer.flip().getInt());
+        ByteBuffer messageBuffer = ByteBuffer.allocate(((ByteBuffer) totalSizeBuffer.flip()).getInt());
         socketChannel.read(messageBuffer);
         try {
             Message message = MessageDecoder.decodeMessage(messageBuffer);
-				GlobalSettings.FLEX_THREAD_POOL.submit(() -> 
-						MessageRouter.getRouter().deliverMessage(message));
-        } catch(NullMessageException | InvalidMessageTypeException e) {
+            MessageRouter.getRouter().routeMessage(message);
+        } catch(NullMessageException | InvalidMessageTypeException | SingletonIsNullException e) {
             // TODO
             System.exit(1);
         }
@@ -118,6 +113,9 @@ public class TCP {
             for(;;) {
                 selector.select();
                 Iterator<SelectionKey> keyIt = selector.selectedKeys().iterator();
+
+                if(GlobalSettings.DEBUGGING_LEVEL >= 4)
+                    System.out.println("TCP Selector selected " + selector.selectedKeys().size() + " keys.");
 
                 while (keyIt.hasNext()) {
                     SelectionKey key = keyIt.next();
@@ -139,33 +137,6 @@ public class TCP {
         }
     }
 
-    private void sendMessages() {
-        try {
-            for (;;) {
-                // This thread waits for a Message, to send it, and blocks here, since its only responsibility
-                // is to do this task
-                Message messageToSend = messagesToSend.take();
-                // If the Message has no destination, it can't be sent
-                if(messageToSend.getDestination() == null || messageToSend.getDestination().isUnresolved())
-                    throw new MessageHasNoDestinationException();
-                SocketChannel socketChannel = connections.get(messageToSend.getDestination());
-                // Something went wrong in the upper layers, probably
-                if(socketChannel == null)
-                    throw new ConnectionNotEstablishedException();
-                ByteBuffer messageBuffer = messageToSend.encode();
-                // First send the total size of the Message, so the receiving Node's TCP layer knows how much to read
-                ByteBuffer totalSizeBuffer = ByteBuffer.allocate(Integer.BYTES);
-                totalSizeBuffer.putInt(0, messageBuffer.capacity());
-                socketChannel.write(totalSizeBuffer);
-                // Then send the Message itself
-                socketChannel.write(messageBuffer);
-            }
-        } catch(IOException | InterruptedException | MessageTooLargeException e) {
-            // TODO also separate exception types
-            System.exit(1);
-        }
-    }
-
     public void connect(InetSocketAddress remoteNodeAddress)
             throws AlreadyConnectedException {
         try {
@@ -175,28 +146,50 @@ public class TCP {
             if(channel != null)
                 throw new AlreadyConnectedException();
 
-            channel = SocketChannel.open();
+            channel = SocketChannel.open(remoteNodeAddress);
+            if(GlobalSettings.DEBUGGING_LEVEL >= 4)
+                System.out.println("Creating new channel between local: " + GlobalSettings.localAddress() +
+                        " and remote: " + remoteNodeAddress);
             channel.bind(GlobalSettings.localAddress());
             channel.configureBlocking(false);
             channel.setOption(StandardSocketOptions.SO_KEEPALIVE, true);
             // This is a non-blocking connect, and has to be, because this is the same thread that is reading
             // incoming messages from the network, and it cannot wait for this connection to be established
+            System.out.println("Connecting to " + remoteNodeAddress);
             channel.connect(remoteNodeAddress);
         } catch(IOException ioe) {
             // TODO
+            ioe.printStackTrace();
             System.exit(1);
         }
     }
-    
-    public void sendMessage(Message message)
-    		throws IOException {
-    	if(message.getDestination() == null)
-    		throw new IOException();
-    	try {
-			messagesToSend.put(message);
-		} catch (InterruptedException e) {
-			// TODO
-			System.exit(1);
-		}
+
+    @Override
+    public void handleNotification(Notification notification) {
+        try {
+            if (!(notification instanceof MessageNotification)) {
+                if (GlobalSettings.DEBUGGING_LEVEL >= 4)
+                    System.out.println("TCP got wrong notification, expected a MessageNotification");
+                return;
+            }
+            Message messageToSend = ((MessageNotification) notification).message();
+            // If the Message has no destination, it can't be sent
+            if (messageToSend.getDestination() == null || messageToSend.getDestination().isUnresolved())
+                throw new MessageHasNoDestinationException();
+            SocketChannel socketChannel = connections.get(messageToSend.getDestination());
+            // Something went wrong in the upper layers, probably
+            if (socketChannel == null)
+                throw new ConnectionNotEstablishedException();
+            ByteBuffer messageBuffer = messageToSend.encode();
+            // First send the total size of the Message, so the receiving Node's TCP layer knows how much to read
+            ByteBuffer totalSizeBuffer = ByteBuffer.allocate(Integer.BYTES);
+            totalSizeBuffer.putInt(0, messageBuffer.capacity());
+            socketChannel.write(totalSizeBuffer);
+            // Then send the Message itself
+            socketChannel.write(messageBuffer);
+        } catch(IOException | MessageTooLargeException ioe) {
+            // TODO
+            System.exit(1);
+        }
     }
 }
