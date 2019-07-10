@@ -30,10 +30,7 @@ public class TCP extends AbstractNotifiable {
 
     private static TCP tcp = new TCP();
 
-    public static TCP tcp()
-            throws SingletonIsNullException {
-        if(tcp == null)
-            throw new SingletonIsNullException(TCP.class.getName());
+    public static TCP tcp() {
         return tcp;
     }
 
@@ -52,6 +49,7 @@ public class TCP extends AbstractNotifiable {
             throws IOException {
         selector = Selector.open();
         serverSocketChannel = ServerSocketChannel.open();
+        serverSocketChannel.setOption(StandardSocketOptions.SO_REUSEADDR, true);
         serverSocketChannel.bind(GlobalSettings.localAddress());
         serverSocketChannel.configureBlocking(false);
         serverSocketChannel.register(selector, SelectionKey.OP_ACCEPT);
@@ -146,13 +144,14 @@ public class TCP extends AbstractNotifiable {
             if(channel != null)
                 throw new AlreadyConnectedException();
 
-            channel = SocketChannel.open(remoteNodeAddress);
+            channel = SocketChannel.open();
             if(GlobalSettings.DEBUGGING_LEVEL >= 4)
                 System.out.println("Creating new channel between local: " + GlobalSettings.localAddress() +
                         " and remote: " + remoteNodeAddress);
             channel.bind(GlobalSettings.localAddress());
             channel.configureBlocking(false);
             channel.setOption(StandardSocketOptions.SO_KEEPALIVE, true);
+            channel.register(selector, SelectionKey.OP_READ);
             // This is a non-blocking connect, and has to be, because this is the same thread that is reading
             // incoming messages from the network, and it cannot wait for this connection to be established
             System.out.println("Connecting to " + remoteNodeAddress);

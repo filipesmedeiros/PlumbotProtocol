@@ -75,6 +75,22 @@ public class FixedSizeRandomSortedMap<K extends Comparable<K>, V> implements Fix
         return list.size();
     }
 
+    public V getElement(int index) {
+        return list.get(index).getValue();
+    }
+
+    public Entry<K, V> get(int index) {
+        return list.get(index);
+    }
+
+    public V getLast() {
+        return getElement(size() - 1);
+    }
+
+    public V getFirst() {
+        return getElement(0);
+    }
+
     public boolean isEmpty() {
         return list.size() == 0;
     }
@@ -109,7 +125,7 @@ public class FixedSizeRandomSortedMap<K extends Comparable<K>, V> implements Fix
         }
     }
 
-    private static class Entry<K, V> implements Map.Entry<K, V> {
+    public static class Entry<K, V> implements Map.Entry<K, V> {
 
         private K key;
         private V value;

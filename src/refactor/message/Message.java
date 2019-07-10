@@ -71,7 +71,7 @@ public class Message {
     }
 
     /**
-     * Convenience method to easily add a sender to this message
+     * Convenience method to easily add a node to this message
      * @return This message
      */
     public Message withSender() {
@@ -80,8 +80,8 @@ public class Message {
     }
 
     /**
-     * Convenience method to easily get the sender of the message. This method assumes the metadata entry "snd" is there
-     * @return The sender of this message
+     * Convenience method to easily get the node of the message. This method assumes the metadata entry "snd" is there
+     * @return The node of this message
      */
     public InetSocketAddress sender() {
         try {

@@ -2,6 +2,7 @@ package refactor.protocol.xbot;
 
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
 
 import refactor.GlobalSettings;
@@ -10,8 +11,8 @@ import refactor.protocol.xbot.XBotRound.Role;
 class XBotRoundPool {
 	
 	private XBotRound initiatorRound;
-	private List<XBotRound> oldRounds;
 	private List<XBotRound> candidateRounds;
+	private List<XBotRound> oldRounds;
 	private List<XBotRound> disconnectedRounds;
 	
 	XBotRoundPool() {
@@ -20,54 +21,65 @@ class XBotRoundPool {
 		disconnectedRounds = new ArrayList<>();
 	}
 
+	public boolean roundExists(Role myRole, Role otherRole, InetSocketAddress node) {
+		EnumSet<Role> roleEnumSet = EnumSet.allOf(Role.class);
+		for(Role role1 : roleEnumSet)
+			for(Role role2 : roleEnumSet)
+				if(myRole == role1 && otherRole == role2)
+					for(XBotRound round : candidateRounds)
+						if(round.initiator().equals(node))
+							return true;
+		return false;
+	}
+
 	public XBotRound createRound(Role role, InetSocketAddress... nodes) {
 		switch(role) {
 			case initiator:
 				if(initiatorRound() != null)
 					return null;
 				initiatorRound = new XBotRound();
-				initiatorRound.initiator = GlobalSettings.localAddress();
+				initiatorRound.initiator(GlobalSettings.localAddress());
 				if(nodes.length >= 1)
-					initiatorRound.candidate = nodes[0];
+					initiatorRound.candidate(nodes[0]);
 				if(nodes.length >= 2)
-					initiatorRound.old = nodes[1];
+					initiatorRound.old(nodes[1]);
 				if(nodes.length == 3)
-					initiatorRound.candidate = nodes[2];
+					initiatorRound.disconnected(nodes[2]);
 				return initiatorRound;
 			case candidate:
 				if(candidateRound(nodes[0]) != null)
 					return null;
 				XBotRound candidateRound = new XBotRound();
-				initiatorRound.candidate = GlobalSettings.localAddress();
-				candidateRound.initiator = nodes[0];
+				initiatorRound.candidate(GlobalSettings.localAddress());
+				candidateRound.initiator(nodes[0]);
 				if(nodes.length >= 2)
-					candidateRound.old = nodes[1];
+					candidateRound.old(nodes[1]);
 				if(nodes.length >= 3)
-					candidateRound.disconnected = nodes[2];
+					candidateRound.disconnected(nodes[2]);
 				candidateRounds.add(candidateRound);
 				return candidateRound;
 			case old:
 				if(oldRound(nodes[0]) != null)
 					return null;
 				XBotRound oldRound = new XBotRound();
-				initiatorRound.old = GlobalSettings.localAddress();
-				oldRound.initiator = nodes[0];
+				initiatorRound.old(GlobalSettings.localAddress());
+				oldRound.initiator(nodes[0]);
 				if(nodes.length >= 2)
-					oldRound.candidate = nodes[1];
+					oldRound.candidate(nodes[1]);
 				if(nodes.length >= 3)
-					oldRound.disconnected = nodes[2];
+					oldRound.disconnected(nodes[2]);
 				oldRounds.add(oldRound);
 				return oldRound;
 			case disconnected:
 				if(disconnectedRound(nodes[0]) != null)
 					return null;
 				XBotRound disconnectedRound = new XBotRound();
-				initiatorRound.disconnected = GlobalSettings.localAddress();
-				disconnectedRound.initiator = nodes[0];
+				initiatorRound.disconnected(GlobalSettings.localAddress());
+				disconnectedRound.initiator(nodes[0]);
 				if(nodes.length >= 2)
-					disconnectedRound.candidate = nodes[1];
+					disconnectedRound.candidate(nodes[1]);
 				if(nodes.length >= 3)
-					disconnectedRound.old = nodes[2];
+					disconnectedRound.old(nodes[2]);
 				disconnectedRounds.add(disconnectedRound);
 				return disconnectedRound;
 		}
@@ -97,7 +109,7 @@ class XBotRoundPool {
 			return initiatorRound;
 		else {
 			for(XBotRound round : rounds)
-				if(round.initiator.equals(initiator))
+				if(round.initiator().equals(initiator))
 					return round;
 			
 			return null;
@@ -115,7 +127,7 @@ class XBotRoundPool {
 			}
 		else {
 			for(int i = 0; i < rounds.size(); i++)
-				if(rounds.get(i).initiator.equals(initiator))
+				if(rounds.get(i).initiator().equals(initiator))
 					return rounds.remove(i);
 
 			return null;

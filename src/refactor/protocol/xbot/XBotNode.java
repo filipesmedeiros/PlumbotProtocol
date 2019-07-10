@@ -6,7 +6,6 @@ import java.nio.ByteBuffer;
 import java.util.*;
 
 import refactor.GlobalSettings;
-import refactor.exception.SingletonIsNullException;
 import refactor.message.Message;
 import refactor.message.MessageDecoder;
 import refactor.network.TCP;
@@ -30,13 +29,22 @@ public class XBotNode extends AbstractNode {
 
 	public static final String OLD_ADDRESS_LABEL = "old";
 
-	public static final String OLD_COST_LABEL = "oldc";
-
 	public static final String JOINER_LABEL = "jnr";
 
 	public static final String ACTIVE_RWL_LABEL = "arwl";
 
 	public static final String JOIN_COST_LABEL = "jnc";
+
+	public static final String OPTIMIZATION_REPLY_LABEL = "optr";
+
+	public static final String NO_DISCONNECT_LABEL = "ndsc";
+
+	public static final String INITIATOR_LABEL = "init";
+
+	public static final String INITIATOR_TO_OLD_LABEL = "itoo";
+
+	public static final String INITIATOR_TO_CANDIDATE_LABEL = "itoc";
+
 
 	/**
 	 * This active view stores {@link Node}s with which the local {@link Node} communicates directly,
@@ -96,6 +104,18 @@ public class XBotNode extends AbstractNode {
 			case forwardJoin:
 				handleForwardJoin(message);
 				break;
+			case optimization:
+				handleOptimization(message);
+				break;
+			case optimizationReply:
+				handleOptimizationReply(message);
+				break;
+			case replace:
+				handleReplace(message);
+				break;
+			case replaceReply:
+				handleReplaceReply(message);
+				break;
 		}
 	}
 
@@ -112,22 +132,22 @@ public class XBotNode extends AbstractNode {
 		Message joinMessage = new Message(MessageDecoder.MessageType.join)
 				.withSender()
 				.setDestination(contactNode);
-		try {
-			TCP.tcp().notify(new MessageNotification(joinMessage));
-		} catch (SingletonIsNullException e) {
-			// TODO
-			System.exit(1);
-		}
+		sendMessage(joinMessage);
 	}
 
 	private void handleCost(CostNotification costNotification) {
-		if(joiningMe.contains(costNotification.sender())) {
+		if(joiningMe.contains(costNotification.node())) {
 			finishJoin(costNotification);
-			joiningMe.remove(costNotification.sender());
+			joiningMe.remove(costNotification.node());
 			return;
 		}
 
-		InetSocketAddress candidate = costNotification.sender();
+		if(currentRounds.roundExists(XBotRound.Role.disconnected, XBotRound.Role.old, costNotification.node())) {
+
+			return;
+		}
+
+		InetSocketAddress candidate = costNotification.node();
 		long cost = costNotification.cost();
 		InetSocketAddress old = null;
 		long oldCost = 0;
@@ -144,21 +164,16 @@ public class XBotNode extends AbstractNode {
 		}
 		if(old == null)
 			return;
-		currentRounds.createRound(XBotRound.Role.initiator, candidate)
-				.addRole(XBotRound.Role.candidate, candidate)
-				.addRole(XBotRound.Role.old, old);
+		currentRounds.createRound(XBotRound.Role.initiator, candidate, old)
+				.itoc(cost)
+				.itoo(oldCost);
 
 		Message optimizationMessage = new Message(MessageDecoder.MessageType.optimization)
 				.withSender()
 				.setDestination(candidate)
 				.addMetadataEntry(OLD_ADDRESS_LABEL, BBInetSocketAddress.toByteBuffer(old))
-				.addMetadataEntry(OLD_COST_LABEL, ByteBuffer.allocate(Long.BYTES).putLong(oldCost));
-		try {
-			TCP.tcp().notify(new MessageNotification(optimizationMessage));
-		} catch(SingletonIsNullException sine) {
-			// TODO
-			System.exit(1);
-		}
+				.addMetadataEntry(INITIATOR_TO_OLD_LABEL, ByteBuffer.allocate(Long.BYTES).putLong(oldCost));
+		sendMessage(optimizationMessage);
 	}
 
 	private void tryOptimize() {
@@ -171,21 +186,15 @@ public class XBotNode extends AbstractNode {
 		RTTOracle.getRttOracle().getCost(sender);
 		joiningMe.add(sender);
 
-		try {
-			TCP tcp = TCP.tcp();
-			activeView.forEach(neighbour -> {
-				Message forwardJoinMessage = new Message(MessageDecoder.MessageType.forwardJoin)
-						.withSender()
-						.setDestination(neighbour)
-						.addMetadataEntry(JOINER_LABEL, BBInetSocketAddress.toByteBuffer(sender))
-						.addMetadataEntry(ACTIVE_RWL_LABEL, ByteBuffer.allocate(Short.BYTES).putShort(
-								XBotSettings.ACTIVE_RANDOM_WALK_LENGTH));
-				tcp.notify(new MessageNotification(forwardJoinMessage));
-			});
-		} catch (SingletonIsNullException e) {
-			// TODO
-			System.exit(1);
-		}
+		activeView.forEach(neighbour -> {
+			Message forwardJoinMessage = new Message(MessageDecoder.MessageType.forwardJoin)
+					.withSender()
+					.setDestination(neighbour)
+					.addMetadataEntry(JOINER_LABEL, BBInetSocketAddress.toByteBuffer(sender))
+					.addMetadataEntry(ACTIVE_RWL_LABEL, ByteBuffer.allocate(Short.BYTES).putShort(
+							XBotSettings.ACTIVE_RANDOM_WALK_LENGTH));
+			sendMessage(forwardJoinMessage);
+		});
 	}
 
 	private void handleAcceptJoin(Message acceptJoinMessage) {
@@ -195,18 +204,13 @@ public class XBotNode extends AbstractNode {
 	private void finishJoin(CostNotification costNotification) {
 		if(activeView.isFull())
 			disconnectRandomNeighbour();
-		activeView.add(costNotification.cost(), costNotification.sender());
+		activeView.add(costNotification.cost(), costNotification.node());
 
 		Message acceptJoinMessage = new Message(MessageDecoder.MessageType.acceptJoin)
 				.withSender()
-				.setDestination(costNotification.sender())
+				.setDestination(costNotification.node())
 				.addMetadataEntry(JOIN_COST_LABEL, ByteBuffer.allocate(Long.BYTES).putLong(costNotification.cost()));
-		try {
-			TCP.tcp().notify(new MessageNotification(acceptJoinMessage));
-		} catch (SingletonIsNullException e) {
-			// TODO
-			System.exit(1);
-		}
+		sendMessage(acceptJoinMessage);
 	}
 
 	private void handleForwardJoin(Message forwardJoinMessage) {
@@ -229,11 +233,70 @@ public class XBotNode extends AbstractNode {
 					.setDestination(forwardTo)
 					.addMetadataEntry(ACTIVE_RWL_LABEL, ByteBuffer.allocate(Short.BYTES).putShort((short) (arwl - 1)))
 					.addMetadataEntry(JOINER_LABEL, BBInetSocketAddress.toByteBuffer(joiner));
-			TCP.tcp().notify(new MessageNotification(newForwardJoinMessage));
-		} catch (UnknownHostException | SingletonIsNullException e) {
+			sendMessage(newForwardJoinMessage);
+		} catch (UnknownHostException e) {
 			// TODO
 			System.exit(1);
 		}
+	}
+
+	private void handleOptimization(Message optimizationMessage) {
+		InetSocketAddress sender = optimizationMessage.sender();
+		if(!activeView.isFull()) {
+			Message optimizationReply = new Message(MessageDecoder.MessageType.optimizationReply)
+					.withSender()
+					.setDestination(sender)
+					.addMetadataEntry(NO_DISCONNECT_LABEL, ByteBuffer.allocate(Byte.BYTES).put((byte) 1))
+					.addMetadataEntry(OPTIMIZATION_REPLY_LABEL, ByteBuffer.allocate(Byte.BYTES).put((byte) 1));
+			sendMessage(optimizationReply);
+			return;
+		}
+		FixedSizeRandomSortedMap.Entry<Long, InetSocketAddress> disconnectEntry =
+				activeView.get(XBotSettings.unbiasedViewSize());
+		InetSocketAddress disconnect = disconnectEntry.getValue();
+		Message replaceMessage = new Message(MessageDecoder.MessageType.replace)
+				.withSender()
+				.setDestination(disconnect)
+				.addMetadataEntry(OLD_ADDRESS_LABEL, optimizationMessage.metadataEntry(OLD_ADDRESS_LABEL))
+				.addMetadataEntry(INITIATOR_TO_OLD_LABEL, optimizationMessage.metadataEntry(INITIATOR_TO_OLD_LABEL))
+				.addMetadataEntry(INITIATOR_TO_CANDIDATE_LABEL,
+						ByteBuffer.allocate(Long.BYTES).putLong(disconnectEntry.getKey()).flip())
+				.addMetadataEntry(INITIATOR_LABEL, optimizationMessage.metadataEntry(Message.SENDER_LABEL));
+		sendMessage(replaceMessage);
+		try {
+			currentRounds.createRound(XBotRound.Role.candidate,
+					sender,
+					BBInetSocketAddress.fromByteBuffer(optimizationMessage.metadataEntry(INITIATOR_TO_OLD_LABEL)),
+					disconnect)
+					.itoc(optimizationMessage.metadataEntry(INITIATOR_TO_CANDIDATE_LABEL).getLong());
+			optimizationMessage.metadataEntry(INITIATOR_TO_CANDIDATE_LABEL).flip();
+		} catch(UnknownHostException uhe) {
+			// TODO
+			uhe.printStackTrace();
+			System.exit(1);
+		}
+	}
+
+	private void handleOptimizationReply(Message optimizationReplyMessage) {
+
+	}
+
+	private void handleReplace(Message replaceMessage) {
+		try {
+			InetSocketAddress old = BBInetSocketAddress.fromByteBuffer(replaceMessage.metadataEntry(OLD_ADDRESS_LABEL));
+			RTTOracle.getRttOracle().getCost(old);
+			currentRounds.createRound(XBotRound.Role.disconnected,
+					BBInetSocketAddress.fromByteBuffer(replaceMessage.metadataEntry(INITIATOR_LABEL)),
+					replaceMessage.sender(),
+					old);
+		} catch(UnknownHostException uhe) {
+			// TODO
+			uhe.printStackTrace();
+			System.exit(1);
+		}
+	}
+
+	private void handleReplaceReply(Message replaceReply) {
 
 	}
 
@@ -241,12 +304,7 @@ public class XBotNode extends AbstractNode {
 		InetSocketAddress disconnect = activeView.removeRandom();
 		Message disconnectMessage = new Message(MessageDecoder.MessageType.disconnect)
 				.withSender();
-		try {
-			TCP.tcp().notify(new MessageNotification(disconnectMessage));
-		} catch (SingletonIsNullException e) {
-			// TODO
-			System.exit(1);
-		}
+		sendMessage(disconnectMessage);
 		return addToPassiveView(disconnect);
 	}
 
@@ -255,5 +313,9 @@ public class XBotNode extends AbstractNode {
 			passiveView.removeRandom();
 		passiveView.add(node);
 		return node;
+	}
+
+	private void sendMessage(Message message) {
+		TCP.tcp().notify(new MessageNotification(message));
 	}
 }

@@ -6,18 +6,18 @@ public class CostNotification implements Notification {
 
     private long cost;
 
-    private InetSocketAddress sender;
+    private InetSocketAddress node;
 
     public CostNotification(long cost, InetSocketAddress sender) {
         this.cost = cost;
-        this.sender = sender;
+        this.node = sender;
     }
 
     public long cost() {
         return cost;
     }
 
-    public InetSocketAddress sender() {
-        return sender;
+    public InetSocketAddress node() {
+        return node;
     }
 }

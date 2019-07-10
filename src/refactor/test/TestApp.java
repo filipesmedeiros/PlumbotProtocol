@@ -28,12 +28,7 @@ public class TestApp {
                 System.exit(1);
             }
 
-            try {
-                TCP.tcp();
-            } catch (SingletonIsNullException sine) {
-                sine.printStackTrace();
-                System.exit(1);
-            }
+            TCP.tcp();
 
             InetAddress address = null;
             try {
@@ -49,11 +44,7 @@ public class TestApp {
 
             int connectPort = Integer.parseInt(args[1]);
             if (connectPort != 0)
-                try {
-                    TCP.tcp().connect(new InetSocketAddress(address, connectPort));
-                } catch (SingletonIsNullException e) {
-                    e.printStackTrace();
-                }
+                TCP.tcp().connect(new InetSocketAddress(address, connectPort));
         } catch(IndexOutOfBoundsException iobe) {
             iobe.printStackTrace();
             System.exit(1);

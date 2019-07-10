@@ -418,7 +418,7 @@ public class XBotNode implements OptimizerNode {
     private void handleJoin(ByteBuffer bytes) {
         JoinMessage msg = JoinMessage.parse(bytes);
 
-        System.out.println("sender of join -> " + msg.sender());
+        System.out.println("node of join -> " + msg.sender());
 
         if(addNewPeerToActiveView(msg.sender()))
             sendAcceptJoin(msg.sender());
