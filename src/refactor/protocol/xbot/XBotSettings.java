@@ -154,8 +154,21 @@ public class XBotSettings {
      * are correct and can the program can run properly
      * @return {@code true} if settings are valid (ready for execution)
      */
-    public boolean isValid() {
+    public static boolean isValid() {
     	return ACTIVE_VIEW_SIZE > 0 && PASSIVE_VIEW_SIZE > 0 && OPTIMIZATION_PERIOD > 0;
     }
 
+    /**
+     * This function represents the criteria used to evaluate if an optimization round should turn into an actual
+     * optimization, and can be changed according to the app's needs
+     * @param optimizationRound The optimization round being evaluated
+     * @return True if the protocol should optimize the network, using this round's info
+     */
+    public static boolean shouldOptimize(XBotRound optimizationRound) {
+        long itoo = optimizationRound.itoo();
+        long dtoc = optimizationRound.dtoc();
+        long itoc = optimizationRound.itoc();
+        long dtoo = optimizationRound.dtoo();
+        return itoo + dtoc > itoc + dtoo;
+    }
 }

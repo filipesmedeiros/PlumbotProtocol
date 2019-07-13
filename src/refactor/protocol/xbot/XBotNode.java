@@ -4,6 +4,7 @@ import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.util.*;
+import java.util.function.Function;
 
 import refactor.GlobalSettings;
 import refactor.message.Message;
@@ -36,6 +37,8 @@ public class XBotNode extends AbstractNode {
 	public static final String JOIN_COST_LABEL = "jnc";
 
 	public static final String OPTIMIZATION_REPLY_LABEL = "optr";
+
+	public static final String REPLACE_REPLY_LABEL = "rplr";
 
 	public static final String NO_DISCONNECT_LABEL = "ndsc";
 
@@ -142,8 +145,12 @@ public class XBotNode extends AbstractNode {
 			return;
 		}
 
-		if(currentRounds.roundExists(XBotRound.Role.disconnected, XBotRound.Role.old, costNotification.node())) {
-
+		XBotRound disconnectedRound = currentRounds.round(XBotRound.Role.disconnected,
+				XBotRound.Role.old, costNotification.node());
+		if(disconnectedRound != null) {
+			disconnectedRound.dtoc(activeView.getEntry(disconnectedRound.candidate()).getKey());
+			disconnectedRound.dtoo(costNotification.cost());
+			optimizeIf(disconnectedRound, XBotSettings::shouldOptimize);
 			return;
 		}
 
@@ -172,7 +179,8 @@ public class XBotNode extends AbstractNode {
 				.withSender()
 				.setDestination(candidate)
 				.addMetadataEntry(OLD_ADDRESS_LABEL, BBInetSocketAddress.toByteBuffer(old))
-				.addMetadataEntry(INITIATOR_TO_OLD_LABEL, ByteBuffer.allocate(Long.BYTES).putLong(oldCost));
+				.addMetadataEntry(INITIATOR_TO_OLD_LABEL, (ByteBuffer) ByteBuffer.allocate(Long.BYTES)
+						.putLong(oldCost).flip());
 		sendMessage(optimizationMessage);
 	}
 
@@ -209,7 +217,8 @@ public class XBotNode extends AbstractNode {
 		Message acceptJoinMessage = new Message(MessageDecoder.MessageType.acceptJoin)
 				.withSender()
 				.setDestination(costNotification.node())
-				.addMetadataEntry(JOIN_COST_LABEL, ByteBuffer.allocate(Long.BYTES).putLong(costNotification.cost()));
+				.addMetadataEntry(JOIN_COST_LABEL, (ByteBuffer) ByteBuffer.allocate(Long.BYTES)
+						.putLong(costNotification.cost()).flip());
 		sendMessage(acceptJoinMessage);
 	}
 
@@ -260,7 +269,7 @@ public class XBotNode extends AbstractNode {
 				.addMetadataEntry(OLD_ADDRESS_LABEL, optimizationMessage.metadataEntry(OLD_ADDRESS_LABEL))
 				.addMetadataEntry(INITIATOR_TO_OLD_LABEL, optimizationMessage.metadataEntry(INITIATOR_TO_OLD_LABEL))
 				.addMetadataEntry(INITIATOR_TO_CANDIDATE_LABEL,
-						ByteBuffer.allocate(Long.BYTES).putLong(disconnectEntry.getKey()).flip())
+						(ByteBuffer) ByteBuffer.allocate(Long.BYTES).putLong(disconnectEntry.getKey()).flip())
 				.addMetadataEntry(INITIATOR_LABEL, optimizationMessage.metadataEntry(Message.SENDER_LABEL));
 		sendMessage(replaceMessage);
 		try {
@@ -268,8 +277,10 @@ public class XBotNode extends AbstractNode {
 					sender,
 					BBInetSocketAddress.fromByteBuffer(optimizationMessage.metadataEntry(INITIATOR_TO_OLD_LABEL)),
 					disconnect)
-					.itoc(optimizationMessage.metadataEntry(INITIATOR_TO_CANDIDATE_LABEL).getLong());
+					.itoc(optimizationMessage.metadataEntry(INITIATOR_TO_CANDIDATE_LABEL).getLong())
+					.itoo(optimizationMessage.metadataEntry(INITIATOR_TO_OLD_LABEL).getLong());
 			optimizationMessage.metadataEntry(INITIATOR_TO_CANDIDATE_LABEL).flip();
+			optimizationMessage.metadataEntry(INITIATOR_TO_OLD_LABEL).flip();
 		} catch(UnknownHostException uhe) {
 			// TODO
 			uhe.printStackTrace();
@@ -298,6 +309,15 @@ public class XBotNode extends AbstractNode {
 
 	private void handleReplaceReply(Message replaceReply) {
 
+	}
+
+	private void optimizeIf(XBotRound disconnectedRound, Function<XBotRound, Boolean> criteria) {
+		// If this is true, the criteria passed and we want to optimize
+			Message replaceReplyMessage = new Message(MessageDecoder.MessageType.replaceReply)
+					.withSender()
+					.setDestination(disconnectedRound.candidate())
+					.addMetadataEntry(REPLACE_REPLY_LABEL, ByteBuffer.allocate(Byte.BYTES)
+							.put((byte) (criteria.apply(disconnectedRound) ? 1 : 0)));
 	}
 
 	private InetSocketAddress disconnectRandomNeighbour() {

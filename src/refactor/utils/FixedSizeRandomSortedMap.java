@@ -83,6 +83,13 @@ public class FixedSizeRandomSortedMap<K extends Comparable<K>, V> implements Fix
         return list.get(index);
     }
 
+    public Entry<K, V> getEntry(V value) {
+        for(Entry<K, V> entry : list)
+            if(entry.getValue().equals(value))
+                return entry;
+        return null;
+    }
+
     public V getLast() {
         return getElement(size() - 1);
     }

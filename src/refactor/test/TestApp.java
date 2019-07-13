@@ -2,7 +2,6 @@ package refactor.test;
 
 import refactor.GlobalSettings;
 import refactor.exception.IllegalSettingChangeException;
-import refactor.exception.SingletonIsNullException;
 import refactor.network.TCP;
 import refactor.protocol.xbot.XBotNode;
 

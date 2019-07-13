@@ -20,7 +20,7 @@ import refactor.protocol.notifications.Notification;
 import refactor.utils.Utils;
 
 public class RTTOracle extends AbstractAsyncOracle {
-	
+
 	private Map<InetSocketAddress, Long> sendTimes;
 
 	private static RTTOracle rttOracle = new RTTOracle();
@@ -28,7 +28,7 @@ public class RTTOracle extends AbstractAsyncOracle {
 	public static RTTOracle getRttOracle() {
 		return rttOracle;
 	}
-	
+
 	private RTTOracle(int initialCapacity) {
 		super(initialCapacity);
 		sendTimes = new HashMap<>(initialCapacity);
@@ -62,12 +62,7 @@ public class RTTOracle extends AbstractAsyncOracle {
 		Message pingMessage = new Message(MessageDecoder.MessageType.ping)
 				.withSender()
 				.setDestination(node);
-		try {
-			TCP.tcp().notify(new MessageNotification(pingMessage));
-		} catch (SingletonIsNullException e) {
-			// TODO
-			System.exit(1);
-		}
+		TCP.tcp().notify(new MessageNotification(pingMessage));
 		listenToMessage(MessageDecoder.MessageType.ping, node);
 		sendTimes.put(node, System.nanoTime());
 	}

@@ -21,15 +21,15 @@ class XBotRoundPool {
 		disconnectedRounds = new ArrayList<>();
 	}
 
-	public boolean roundExists(Role myRole, Role otherRole, InetSocketAddress node) {
+	public XBotRound round(Role myRole, Role otherRole, InetSocketAddress node) {
 		EnumSet<Role> roleEnumSet = EnumSet.allOf(Role.class);
 		for(Role role1 : roleEnumSet)
 			for(Role role2 : roleEnumSet)
 				if(myRole == role1 && otherRole == role2)
 					for(XBotRound round : candidateRounds)
 						if(round.initiator().equals(node))
-							return true;
-		return false;
+							return round;
+		return null;
 	}
 
 	public XBotRound createRound(Role role, InetSocketAddress... nodes) {
