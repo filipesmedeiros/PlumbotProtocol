@@ -91,18 +91,18 @@ class XBotRoundPool {
 	}
 	
 	public XBotRound oldRound(InetSocketAddress initiator) {
-		return getRound(Role.old, initiator);
+		return getRoundWithInitiator(Role.old, initiator);
 	}
 	
 	public XBotRound candidateRound(InetSocketAddress initiator) {
-		return getRound(Role.candidate, initiator);
+		return getRoundWithInitiator(Role.candidate, initiator);
 	}
 	
 	public XBotRound disconnectedRound(InetSocketAddress initiator) {
-		return getRound(Role.disconnected, initiator);
+		return getRoundWithInitiator(Role.disconnected, initiator);
 	}
 	
-	public XBotRound getRound(XBotRound.Role localRole, InetSocketAddress initiator) {
+	public XBotRound getRoundWithInitiator(XBotRound.Role localRole, InetSocketAddress initiator) {
 		List<XBotRound> rounds = decideRounds(localRole);
 
 		if(rounds == null)
@@ -114,6 +114,12 @@ class XBotRoundPool {
 			
 			return null;
 		}
+	}
+
+	public XBotRound removeInitiatorRound() {
+		XBotRound round = initiatorRound;
+		initiatorRound = null;
+		return round;
 	}
 
 	public XBotRound removeRound(Role localRole, InetSocketAddress initiator) {

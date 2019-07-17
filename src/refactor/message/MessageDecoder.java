@@ -46,7 +46,7 @@ public class MessageDecoder {
         ping,
         replace,
         replaceReply,
-        swap;
+        swap; // This is the Switch message but switch is a reserved keyword in java...
 
         /**
          * For encoding purposes, the code of each type is equal to the its position's ordinal in this enum. This is an
