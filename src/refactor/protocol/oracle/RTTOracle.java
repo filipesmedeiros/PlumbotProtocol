@@ -63,13 +63,13 @@ public class RTTOracle extends AbstractAsyncOracle {
 				.withSender()
 				.setDestination(node);
 		TCP.tcp().notify(new MessageNotification(pingMessage));
-		listenToMessage(MessageDecoder.MessageType.ping, node);
+		listenToMessage(MessageDecoder.MessageType.pingBack, node);
 		sendTimes.put(node, System.nanoTime());
 	}
 
 	@Override
 	public void handleMessage(Message message) {
-		if(message.messageType() != MessageDecoder.MessageType.ping) {
+		if(message.messageType() != MessageDecoder.MessageType.pingBack) {
 			if(GlobalSettings.DEBUGGING_LEVEL >= 3)
 				System.out.println("Wrong message received, expected ping back");
 			return;
