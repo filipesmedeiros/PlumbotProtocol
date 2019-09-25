@@ -11,7 +11,7 @@
     </annotationProcessing>
     <bytecodeTargetLevel>
       <module name="PlumbotProtocol" target="1.5" />
-      <module name="plumbotprotocol" target="1.8" />
+      <module name="plumbotprotocol" target="8" />
     </bytecodeTargetLevel>
   </component>
 </project>
