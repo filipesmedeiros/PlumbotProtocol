@@ -1,6 +1,6 @@
 package refactor.framework;
 
-import refactor.message.Message;
+import nettyFoutoRefactor.network.messaging.Message;
 
 public class MessageEvent extends DirectedEvent {
 

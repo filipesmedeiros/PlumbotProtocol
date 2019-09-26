@@ -1,6 +1,6 @@
 package refactor.protocol.notifications;
 
-import refactor.message.Message;
+import nettyFoutoRefactor.network.messaging.Message;
 
 public class MessageNotification implements Notification {
 

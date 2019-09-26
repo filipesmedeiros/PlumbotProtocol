@@ -7,7 +7,7 @@ import java.nio.ByteBuffer;
 
 public interface Message {
 
-    // End of string (mostly for node address)
+    // End of string (mostly for Peer address)
     char EOS = '<';
 
     byte EOT = NetworkInterface.EOT;

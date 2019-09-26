@@ -1,7 +1,9 @@
 package refactor.exception;
 
+import nettyFoutoRefactor.network.messaging.Message;
+
 /**
- * Exception that is thrown when the program tries to process (decode, encode, etc) a {@link refactor.message.Message}
+ * Exception that is thrown when the program tries to process (decode, encode, etc) a {@link Message}
  * object that is either {@code null} or empty (no metadata, no data)
  * @author Filipe Medeiros - filipesilvamedeiros@gmail.com
  * @author Filipe Medeiros - github.com/filipesmedeiros

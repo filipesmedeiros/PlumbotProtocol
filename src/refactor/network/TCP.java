@@ -1,10 +1,10 @@
 package refactor.network;
 
+import nettyFoutoRefactor.network.messaging.MessageSerializer;
 import refactor.GlobalSettings;
 import refactor.exception.*;
-import refactor.message.Message;
-import refactor.message.MessageDecoder;
-import refactor.message.MessageRouter;
+import nettyFoutoRefactor.network.messaging.Message;
+import nettyFoutoRefactor.network.messaging.MessageRouter;
 import refactor.protocol.notifications.AbstractNotifiable;
 import refactor.protocol.notifications.MessageNotification;
 import refactor.protocol.notifications.Notification;
@@ -97,7 +97,7 @@ public class TCP extends AbstractNotifiable {
         ByteBuffer messageBuffer = ByteBuffer.allocate(((ByteBuffer) totalSizeBuffer.flip()).getInt());
         socketChannel.read(messageBuffer);
         try {
-            Message message = MessageDecoder.decodeMessage(messageBuffer);
+            Message message = MessageSerializer.decodeMessage(messageBuffer);
             MessageRouter.getRouter().routeMessage(message);
         } catch(NullMessageException | InvalidMessageTypeException | SingletonIsNullException e) {
             // TODO

@@ -22,7 +22,7 @@ import refactor.utils.BBInetSocketAddress;
 public class GlobalSettings {
 
     /**
-     * This field stores the local address of the local node, so it can be accessed throughout the whole program.
+     * This field stores the local address of the local Peer, so it can be accessed throughout the whole program.
      * It can be set and got at will, but is assumed to only be set once, at the beginning of execution. It is
      * assumed also to be an address that all {@link refactor.protocol.Node}s can see and connect to
      */
@@ -90,7 +90,7 @@ public class GlobalSettings {
     }
 
     /**
-     * Maximum time, in milliseconds, a thread can block in order to try to connect a node to another one. After this
+     * Maximum time, in milliseconds, a thread can block in order to try to connect a Peer to another one. After this
      * time, an exception will be thrown and the connection between the nodes will be assumed to have failed. Changing
      * this setting mid-execution is permitted but discouraged and can lead to incorrect behaviors and errors
      */

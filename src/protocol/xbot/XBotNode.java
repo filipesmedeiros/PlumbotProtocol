@@ -97,7 +97,7 @@ public class XBotNode implements OptimizerNode {
     // All these are for remembering stuff during async optimization
     private Map<InetSocketAddress, XBotSupportEdge> costsWaiting;
 
-    // Lists of "states" being used by this node for optimizations, currently
+    // Lists of "states" being used by this Peer for optimizations, currently
     // The cycle each one belongs to is identified by its initiator
     private XBotInit init;
     private Map<InetSocketAddress, XBotCand> cands;
@@ -111,7 +111,7 @@ public class XBotNode implements OptimizerNode {
 
     private Set<NeighbourhoodListener> neighbourhoodListeners;
 
-    // For testing, every node waits a random (relatively low) amount of time
+    // For testing, every Peer waits a random (relatively low) amount of time
     // when answering pings
     private long pingSleepTime;
 
@@ -256,7 +256,7 @@ public class XBotNode implements OptimizerNode {
             XBotOld old = createOld(msg.sender());
 
             // This is putting the init as the future, but it symbolises
-            // we are waiting for the corresponding disconnect node,
+            // we are waiting for the corresponding DisconnectMessage Peer,
             // because we don't know its ID
             futureConnections.put(msg.sender(), null);
             old.handleDisconnectWait();
@@ -418,7 +418,7 @@ public class XBotNode implements OptimizerNode {
     private void handleJoin(ByteBuffer bytes) {
         JoinMessage msg = JoinMessage.parse(bytes);
 
-        System.out.println("node of join -> " + msg.sender());
+        System.out.println("Peer of join -> " + msg.sender());
 
         if(addNewPeerToActiveView(msg.sender()))
             sendAcceptJoin(msg.sender());

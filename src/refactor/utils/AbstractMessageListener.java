@@ -1,8 +1,8 @@
 package refactor.utils;
 
 import refactor.exception.SingletonIsNullException;
-import refactor.message.MessageDecoder;
-import refactor.message.MessageRouter;
+import nettyFoutoRefactor.network.messaging.MessageSerializer;
+import nettyFoutoRefactor.network.messaging.MessageRouter;
 import refactor.protocol.notifications.AbstractNotifiable;
 
 import java.net.InetSocketAddress;
@@ -18,7 +18,7 @@ public abstract class AbstractMessageListener extends AbstractNotifiable impleme
     }
 
     @Override
-    public void listenToMessage(MessageDecoder.MessageType messageType, InetSocketAddress sender) {
+    public void listenToMessage(MessageSerializer.MessageType messageType, InetSocketAddress sender) {
         try {
             MessageRouter.getRouter().addRoute(this, messageType, sender);
         } catch(SingletonIsNullException sine) {

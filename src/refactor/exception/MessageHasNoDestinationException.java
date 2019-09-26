@@ -1,10 +1,12 @@
 package refactor.exception;
 
+import nettyFoutoRefactor.network.messaging.Message;
+
 import java.io.IOException;
 
 /**
- * Exception that is thrown when the program tries to send a {@link refactor.message.Message} through the network,
- * but said {@link refactor.message.Message} has no defined destination
+ * Exception that is thrown when the program tries to send a {@link Message} through the network,
+ * but said {@link Message} has no defined destination
  * @author Filipe Medeiros - filipesilvamedeiros@gmail.com
  * @author Filipe Medeiros - github.com/filipesmedeiros
  * @version 1.0

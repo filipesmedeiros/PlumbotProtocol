@@ -1,5 +1,6 @@
 package refactor.protocol.xbot;
 
+import nettyFoutoRefactor.network.messaging.Message;
 import refactor.GlobalSettings;
 import refactor.exception.IllegalSettingChangeException;
 
@@ -21,7 +22,7 @@ public class XBotSettings {
 
     /**
      * Simple method that just returns the set active view size
-     * @return The size of this node's active view (XBot-wise)
+     * @return The size of this Peer's active view (XBot-wise)
      */
     public static short activeViewSize() {
     	return ACTIVE_VIEW_SIZE;
@@ -75,7 +76,7 @@ public class XBotSettings {
     
     /**
      * Simple method that just returns the set passive view size
-     * @return The size of this node's passive view (XBot-wise)
+     * @return The size of this Peer's passive view (XBot-wise)
      */
     public static short passiveViewSize() {
     	return PASSIVE_VIEW_SIZE;
@@ -95,7 +96,7 @@ public class XBotSettings {
 
     /**
      * This value defines how many times a Join is spread across the network, through JoinForward
-     * {@link refactor.message.Message}s
+     * {@link Message}s
      */
     public static short ACTIVE_RANDOM_WALK_LENGTH = 4;
 
@@ -103,7 +104,7 @@ public class XBotSettings {
      * This value defines at which point during the JoinForward spread, the {@link refactor.protocol.Node} is added to a
      * passive view. Note that, since this is implemented with the help of the {@code ACTIVE_RANDOM_WALK_LENGTH}, this
      * value actually represents how close to {@code 0} you have to be to do it, i.e. an ARWL of 10 and a PRWL of 3
-     * means that on the 7th "spread", the node will be added to a passive view
+     * means that on the 7th "spread", the Peer will be added to a passive view
      */
     public static short PASSIVE_RANDOM_WALK_LENGTH = 2;
     

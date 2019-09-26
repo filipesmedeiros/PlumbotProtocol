@@ -7,10 +7,9 @@ import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-import jdk.nashorn.internal.runtime.GlobalConstants;
+import nettyFoutoRefactor.network.messaging.MessageSerializer;
 import refactor.GlobalSettings;
-import refactor.message.Message;
-import refactor.message.MessageDecoder;
+import nettyFoutoRefactor.network.messaging.Message;
 import refactor.network.TCP;
 import refactor.protocol.AbstractNode;
 import refactor.protocol.notifications.CostNotification;
@@ -137,7 +136,7 @@ public class XBotNode extends AbstractNode {
 
     @Override
     public void join(InetSocketAddress contactNode) {
-        Message joinMessage = new Message(MessageDecoder.MessageType.join)
+        Message joinMessage = new Message(MessageSerializer.MessageType.join)
                 .withSender()
                 .setDestination(contactNode);
         sendMessage(joinMessage);
@@ -195,7 +194,7 @@ public class XBotNode extends AbstractNode {
                 .itoc(cost)
                 .itoo(oldCost);
 
-        Message optimizationMessage = new Message(MessageDecoder.MessageType.optimization)
+        Message optimizationMessage = new Message(MessageSerializer.MessageType.optimization)
                 .withSender()
                 .setDestination(candidate)
                 .addMetadataEntry(OLD_ADDRESS_LABEL, BBInetSocketAddress.toByteBuffer(old))
@@ -216,7 +215,7 @@ public class XBotNode extends AbstractNode {
         waitingForCosts.put(sender, this::finishJoin);
 
         activeView.forEach(neighbour -> {
-            Message forwardJoinMessage = new Message(MessageDecoder.MessageType.forwardJoin)
+            Message forwardJoinMessage = new Message(MessageSerializer.MessageType.forwardJoin)
                     .withSender()
                     .setDestination(neighbour)
                     .addMetadataEntry(JOINER_LABEL, BBInetSocketAddress.toByteBuffer(sender))
@@ -233,7 +232,7 @@ public class XBotNode extends AbstractNode {
     private void finishJoin(CostNotification costNotification) {
         addToActiveView(costNotification.node(), costNotification.cost());
 
-        Message acceptJoinMessage = new Message(MessageDecoder.MessageType.acceptJoin)
+        Message acceptJoinMessage = new Message(MessageSerializer.MessageType.acceptJoin)
                 .withSender()
                 .setDestination(costNotification.node())
                 .addMetadataEntry(JOIN_COST_LABEL, (ByteBuffer) ByteBuffer.allocate(Long.BYTES)
@@ -256,7 +255,7 @@ public class XBotNode extends AbstractNode {
             InetSocketAddress forwardTo = activeView.getRandom();
             while(forwardTo.equals(sender))
                 forwardTo = activeView.getRandom();
-            Message newForwardJoinMessage = new Message(MessageDecoder.MessageType.forwardJoin)
+            Message newForwardJoinMessage = new Message(MessageSerializer.MessageType.forwardJoin)
                     .withSender()
                     .setDestination(forwardTo)
                     .addMetadataEntry(ACTIVE_RWL_LABEL, ByteBuffer.allocate(Short.BYTES).putShort((short) (arwl - 1)))
@@ -271,7 +270,7 @@ public class XBotNode extends AbstractNode {
     private void handleOptimization(Message optimizationMessage) {
         InetSocketAddress sender = optimizationMessage.sender();
         if(!activeView.isFull()) {
-            Message optimizationReply = new Message(MessageDecoder.MessageType.optimizationReply)
+            Message optimizationReply = new Message(MessageSerializer.MessageType.optimizationReply)
                     .withSender()
                     .setDestination(sender)
                     .addMetadataEntry(NO_DISCONNECT_LABEL, ByteBuffer.allocate(Byte.BYTES).put((byte) 1))
@@ -282,7 +281,7 @@ public class XBotNode extends AbstractNode {
         FixedSizeRandomSortedMap.Entry<Long, InetSocketAddress> disconnectEntry =
                 activeView.get(XBotSettings.unbiasedViewSize());
         InetSocketAddress disconnect = disconnectEntry.getValue();
-        Message replaceMessage = new Message(MessageDecoder.MessageType.replace)
+        Message replaceMessage = new Message(MessageSerializer.MessageType.replace)
                 .withSender()
                 .setDestination(disconnect)
                 .addMetadataEntry(OLD_ADDRESS_LABEL, optimizationMessage.metadataEntry(OLD_ADDRESS_LABEL))
@@ -293,7 +292,7 @@ public class XBotNode extends AbstractNode {
         try {
             InetSocketAddress oldAddress = BBInetSocketAddress
                     .fromByteBuffer(optimizationMessage.metadataEntry(OLD_ADDRESS_LABEL));
-            Message disconnectMessage = new Message(MessageDecoder.MessageType.swap)
+            Message disconnectMessage = new Message(MessageSerializer.MessageType.swap)
                     .withSender()
                     .setDestination(oldAddress);
             // TODO
@@ -364,7 +363,7 @@ public class XBotNode extends AbstractNode {
             return;
         }
         boolean optimize = replaceReply.metadataEntry(REPLACE_REPLY_LABEL).get() == 1;
-        Message optimizationReply = new Message(MessageDecoder.MessageType.optimizationReply)
+        Message optimizationReply = new Message(MessageSerializer.MessageType.optimizationReply)
                 .withSender()
                 .setDestination(round.initiator())
                 .addMetadataEntry(OPTIMIZATION_REPLY_LABEL,
@@ -387,7 +386,7 @@ public class XBotNode extends AbstractNode {
     private void optimizeIf(XBotRound disconnectedRound, Function<XBotRound, Boolean> criteria) {
         // If this is true, the criteria passed and we want to optimize
         boolean optimize = criteria.apply(disconnectedRound);
-        Message replaceReplyMessage = new Message(MessageDecoder.MessageType.replaceReply)
+        Message replaceReplyMessage = new Message(MessageSerializer.MessageType.replaceReply)
                 .withSender()
                 .setDestination(disconnectedRound.candidate())
                 .addMetadataEntry(REPLACE_REPLY_LABEL, ByteBuffer.allocate(Byte.BYTES)
@@ -428,7 +427,7 @@ public class XBotNode extends AbstractNode {
 
     private void disconnectNeighbour(InetSocketAddress neighbour) {
         activeView.remove(neighbour);
-        Message disconnectMessage = new Message(MessageDecoder.MessageType.disconnect)
+        Message disconnectMessage = new Message(MessageSerializer.MessageType.disconnect)
                 .withSender()
                 .setDestination(neighbour);
         sendMessage(disconnectMessage);
@@ -437,7 +436,7 @@ public class XBotNode extends AbstractNode {
 
     private InetSocketAddress disconnectRandomNeighbour() {
         InetSocketAddress disconnect = activeView.removeRandom();
-        Message disconnectMessage = new Message(MessageDecoder.MessageType.disconnect)
+        Message disconnectMessage = new Message(MessageSerializer.MessageType.disconnect)
                 .withSender()
                 .setDestination(disconnect);
         sendMessage(disconnectMessage);

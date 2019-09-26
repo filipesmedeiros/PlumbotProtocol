@@ -1,10 +1,11 @@
 package refactor.exception;
 
-import refactor.message.MessageDecoder;
+import nettyFoutoRefactor.network.messaging.Message;
+import nettyFoutoRefactor.network.messaging.MessageSerializer;
 
 /**
- * Exception that is thrown when the program tries to instantiate a {@link refactor.message.Message}
- * with a type that is not correct (not present in {@link MessageDecoder}'s type list
+ * Exception that is thrown when the program tries to instantiate a {@link Message}
+ * with a type that is not correct (not present in {@link MessageSerializer}'s type list
  * @author Filipe Medeiros - filipesilvamedeiros@gmail.com
  * @author Filipe Medeiros - github.com/filipesmedeiros
  * @version 1.0
@@ -19,7 +20,7 @@ public class InvalidMessageTypeException extends Exception {
 
     /**
      * Default constructor of this exception, takes the type which the program tried to use
-     * @param number The type the program tried to use for the {@link refactor.message.Message}
+     * @param number The type the program tried to use for the {@link Message}
      */
     public InvalidMessageTypeException(byte number) {
         super(MESSAGE + number);

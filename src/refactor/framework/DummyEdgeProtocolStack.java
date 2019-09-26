@@ -142,5 +142,10 @@ public class DummyEdgeProtocolStack implements ProtocolStack {
         public boolean checkEvent(Event event) {
             return false;
         }
+
+        @Override
+        public void handleEvent(Event event) {
+            
+        }
     }
 }

@@ -7,10 +7,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import nettyFoutoRefactor.network.messaging.MessageSerializer;
 import refactor.GlobalSettings;
-import refactor.exception.SingletonIsNullException;
-import refactor.message.Message;
-import refactor.message.MessageDecoder;
+import nettyFoutoRefactor.network.messaging.Message;
 import refactor.network.TCP;
 import refactor.protocol.notifications.CostNotification;
 import refactor.protocol.xbot.XBotNode;
@@ -56,20 +55,20 @@ public class RTTOracle extends AbstractAsyncOracle {
 		Long sendTime = sendTimes.get(node);
 		if(sendTime != null && Utils.timeElapsed(sendTime, TimeUnit.SECONDS) < 30) {
 			if(GlobalSettings.DEBUGGING_LEVEL >= 4)
-				System.out.println("Trying to ping the same node to often");
+				System.out.println("Trying to ping the same Peer to often");
 		}
 
-		Message pingMessage = new Message(MessageDecoder.MessageType.ping)
+		Message pingMessage = new Message(MessageSerializer.MessageType.ping)
 				.withSender()
 				.setDestination(node);
 		TCP.tcp().notify(new MessageNotification(pingMessage));
-		listenToMessage(MessageDecoder.MessageType.pingBack, node);
+		listenToMessage(MessageSerializer.MessageType.pingBack, node);
 		sendTimes.put(node, System.nanoTime());
 	}
 
 	@Override
 	public void handleMessage(Message message) {
-		if(message.messageType() != MessageDecoder.MessageType.pingBack) {
+		if(message.messageType() != MessageSerializer.MessageType.pingBack) {
 			if(GlobalSettings.DEBUGGING_LEVEL >= 3)
 				System.out.println("Wrong message received, expected ping back");
 			return;
@@ -80,7 +79,7 @@ public class RTTOracle extends AbstractAsyncOracle {
 			Long sendTime = sendTimes.get(sender);
 			if(sendTime == null) {
 				if(GlobalSettings.DEBUGGING_LEVEL >= 4)
-					System.out.println("This oracle wasn't waiting for a ping back from this node");
+					System.out.println("This oracle wasn't waiting for a ping back from this Peer");
 				return;
 			}
 			XBotNode.xBotNode().notify(new CostNotification(Utils.timeElapsedNano(sendTime), sender));
