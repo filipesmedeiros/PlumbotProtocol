@@ -4,9 +4,9 @@ import nettyFoutoRefactor.network.Host;
 
 public class MessageWithSender {
 
-    private Host sender;
+    private final Host sender;
 
-    public MessageWithSender(Host sender) {
+    MessageWithSender(Host sender) {
         this.sender = sender;
     }
 
