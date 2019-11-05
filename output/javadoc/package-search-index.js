@@ -1,1 +1,0 @@
-packageSearchIndex = [{"l":"All Packages","url":"allpackages-index.html"},{"l":"refactor"},{"l":"refactor.exception"},{"l":"refactor.message"},{"l":"refactor.network"},{"l":"refactor.protocol"},{"l":"refactor.protocol.oracle"},{"l":"refactor.protocol.xbot"},{"l":"refactor.utils"}]
