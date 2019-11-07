@@ -109,7 +109,7 @@ public class XBotNode implements OptimizerNode {
 
     private PersistantNetwork tcp;
 
-    private Set<NeighbourhoodListener> neighbourhoodListeners;
+    private List<NeighbourhoodListener> neighbourhoodListeners;
 
     // For testing, every Peer waits a random (relatively low) amount of time
     // when answering pings
@@ -163,7 +163,7 @@ public class XBotNode implements OptimizerNode {
 
         tcp = null;
         oracle = null;
-        neighbourhoodListeners = new HashSet<>();
+        neighbourhoodListeners = new LinkedList<>();
     }
 
     @Override
@@ -640,6 +640,8 @@ public class XBotNode implements OptimizerNode {
             unbiasedActiveView.add(peer);
             activeView.add(peer);
 
+            System.out.println("listeners " + neighbourhoodListeners.size());
+
             for(NeighbourhoodListener listener : neighbourhoodListeners)
                 listener.neighbourUp(peer);
         } else
@@ -650,14 +652,7 @@ public class XBotNode implements OptimizerNode {
         if(!passiveView.remove(peer))
             return;
 
-        if(unbiasedActiveView.size() < unbiasedViewMaxSize) {
-            unbiasedActiveView.add(peer);
-            activeView.add(peer);
-
-            for(NeighbourhoodListener listener : neighbourhoodListeners)
-                listener.neighbourUp(peer);
-        } else
-            addPeerToBiasedActiveView(peer, cost);
+        addNewPeerToActiveView(peer, cost);
     }
 
     void beginConnection(InetSocketAddress peer, long cost, boolean active, XBotSupport xBotSupport) {
@@ -698,6 +693,9 @@ public class XBotNode implements OptimizerNode {
 
         biasedActiveView.add(new BiasedInetAddress(peer, cost));
         activeView.add(peer);
+
+        for(NeighbourhoodListener listener : neighbourhoodListeners)
+            listener.neighbourUp(peer);
     }
 
     private void addPeerToBiasedActiveView(InetSocketAddress peer) {
@@ -717,6 +715,10 @@ public class XBotNode implements OptimizerNode {
         if(unbiasedActiveView.size() < unbiasedViewMaxSize) {
             unbiasedActiveView.add(peer);
             activeView.add(peer);
+
+            for(NeighbourhoodListener listener : neighbourhoodListeners)
+                listener.neighbourUp(peer);
+
             return true;
         } else
             addPeerToBiasedActiveView(peer);
@@ -728,6 +730,9 @@ public class XBotNode implements OptimizerNode {
         if(unbiasedActiveView.size() < unbiasedViewMaxSize) {
             unbiasedActiveView.add(peer);
             activeView.add(peer);
+
+            for(NeighbourhoodListener listener : neighbourhoodListeners)
+                listener.neighbourUp(peer);
         } else
             addPeerToBiasedActiveView(peer, cost);
     }
@@ -736,6 +741,9 @@ public class XBotNode implements OptimizerNode {
         if(unbiasedActiveView.size() < unbiasedViewMaxSize) {
             unbiasedActiveView.add(peer);
             activeView.add(peer);
+
+            for(NeighbourhoodListener listener : neighbourhoodListeners)
+                listener.neighbourUp(peer);
         } else {
             if(activeView.size() == activeViewMaxSize - futureConnections.size())
                 movePeerToPassiveView(biasedActiveView.last().address);
@@ -751,8 +759,13 @@ public class XBotNode implements OptimizerNode {
             else {
                 biasedActiveView.add(new BiasedInetAddress(peer, info.cost));
                 activeView.add(peer);
+
+                for(NeighbourhoodListener listener : neighbourhoodListeners)
+                    listener.neighbourUp(peer);
             }
         }
+
+        System.out.println("doing this?");
     }
 
     private void addNewPeerToPassiveView(InetSocketAddress peer) {

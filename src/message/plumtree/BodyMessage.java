@@ -23,6 +23,10 @@ public class BodyMessage extends HopMessage {
         this.bodySize = bodySize;
     }
 
+    public ByteBuffer body() {
+        return body;
+    }
+
     @Override
     public ByteBuffer bytes() {
         ByteBuffer buffer = putSenderInBuffer();

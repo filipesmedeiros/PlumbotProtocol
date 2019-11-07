@@ -99,7 +99,12 @@ public class PlumtreeNode implements TreeBroadcastNode {
         msgsToBeSent.put(iHave.hash(), new CountedMessage(bytes, new HashSet<>()));
     }
 
+    private void broadcast(BodyMessage message) {
+        broadcast(message.body());
+    }
+
     private void eagerPushMessage(ByteBuffer bytes) {
+        System.out.println(eagerPeers.size());
         for(InetSocketAddress peer : eagerPeers)
             try {
                 BodyMessage msg = new BodyMessage(id, bytes, bytes.limit(), (short) 1);
@@ -237,14 +242,7 @@ public class PlumtreeNode implements TreeBroadcastNode {
                 receivedHashes.put(hash, System.currentTimeMillis());
                 messages.put(msg);
 
-                for(InetSocketAddress peer : eagerPeers)
-                    if(peer.equals(msg.sender()))
-                        try {
-                            tcp.send(msg.next(id).bytes(), peer);
-                        } catch(IOException e) {
-                            // TODO
-                            e.printStackTrace();
-                        }
+                broadcast(msg);
             }
 
             for(IHaveMessage missMsg : missing)

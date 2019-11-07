@@ -14,11 +14,14 @@ import protocol.xbot.XBotNode;
 import test.Application;
 
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ThreadPoolExecutor;
 
 public class PlumBotInstance implements PlumBot {
 
@@ -54,6 +57,7 @@ public class PlumBotInstance implements PlumBot {
 
             xbot.setOracle(oracle);
             xbot.setNetwork(tcp);
+            xbot.setNeighbourhoodListener(plum);
 
             plum.setNetwork(tcp);
 
@@ -174,5 +178,21 @@ public class PlumBotInstance implements PlumBot {
         list.add(PingBackMessage.TYPE);
 
         return list;
+    }
+
+    public static void main(String[] args) throws UnknownHostException, InterruptedException {
+        PlumBot pb = new PlumBotInstance(new InetSocketAddress(InetAddress.getByName(InetAddress.getLocalHost().getHostName()).getHostAddress(),
+                Short.parseShort(args[0])));
+        pb.addApp(message -> System.out.println(new String(message.body().array())));
+
+        short contactPort = Short.parseShort(args[1]);
+        if(contactPort > 0)
+            pb.join(new InetSocketAddress(InetAddress.getByName(InetAddress.getLocalHost().getHostName()).getHostAddress(),
+                    contactPort));
+
+        Thread.sleep(5000);
+        pb.broadcast(ByteBuffer.wrap(args[2].getBytes()));
+
+        Thread.sleep(100000);
     }
 }
