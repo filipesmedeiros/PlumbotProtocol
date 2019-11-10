@@ -132,7 +132,7 @@ public class PlumtreeNode implements TreeBroadcastNode {
     }
 
     @Override
-    public int eagerPeerSetSize(int size) throws IllegalArgumentException {
+    public int setNumberOfEagerPeers(int size) throws IllegalArgumentException {
         int count = 0;
 
         while(eagerPeers.size() > size) {
@@ -145,11 +145,10 @@ public class PlumtreeNode implements TreeBroadcastNode {
 
     // TODO how to implement this??? many ways
     @Override
-    public int lazyPeerSetSize(int size) throws IllegalArgumentException {
+    public int setNumberOfLazyPeers(int size) throws IllegalArgumentException {
         return 0;
     }
 
-    // half the && are for confirmation of errors (cuz they should be symmetrical)
     @Override
     public boolean canOptimize(InetSocketAddress peer1, InetSocketAddress peer2) {
         if(peer1 != null && peer2 != null)

@@ -34,7 +34,7 @@ public class MessageRouter {
 
 	public void routeMessage(Message message) {
 		try {
-			MessageRoutingKey mrk = MessageRoutingKey.fromMessage(message);
+			MessageRoutingKey mrk = MessageRoutingKey.createKey(message);
 			Notifiable notifiable = routes.get(mrk);
 			if(notifiable == null) {
 				if(GlobalSettings.DEBUGGING_LEVEL >= 4)
@@ -64,7 +64,7 @@ public class MessageRouter {
 			this.sender = sender;
 		}
 
-		private static MessageRoutingKey fromMessage(Message message)
+		private static MessageRoutingKey createKey(Message message)
 				throws UnknownHostException, IllegalArgumentException {
 			InetSocketAddress sender = BBInetSocketAddress.fromByteBuffer(
 					message.metadataEntry(Message.SENDER_LABEL));

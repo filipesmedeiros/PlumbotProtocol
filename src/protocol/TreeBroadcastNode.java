@@ -13,9 +13,9 @@ public interface TreeBroadcastNode extends NeighbourhoodListener, NetworkNotifia
 
     void broadcast(ByteBuffer bytes) throws IllegalArgumentException;
 
-    int eagerPeerSetSize(int size) throws IllegalArgumentException;
+    int setNumberOfEagerPeers(int size) throws IllegalArgumentException;
 
-    int lazyPeerSetSize(int size) throws IllegalArgumentException;
+    int setNumberOfLazyPeers(int size) throws IllegalArgumentException;
 
     void addApplication(Application app) throws IllegalArgumentException;
 
