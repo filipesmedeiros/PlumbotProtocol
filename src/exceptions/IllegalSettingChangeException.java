@@ -1,4 +1,4 @@
-package refactor.exception;
+package exceptions;
 
 public class IllegalSettingChangeException extends Exception {
 	

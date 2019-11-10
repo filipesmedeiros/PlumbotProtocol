@@ -2,9 +2,9 @@ package nettyFoutoRefactor.network.messaging;
 
 import io.netty.buffer.ByteBuf;
 import nettyFoutoRefactor.network.ISerializer;
-import refactor.GlobalSettings;
-import refactor.exception.InvalidMessageTypeException;
-import refactor.exception.NullMessageException;
+import common.GlobalSettings;
+import exceptions.InvalidMessageTypeException;
+import exceptions.NullMessageException;
 
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;

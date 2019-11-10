@@ -1,6 +1,4 @@
-package refactor.utils;
-
-import refactor.GlobalSettings;
+package common;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;

@@ -1,4 +1,4 @@
-package refactor.exception;
+package exceptions;
 
 import java.io.IOException;
 

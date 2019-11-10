@@ -1,8 +1,8 @@
 package nettyFoutoRefactor.network.messaging;
 
-import refactor.GlobalSettings;
-import refactor.exception.MessageTooLargeException;
-import refactor.utils.BBInetSocketAddress;
+import common.GlobalSettings;
+import exceptions.MessageTooLargeException;
+import common.BBInetSocketAddress;
 
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;

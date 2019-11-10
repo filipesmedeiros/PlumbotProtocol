@@ -1,7 +1,7 @@
-package refactor.exception;
+package exceptions;
 
 import nettyFoutoRefactor.network.messaging.Message;
-import refactor.GlobalSettings;
+import common.GlobalSettings;
 
 /**
  * Exception that is thrown when the program tries to create a {@link Message} whose total

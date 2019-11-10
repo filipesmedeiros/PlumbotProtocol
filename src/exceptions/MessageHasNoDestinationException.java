@@ -1,4 +1,4 @@
-package refactor.exception;
+package exceptions;
 
 import nettyFoutoRefactor.network.messaging.Message;
 

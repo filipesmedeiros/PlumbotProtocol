@@ -1,6 +1,6 @@
 package nettyFoutoRefactor.network.messaging;
 
-import refactor.GlobalSettings;
+import common.GlobalSettings;
 
 import java.nio.ByteBuffer;
 import java.util.HashMap;

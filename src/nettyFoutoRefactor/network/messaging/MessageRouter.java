@@ -1,10 +1,10 @@
 package nettyFoutoRefactor.network.messaging;
 
-import refactor.GlobalSettings;
-import refactor.exception.SingletonIsNullException;
+import common.GlobalSettings;
+import exceptions.SingletonIsNullException;
 import refactor.protocol.notifications.MessageNotification;
 import refactor.protocol.notifications.Notifiable;
-import refactor.utils.BBInetSocketAddress;
+import common.BBInetSocketAddress;
 import refactor.utils.MessageListener;
 
 import java.net.InetSocketAddress;

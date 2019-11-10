@@ -1,4 +1,4 @@
-package refactor.exception;
+package exceptions;
 
 public class SingletonIsNullException extends Exception {
 	

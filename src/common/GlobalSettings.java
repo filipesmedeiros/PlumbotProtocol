@@ -1,4 +1,4 @@
-package refactor;
+package common;
 
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
@@ -8,8 +8,7 @@ import java.util.Timer;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import refactor.exception.IllegalSettingChangeException;
-import refactor.utils.BBInetSocketAddress;
+import exceptions.IllegalSettingChangeException;
 
 /**
  * This interface just stores important settings that are used throughout the whole protocol implementation
@@ -35,7 +34,7 @@ public class GlobalSettings {
 
     /**
      * This field if used as a flag representing that the execution of the protocol in this
-     * {@link refactor.protocol.Node} has started, so some setting cannot be changed
+     * Node has started, so some setting cannot be changed
      */
     private static boolean SETTINGS_LOCKED = false;
     
