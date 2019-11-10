@@ -9,11 +9,11 @@ public abstract class MessageWithSender implements Message {
     public static final int BYTE_SIZE = 14;
 
     private InetSocketAddress sender;
-    private long id;
+    protected UUID id;
 
     public MessageWithSender(InetSocketAddress sender) {
         this.sender = sender;
-        id = UUID.randomUUID().getMostSignificantBits();
+        id = UUID.randomUUID();
     }
 
     @Override
@@ -22,21 +22,21 @@ public abstract class MessageWithSender implements Message {
     }
 
     @Override
-    public long id() {
+    public UUID id() {
         return id;
     }
 
-    @Override
-    public ByteBuffer serialize() {
-        ByteBuffer buffer = ByteBuffer.allocate(size());
-        buffer.putShort(type().code());
-        return serializeIdAndSender(buffer);
-    }
-
-    public ByteBuffer serializeIdAndSender(ByteBuffer buffer) {
-        return buffer.put(sender.getAddress().getAddress())
+    public ByteBuffer serializeTypeIdAndSender(ByteBuffer buffer) {
+        return buffer.putShort(type().code())
+                .put(sender.getAddress().getAddress())
                 .putShort((short) sender.getPort())
-                .putLong(id);
+                .putLong(id.getMostSignificantBits())
+                .putLong(id.getLeastSignificantBits());
     }
 
-    abstract public int size();}
+    public int baseSize() {
+        return 24; // 2 type + 6 sender + 16 id
+    }
+
+    abstract public int size();
+}

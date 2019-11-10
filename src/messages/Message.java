@@ -2,12 +2,16 @@ package messages;
 
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
+import java.util.UUID;
 
 public interface Message {
 
     enum MessageType {
         Join,
-        Data;
+        IHave,
+        Prune,
+        Graft,
+        Broadcast;
 
         public short code() {
             return (short) this.hashCode();
@@ -16,7 +20,7 @@ public interface Message {
 
     InetSocketAddress sender();
 
-    long id();
+    UUID id();
 
     MessageType type();
 

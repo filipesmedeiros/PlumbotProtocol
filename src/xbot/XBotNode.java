@@ -9,8 +9,6 @@ public class XBotNode implements Node {
 
     private InetSocketAddress id;
 
-    private
-
     public XBotNode(InetSocketAddress id) {
         this.id = id;
     }
