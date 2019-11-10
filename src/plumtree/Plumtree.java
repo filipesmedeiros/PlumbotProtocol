@@ -19,7 +19,8 @@ public class Plumtree implements TreeBroadcast {
     private Collection<InetSocketAddress> eagerPushPeers;
     private Collection<InetSocketAddress> lazyPushPeers;
 
-    private Queue<Message> lazyQueue;
+    // TODO for lazy push policies
+    // private Queue<Message> lazyQueue;
 
     private Map<UUID, BroadcastMessage> receivedMessages;
     private Map<UUID, List<IHaveAnnouncement>> missingMessages; // mIds and respective senders/rounds
@@ -28,8 +29,16 @@ public class Plumtree implements TreeBroadcast {
 
     private BroadcastListener broadcastListener;
 
-    public Plumtree() {
+    private int threshold;
 
+    public Plumtree(InetSocketAddress id) {
+        eagerPushPeers = new HashSet<>();
+        lazyPushPeers = new HashSet<>();
+
+        receivedMessages = new HashMap<>();
+        missingMessages = new HashMap<>();
+
+        this.id = id;
     }
 
     @Override
@@ -78,6 +87,14 @@ public class Plumtree implements TreeBroadcast {
         }
     }
 
+    @Override
+    public boolean breaksTree(InetSocketAddress peer) {
+        // TODO like this?
+        // Just for dev this is enough, when testing, have to put the correct implementation
+
+        return eagerPushPeers.contains(peer);
+    }
+
     private void handleBroadcastMessage(BroadcastMessage m) {
         if(!receivedMessages.containsKey(m.id())) {
             broadcastListener.deliver(m.data());
@@ -91,6 +108,8 @@ public class Plumtree implements TreeBroadcast {
 
             eagerPushPeers.add(m.sender());
             lazyPushPeers.remove(m.sender());
+
+            optimize(m);
         } else {
             eagerPushPeers.remove(m.sender());
             lazyPushPeers.add(m.sender());
@@ -140,6 +159,20 @@ public class Plumtree implements TreeBroadcast {
         for(InetSocketAddress peer : lazyPushPeers)
             if(!peer.equals(m.sender()))
                 network.send(new IHaveMessage(id, m.id(), m.round() + 1).serialize(), peer);
+    }
+
+    private void optimize(BroadcastMessage m) {
+        List<IHaveAnnouncement> announcements = missingMessages.get(m.id());
+
+        if(announcements != null)
+            for(IHaveAnnouncement announcement : announcements)
+                if(announcement.round() < m.round() && m.round() - announcement.round() >= threshold) {
+                    network.send(new GraftMessage(id, new UUID(0, 0)).serialize(), m.sender());
+                    network.send(new PruneMessage(id).serialize(), announcement.sender());
+
+                    announcements.remove(announcement);
+                    break;
+                }
     }
 
     private void cancelMissingTimer(UUID mId) {
