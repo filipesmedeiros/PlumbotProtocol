@@ -1,12 +1,12 @@
 package xbot;
 
+import common.Timer;
 import messages.Message;
 import messages.xbot.*;
 import network.Network;
 import plumtree.TreeBroadcast;
 
 import java.net.InetSocketAddress;
-import common.Timer;
 import java.util.*;
 
 // TODO Drop peers (from the cost map) periodically or maybe after a certain limit

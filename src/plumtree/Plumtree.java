@@ -1,6 +1,7 @@
 package plumtree;
 
 import common.BroadcastListener;
+import common.Timer;
 import messages.plumtree.BroadcastMessage;
 import messages.plumtree.GraftMessage;
 import messages.plumtree.IHaveMessage;
@@ -32,6 +33,8 @@ public class Plumtree implements TreeBroadcast {
 
     private PeerSampling peerSampling; // TODO why do we need this after constructor?
 
+    private Map<UUID, Boolean> missingTimers;
+
     private int threshold;
     private long firstTimer;
     private long secondTimer;
@@ -47,6 +50,8 @@ public class Plumtree implements TreeBroadcast {
 
         this.peerSampling = peerSampling;
         eagerPushPeers.addAll(peerSampling.getPeers());
+
+        missingTimers = new HashMap<>();
 
         this.threshold = threshold;
         this.firstTimer = firstTimer;
@@ -184,20 +189,29 @@ public class Plumtree implements TreeBroadcast {
     }
 
     private void cancelMissingTimer(UUID mId) {
-        // TODO
+        missingTimers.put(mId, false);
     }
 
     private void startMissingTimer(UUID mId, long time) {
-        // TODO
+        Timer.getInstance().schedule(new TimerTask() {
+            @Override
+            public void run() {
+                fireMissingTimer(mId);
+            }
+        }, 0, time);
+
+        missingTimers.put(mId, true);
     }
 
     private boolean haveMissingTimer(UUID mId) {
-        // TODO
-
-        return true;
+        return missingTimers.containsKey(mId) && missingTimers.get(mId);
     }
 
     public void fireMissingTimer(UUID mId) {
+        boolean canceled = !missingTimers.remove(mId);
+        if(canceled)
+            return;
+
         startMissingTimer(mId, secondTimer);
         IHaveAnnouncement announcement = missingMessages.get(mId).remove(0);
         eagerPushPeers.add(announcement.sender());
