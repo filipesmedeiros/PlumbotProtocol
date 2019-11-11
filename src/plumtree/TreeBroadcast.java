@@ -15,5 +15,5 @@ public interface TreeBroadcast {
 
     void deliverMessage(Message message);
 
-    boolean breaksTree(InetSocketAddress peer);
+    boolean breaksTree(InetSocketAddress[] peers);
 }

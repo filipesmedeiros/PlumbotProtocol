@@ -7,6 +7,7 @@ import messages.plumtree.IHaveMessage;
 import messages.Message;
 import messages.plumtree.PruneMessage;
 import network.Network;
+import xbot.PeerSampling;
 
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
@@ -27,11 +28,15 @@ public class Plumtree implements TreeBroadcast {
 
     private InetSocketAddress id;
 
-    private BroadcastListener broadcastListener;
+    private BroadcastListener broadcastListener; // TODO
+
+    private PeerSampling peerSampling;
 
     private int threshold;
+    private long firstTimer;
+    private long secondTimer;
 
-    public Plumtree(InetSocketAddress id) {
+    public Plumtree(InetSocketAddress id, int threshold, long firstTimer, long secondTimer, PeerSampling peerSampling) {
         eagerPushPeers = new HashSet<>();
         lazyPushPeers = new HashSet<>();
 
@@ -39,6 +44,13 @@ public class Plumtree implements TreeBroadcast {
         missingMessages = new HashMap<>();
 
         this.id = id;
+
+        this.peerSampling = peerSampling;
+        eagerPushPeers.addAll(peerSampling.getPeers());
+
+        this.threshold = threshold;
+        this.firstTimer = firstTimer;
+        this.secondTimer = secondTimer;
     }
 
     @Override
@@ -88,11 +100,19 @@ public class Plumtree implements TreeBroadcast {
     }
 
     @Override
-    public boolean breaksTree(InetSocketAddress peer) {
-        // TODO like this?
-        // Just for dev this is enough, when testing, have to put the correct implementation
+    public boolean breaksTree(InetSocketAddress[] peers) {
+        // TODO pseudo code for this function:
+        // TODO call this on XBot only when you know all four involved peers
+        // TODO code -> check
 
-        return eagerPushPeers.contains(peer);
+        if(peers.length != 4) {
+            // TODO
+
+            System.out.println("Wrong number of peers for tree breaking check.");
+            System.exit(1);
+        }
+
+        return eagerPushPeers.contains(peers[0]);
     }
 
     private void handleBroadcastMessage(BroadcastMessage m) {
@@ -119,18 +139,18 @@ public class Plumtree implements TreeBroadcast {
 
     private void handleIHaveMessage(IHaveMessage m) {
         if(!missingMessages.containsKey(m.iHaveId())) {
-            if (!haveMissingTimer(m.iHaveId()))
-                startMissingTimer(m.iHaveId());
-            List<IHaveAnnouncement> missings = missingMessages.put(m.id(), new LinkedList<>());
+            if(!haveMissingTimer(m.iHaveId()))
+                startMissingTimer(m.iHaveId(), firstTimer);
+            List<IHaveAnnouncement> missingList = missingMessages.put(m.id(), new LinkedList<>());
 
-            if(missings == null) {
+            if(missingList == null) {
                 // TODO
 
                 System.out.println("Something went wrong adding a list to the missing map");
                 System.exit(1);
             }
 
-            missings.add(new IHaveAnnouncement(m.sender(), m.round()));
+            missingList.add(new IHaveAnnouncement(m.sender(), m.round()));
         }
     }
 
@@ -179,7 +199,7 @@ public class Plumtree implements TreeBroadcast {
         // TODO
     }
 
-    private void startMissingTimer(UUID mId) {
+    private void startMissingTimer(UUID mId, long time) {
         // TODO
     }
 
@@ -187,5 +207,9 @@ public class Plumtree implements TreeBroadcast {
         // TODO
 
         return true;
+    }
+
+    public void fireMissingTimer(UUID mId) {
+
     }
 }
