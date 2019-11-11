@@ -99,22 +99,6 @@ public class Plumtree implements TreeBroadcast {
         }
     }
 
-    @Override
-    public boolean breaksTree(InetSocketAddress[] peers) {
-        // TODO pseudo code for this function:
-        // TODO call this on XBot only when you know all four involved peers
-        // TODO code -> check
-
-        if(peers.length != 4) {
-            // TODO
-
-            System.out.println("Wrong number of peers for tree breaking check.");
-            System.exit(1);
-        }
-
-        return eagerPushPeers.contains(peers[0]);
-    }
-
     private void handleBroadcastMessage(BroadcastMessage m) {
         if(!receivedMessages.containsKey(m.id())) {
             broadcastListener.deliver(m.data());
@@ -210,6 +194,10 @@ public class Plumtree implements TreeBroadcast {
     }
 
     public void fireMissingTimer(UUID mId) {
-
+        startMissingTimer(mId, secondTimer);
+        IHaveAnnouncement announcement = missingMessages.get(mId).remove(0);
+        eagerPushPeers.add(announcement.sender());
+        lazyPushPeers.remove(announcement.sender());
+        network.send(new GraftMessage(id, mId).serialize(), announcement.sender());
     }
 }

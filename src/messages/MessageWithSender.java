@@ -6,8 +6,6 @@ import java.util.UUID;
 
 public abstract class MessageWithSender implements Message {
 
-    public static final int BYTE_SIZE = 14;
-
     private InetSocketAddress sender;
     protected UUID id;
 

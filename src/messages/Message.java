@@ -8,6 +8,14 @@ public interface Message {
 
     enum MessageType {
         Join,
+        ForwardJoin,
+        Optimize,
+        OptimizeReply,
+        Replace,
+        ReplaceReply,
+        Switch,
+        SwitchReply,
+        Disconnect,
         IHave,
         Prune,
         Graft,

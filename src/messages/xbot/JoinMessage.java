@@ -1,12 +1,11 @@
-package xbot.messages;
+package messages.xbot;
 
 import messages.MessageWithSender;
 
 import java.net.InetSocketAddress;
+import java.nio.ByteBuffer;
 
 public class JoinMessage extends MessageWithSender {
-
-    public static final MessageType TYPE = MessageType.Join;
 
     public JoinMessage(InetSocketAddress sender) {
         super(sender);
@@ -14,11 +13,18 @@ public class JoinMessage extends MessageWithSender {
 
     @Override
     public MessageType type() {
-        return TYPE;
+        return MessageType.Join;
+    }
+
+    @Override
+    public ByteBuffer serialize() {
+        // TODO
+
+        return null;
     }
 
     @Override
     public int size() {
-        return BYTE_SIZE + 2;
+        return baseSize();
     }
 }
