@@ -1,3 +1,6 @@
+package plumbot;
+
+import common.BroadcastListener;
 import plumtree.Plumtree;
 import xbot.Oracle;
 import xbot.XBot;
@@ -14,7 +17,7 @@ public class Plumbot {
     private XBot xbot;
     private Plumtree plumtree;
 
-    public Plumbot(InetSocketAddress id) {
+    public Plumbot(InetSocketAddress id, BroadcastListener broadcastListener) {
         Oracle oracle = peer -> new Random().nextLong() / 1000000000L;
 
         Properties props = new Properties();
@@ -26,7 +29,7 @@ public class Plumbot {
             System.exit(1);
         }
 
-        XBot xbot = new XBot(id, oracle,
+        xbot = new XBot(id, oracle,
                 Integer.parseInt(props.getProperty("xbot_fanout")),
                 Integer.parseInt(props.getProperty("xbot_k")),
                 Integer.parseInt(props.getProperty("xbot_unbiased_peers")),
@@ -36,13 +39,14 @@ public class Plumbot {
                 Integer.parseInt(props.getProperty("xbot_optimization_period")),
                 Integer.parseInt(props.getProperty("xbot_threshold")));
 
-        Plumtree plumtree = new Plumtree(id,
+        plumtree = new Plumtree(id,
                 Integer.parseInt(props.getProperty("plumtree_threshold")),
                 Integer.parseInt(props.getProperty("plumtree_first_timer")),
                 Integer.parseInt(props.getProperty("plumtree_second_timer")),
                 xbot);
 
         xbot.setTreeBroadcast(plumtree);
+        plumtree.setBroadcastListener(broadcastListener);
 
     }
 

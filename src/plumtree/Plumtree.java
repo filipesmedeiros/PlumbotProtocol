@@ -30,7 +30,7 @@ public class Plumtree implements TreeBroadcast {
 
     private BroadcastListener broadcastListener; // TODO
 
-    private PeerSampling peerSampling;
+    private PeerSampling peerSampling; // TODO why do we need this after constructor?
 
     private int threshold;
     private long firstTimer;
@@ -51,6 +51,10 @@ public class Plumtree implements TreeBroadcast {
         this.threshold = threshold;
         this.firstTimer = firstTimer;
         this.secondTimer = secondTimer;
+    }
+
+    public void setBroadcastListener(BroadcastListener broadcastListener) {
+        this.broadcastListener = broadcastListener;
     }
 
     @Override
