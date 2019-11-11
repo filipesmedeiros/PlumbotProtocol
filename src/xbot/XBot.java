@@ -10,7 +10,7 @@ import java.util.*;
 
 // TODO Drop peers (from the cost map) periodically or maybe after a certain limit
 
-public class XBotNode implements PeerSampling {
+public class XBot implements PeerSampling {
 
     private Map<InetSocketAddress, Long> peers; // with costs
     private SortedSet<InetSocketAddress> activeView;
@@ -27,15 +27,17 @@ public class XBotNode implements PeerSampling {
     private final int passiveScanLength;
     private final int arwl;
     private final int prwl;
+    private final int optimizationPeriod; // TODO
+    private final int threshold;
 
-    private Network network;
+    private Network network; // TODO
 
     private TreeBroadcast treeBroadcast;
 
     private InetSocketAddress id;
 
-    public XBotNode(InetSocketAddress id, Oracle oracle, int fanout, int k, int numUnbiasedPeers, int passiveScanLength,
-                    int arwl, int prwl, TreeBroadcast treeBroadcast) {
+    public XBot(InetSocketAddress id, Oracle oracle, int fanout, int k, int numUnbiasedPeers, int passiveScanLength,
+                int arwl, int prwl, int optimizationPeriod, int threshold) {
         peers = new HashMap<>();
         activeView = new TreeSet<>((peer1, peer2) -> {
             long diff = peers.get(peer1) - peers.get(peer2);
@@ -54,10 +56,14 @@ public class XBotNode implements PeerSampling {
         this.passiveScanLength = passiveScanLength;
         this.arwl = arwl;
         this.prwl = prwl;
-
-        this.treeBroadcast = treeBroadcast;
+        this.optimizationPeriod = optimizationPeriod;
+        this.threshold = threshold;
 
         this.id = id;
+    }
+
+    public void setTreeBroadcast(TreeBroadcast treeBroadcast) {
+        this.treeBroadcast = treeBroadcast;
     }
 
     public void join(InetSocketAddress connectPeer) {
@@ -136,12 +142,12 @@ public class XBotNode implements PeerSampling {
                     network.send(new DisconnectMessage(id, true).serialize(), m.old());
                 else
                     network.send(new DisconnectMessage(id, false).serialize(), m.old());
-                switchPeerFromActiveToPassive(m.sender());
+            switchPeerFromActiveToPassive(m.sender());
         }
     }
 
     private void handleReplace(ReplaceMessage m) {
-        if(getCost(m.old()) + m.itoc() >= m.itoo() + getCost(m.sender()))
+        if(isBetter(m.itoc(), m.itoo(), getCost(m.sender()), getCost(m.old())))
             network.send(new SwitchMessage(id, m.initiator(), m.sender(), getCost(m.old())).serialize(), m.old());
         else
             network.send(new ReplaceReplyMessage(id, true, m.initiator(), m.old()).serialize(), m.sender());
@@ -163,6 +169,7 @@ public class XBotNode implements PeerSampling {
             network.send(new DisconnectMessage(id, true).serialize(), m.initiator());
             dropPeerFromActiveView(m.initiator());
             addPeerToActiveView(m.sender());
+            endWait(m.initiator());
         }
         network.send(new SwitchReplyMessage(id, true, m.initiator(), m.candidate()).serialize(), m.sender());
     }
@@ -273,6 +280,7 @@ public class XBotNode implements PeerSampling {
         waits.remove(peer);
     }
 
+    // TODO
     public void fireOptimizationTimer() {
         if(activeView.size() == activeViewSize) {
             List<InetSocketAddress> candidates = selectRandomPeersFromPassiveView(passiveScanLength);
@@ -296,5 +304,9 @@ public class XBotNode implements PeerSampling {
                 }
             });
         }
+    }
+
+    private boolean isBetter(long itoc, long itoo, long ctod, long dtoo) {
+        return itoc + dtoo + threshold < itoo + ctod;
     }
 }
