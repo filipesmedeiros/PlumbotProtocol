@@ -6,6 +6,7 @@ import network.Network;
 import plumtree.TreeBroadcast;
 
 import java.net.InetSocketAddress;
+import common.Timer;
 import java.util.*;
 
 // TODO Drop peers (from the cost map) periodically or maybe after a certain limit
@@ -27,7 +28,6 @@ public class XBot implements PeerSampling {
     private final int passiveScanLength;
     private final int arwl;
     private final int prwl;
-    private final int optimizationPeriod; // TODO
     private final int threshold;
 
     private Network network; // TODO
@@ -56,10 +56,16 @@ public class XBot implements PeerSampling {
         this.passiveScanLength = passiveScanLength;
         this.arwl = arwl;
         this.prwl = prwl;
-        this.optimizationPeriod = optimizationPeriod;
         this.threshold = threshold;
 
         this.id = id;
+
+        Timer.getInstance().schedule(new TimerTask() {
+            @Override
+            public void run() {
+                fireOptimizationTimer();
+            }
+        }, optimizationPeriod, optimizationPeriod);
     }
 
     public void setTreeBroadcast(TreeBroadcast treeBroadcast) {
