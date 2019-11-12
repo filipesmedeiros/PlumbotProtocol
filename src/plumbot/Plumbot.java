@@ -2,7 +2,7 @@ package plumbot;
 
 import common.BroadcastListener;
 import plumtree.Plumtree;
-import xbot.Oracle;
+import xbot.oracle.Oracle;
 import xbot.XBot;
 
 import java.io.FileInputStream;

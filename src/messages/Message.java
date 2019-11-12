@@ -19,7 +19,8 @@ public interface Message {
         IHave,
         Prune,
         Graft,
-        Broadcast;
+        Broadcast,
+        Ping;
 
         public short code() {
             return (short) this.hashCode();

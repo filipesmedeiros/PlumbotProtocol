@@ -5,9 +5,12 @@ import messages.Message;
 import messages.xbot.*;
 import network.Network;
 import plumtree.TreeBroadcast;
+import xbot.oracle.Oracle;
 
 import java.net.InetSocketAddress;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Future;
 
 // TODO Drop peers (from the cost map) periodically or maybe after a certain limit
 
@@ -268,14 +271,11 @@ public class XBot implements PeerSampling {
         return list;
     }
 
-    private long getCost(InetSocketAddress peer) {
+    private Future<Long> getCost(InetSocketAddress peer) {
         if(peers.containsKey(peer))
-            return peers.get(peer);
-        else {
-            long cost = oracle.getCost(peer);
-            peers.put(peer, cost);
-            return cost;
-        }
+            return CompletableFuture.completedFuture(peers.get(peer));
+        else
+            return oracle.getCost(peer);
     }
 
     private void storeWait(InetSocketAddress peer) {
