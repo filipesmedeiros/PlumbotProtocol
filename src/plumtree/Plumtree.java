@@ -2,11 +2,11 @@ package plumtree;
 
 import common.BroadcastListener;
 import common.Timer;
-import messages.plumtree.BroadcastMessage;
-import messages.plumtree.GraftMessage;
-import messages.plumtree.IHaveMessage;
+import plumtree.messages.BroadcastMessage;
+import plumtree.messages.GraftMessage;
+import plumtree.messages.IHaveMessage;
 import messages.Message;
-import messages.plumtree.PruneMessage;
+import plumtree.messages.PruneMessage;
 import network.Network;
 import xbot.PeerSampling;
 

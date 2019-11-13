@@ -1,4 +1,4 @@
-package messages.plumtree;
+package plumtree.messages;
 
 import messages.MessageWithSender;
 
