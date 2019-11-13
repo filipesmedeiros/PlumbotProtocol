@@ -1,11 +1,6 @@
 package xbot;
 
-import common.Timer;
-import messages.Message;
 import messages.xbot.*;
-import network.Network;
-import plumtree.TreeBroadcast;
-import xbot.oracle.Oracle;
 
 import java.net.InetSocketAddress;
 import java.util.*;
@@ -14,7 +9,10 @@ import java.util.concurrent.Future;
 
 // TODO Drop peers (from the cost map) periodically or maybe after a certain limit
 
-public class XBot implements PeerSampling {
+public class XBot {
+
+    public static final short PROTOCOL_CODE = 200;
+    public static final String PROTOCOL_NAME = "X-Bot";
 
     private Map<InetSocketAddress, Long> peers; // with costs
     private SortedSet<InetSocketAddress> activeView;

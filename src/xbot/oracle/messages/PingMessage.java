@@ -1,4 +1,4 @@
-package plumtree.messages;
+package xbot.oracle.messages;
 
 import babel.protocol.event.ProtocolMessage;
 import io.netty.buffer.ByteBuf;
@@ -7,38 +7,42 @@ import network.ISerializer;
 import java.net.UnknownHostException;
 import java.util.UUID;
 
-public class PruneMessage extends ProtocolMessage {
+public class PingMessage extends ProtocolMessage {
 
-    public static final short MSG_CODE = 104;
+    public static final short MSG_CODE = 301;
 
-    private final UUID mId;
+    private UUID mId;
 
-    public PruneMessage() {
+    public PingMessage() {
         super(MSG_CODE);
         this.mId = UUID.randomUUID();
     }
 
-    public PruneMessage(UUID mId) {
+    public PingMessage(UUID mId) {
         super(MSG_CODE);
         this.mId = mId;
     }
 
-    public static final ISerializer<PruneMessage> serializer = new ISerializer<PruneMessage>() {
+    public UUID mId() {
+        return mId;
+    }
+
+    public static final ISerializer<PingMessage> serializer = new ISerializer<PingMessage>() {
 
         @Override
-        public void serialize(PruneMessage m, ByteBuf out) {
+        public void serialize(PingMessage m, ByteBuf out) {
             out.writeLong(m.mId.getMostSignificantBits());
             out.writeLong(m.mId.getLeastSignificantBits());
         }
 
         @Override
-        public PruneMessage deserialize(ByteBuf in) throws UnknownHostException {
+        public PingMessage deserialize(ByteBuf in) throws UnknownHostException {
             UUID mId = new UUID(in.readLong(), in.readLong());
-            return new PruneMessage(mId);
+            return new PingMessage(mId);
         }
 
         @Override
-        public int serializedSize(PruneMessage m) {
+        public int serializedSize(PingMessage m) {
             return (2 * Long.BYTES);
         }
     };

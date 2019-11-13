@@ -1,140 +1,155 @@
 package plumtree;
 
-import common.BroadcastListener;
-import common.Timer;
+import babel.exceptions.HandlerRegistrationException;
+import babel.exceptions.NotificationDoesNotExistException;
+import babel.exceptions.ProtocolDoesNotExist;
+import babel.notification.ProtocolNotification;
+import babel.protocol.GenericProtocol;
+import babel.protocol.event.ProtocolMessage;
+import babel.requestreply.ProtocolRequest;
+import babel.timer.ProtocolTimer;
+import network.Host;
+import network.INetwork;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import plumtree.messages.BroadcastMessage;
 import plumtree.messages.GraftMessage;
 import plumtree.messages.IHaveMessage;
-import messages.Message;
 import plumtree.messages.PruneMessage;
-import network.Network;
-import xbot.PeerSampling;
+import plumtree.notifications.BroadcastDeliver;
+import plumtree.notifications.PeerDown;
+import plumtree.notifications.PeerUp;
+import plumtree.requests.BroadcastRequest;
+import plumtree.timers.MissingMessageTimer;
 
-import java.net.InetSocketAddress;
-import java.nio.ByteBuffer;
 import java.util.*;
 
-public class Plumtree implements TreeBroadcast {
+public class Plumtree extends GenericProtocol {
 
-    private Network network;
+    public static final short PROTOCOL_CODE = 100;
+    public static final String PROTOCOL_NAME = "Plumtree";
 
-    private Collection<InetSocketAddress> eagerPushPeers;
-    private Collection<InetSocketAddress> lazyPushPeers;
+    private static final Logger logger = LogManager.getLogger(Plumtree.class);
+
+    private List<Host> eagerPushPeers;
+    private List<Host> lazyPushPeers;
 
     // TODO for lazy push policies
     // private Queue<Message> lazyQueue;
 
-    private Map<UUID, BroadcastMessage> receivedMessages;
+    private Map<UUID, BroadcastMessage> deliveredMessages; // TODO store only temporarily
     private Map<UUID, List<IHaveAnnouncement>> missingMessages; // mIds and respective senders/rounds
 
-    private InetSocketAddress id;
-
-    private BroadcastListener broadcastListener; // TODO
-
-    private PeerSampling peerSampling; // TODO why do we need this after constructor?
-
-    private Map<UUID, Boolean> missingTimers;
+    private Map<UUID, UUID> missingMessageTimers; // because I don't think different timers of the same class can exist
 
     private int threshold;
     private long firstTimer;
     private long secondTimer;
 
-    public Plumtree(InetSocketAddress id, int threshold, long firstTimer, long secondTimer, PeerSampling peerSampling) {
-        eagerPushPeers = new HashSet<>();
-        lazyPushPeers = new HashSet<>();
+    public Plumtree(INetwork net)
+            throws HandlerRegistrationException, NotificationDoesNotExistException, ProtocolDoesNotExist {
 
-        receivedMessages = new HashMap<>();
-        missingMessages = new HashMap<>();
+        super(PROTOCOL_NAME, PROTOCOL_CODE, net);
 
-        this.id = id;
+        registerNotification(BroadcastDeliver.NOTIFICATION_CODE, BroadcastDeliver.NOTIFICATION_NAME);
 
-        this.peerSampling = peerSampling;
-        eagerPushPeers.addAll(peerSampling.getPeers());
+        registerNotificationHandler(PROTOCOL_CODE, PeerDown.NOTIFICATION_CODE, this::handlePeerDown);
+        registerNotificationHandler(PROTOCOL_CODE, PeerUp.NOTIFICATION_CODE, this::handlePeerUp);
 
-        missingTimers = new HashMap<>();
+        registerRequestHandler(BroadcastRequest.REQUEST_CODE, this::broadcast);
 
-        this.threshold = threshold;
-        this.firstTimer = firstTimer;
-        this.secondTimer = secondTimer;
+        registerMessageHandler(BroadcastMessage.MSG_CODE, this::handleBroadcastMessage, BroadcastMessage.serializer);
+        registerMessageHandler(GraftMessage.MSG_CODE, this::handleGraftMessage, BroadcastMessage.serializer);
+        registerMessageHandler(IHaveMessage.MSG_CODE, this::handleIHaveMessage, IHaveMessage.serializer);
+        registerMessageHandler(PruneMessage.MSG_CODE, this::handlePruneMessage, PruneMessage.serializer);
+
+        registerTimerHandler(MissingMessageTimer.TIMER_CODE, this::handleMissingMessageTimer);
     }
 
-    public void setBroadcastListener(BroadcastListener broadcastListener) {
-        this.broadcastListener = broadcastListener;
+    private void deliverMessage(BroadcastMessage message) {
+        deliveredMessages.put(message.mId(), message);
+        BroadcastDeliver deliver = new BroadcastDeliver(message.payload());
+        triggerNotification(deliver);
     }
 
-    @Override
-    public void broadcast(ByteBuffer data) {
-        BroadcastMessage m = new BroadcastMessage(id, data, 0);
-        eagerPush(m);
-        lazyPush(m);
-        broadcastListener.deliver(m.data());
-        receivedMessages.put(m.id(), m);
+    private void eagerAndLazyPushMessage(BroadcastMessage message) {
+        message.setRound(message.round() + 1);
+        for(Host eagerPeer : eagerPushPeers)
+            sendMessage(message, eagerPeer);
+
+        IHaveMessage iHaveMessage = new IHaveMessage();
+        iHaveMessage.setIHaveId(message.mId());
+        iHaveMessage.setRound(message.round());
+
+        for(Host lazyPeer : lazyPushPeers)
+            sendMessage(iHaveMessage, lazyPeer);
     }
 
-    @Override
-    public void peerDown(InetSocketAddress peer) {
-        eagerPushPeers.remove(peer);
-        lazyPushPeers.remove(peer);
+    // This increments the round by one, be careful??
+    private void broadcast(ProtocolRequest r) {
+        if(!(r instanceof BroadcastRequest))
+            return;
 
-        for(Map.Entry<UUID, List<IHaveAnnouncement>> missingEntry : missingMessages.entrySet())
-            for(IHaveAnnouncement announcement : missingEntry.getValue())
-                if(announcement.sender().equals(peer)) {
-                    missingEntry.getValue().remove(announcement);
-                    if(missingEntry.getValue().size() == 0)
-                        missingMessages.remove(missingEntry.getKey());
-                }
+        BroadcastRequest req = (BroadcastRequest) r;
+        BroadcastMessage message = new BroadcastMessage();
+        message.setPayload(req.payload());
+
+        deliverMessage(message);
+
+        eagerAndLazyPushMessage(message);
     }
 
-    @Override
-    public void peerUp(InetSocketAddress peer) {
-        eagerPushPeers.add(peer);
-    }
+    private void handleBroadcastMessage(ProtocolMessage m) {
+        if(!(m instanceof BroadcastMessage))
+            return;
+        BroadcastMessage message = (BroadcastMessage) m;
 
-    @Override
-    public void deliverMessage(Message m) {
-        switch(m.type()) {
-            case Broadcast:
-                handleBroadcastMessage((BroadcastMessage) m);
-                break;
-            case IHave:
-                handleIHaveMessage((IHaveMessage) m);
-                break;
-            case Graft:
-                handleGraftMessage((GraftMessage) m);
-                break;
-            case Prune:
-                handlePrune((PruneMessage) m);
-                break;
-        }
-    }
+        if(!deliveredMessages.containsKey(message.mId())) {
+            deliverMessage(message);
 
-    private void handleBroadcastMessage(BroadcastMessage m) {
-        if(!receivedMessages.containsKey(m.id())) {
-            broadcastListener.deliver(m.data());
-            receivedMessages.put(m.id(), m);
+            cancelMissingTimer(message.mId());
 
-            cancelMissingTimer(m.id());
+            eagerAndLazyPushMessage(message);
 
-            BroadcastMessage newBroadcastMessage = new BroadcastMessage(id, m);
-            eagerPush(newBroadcastMessage);
-            lazyPush(newBroadcastMessage);
+            eagerPushPeers.add(m.getFrom());
+            lazyPushPeers.remove(m.getFrom());
 
-            eagerPushPeers.add(m.sender());
-            lazyPushPeers.remove(m.sender());
-
-            optimize(m);
+            optimize(message);
         } else {
-            eagerPushPeers.remove(m.sender());
-            lazyPushPeers.add(m.sender());
-            network.send(new PruneMessage(id).serialize(), m.sender());
+            eagerPushPeers.remove(m.getFrom());
+            lazyPushPeers.add(m.getFrom());
+
+            ProtocolMessage pruneMessage = new PruneMessage();
+            sendMessage(pruneMessage, m.getFrom());
         }
     }
 
-    private void handleIHaveMessage(IHaveMessage m) {
-        if(!missingMessages.containsKey(m.iHaveId())) {
-            if(!haveMissingTimer(m.iHaveId()))
-                startMissingTimer(m.iHaveId(), firstTimer);
-            List<IHaveAnnouncement> missingList = missingMessages.put(m.id(), new LinkedList<>());
+    private void handleGraftMessage(ProtocolMessage m) {
+        if(!(m instanceof GraftMessage))
+            return;
+
+        GraftMessage message = (GraftMessage) m;
+
+        eagerPushPeers.add(message.getFrom());
+        lazyPushPeers.remove(message.getFrom());
+        if(deliveredMessages.containsKey(message.graftId())) {
+            byte[] payload = deliveredMessages.get(message.graftId()).payload();
+            BroadcastMessage broadcastMessage = new BroadcastMessage();
+            broadcastMessage.setPayload(payload).setRound(message.round() + 1);
+            sendMessage(broadcastMessage, message.getFrom());
+        }
+    }
+
+    private void handleIHaveMessage(ProtocolMessage m) {
+        if(!(m instanceof IHaveMessage))
+            return;
+
+        IHaveMessage message = (IHaveMessage) m;
+
+        if(!missingMessages.containsKey(message.iHaveId())) {
+            if(!haveMissingMessageTimer(message.iHaveId()))
+                startMissingMessageTimer(message.iHaveId(), firstTimer);
+            List<IHaveAnnouncement> missingList = missingMessages.put(message.iHaveId(), new LinkedList<>());
 
             if(missingList == null) {
                 // TODO
@@ -143,79 +158,101 @@ public class Plumtree implements TreeBroadcast {
                 System.exit(1);
             }
 
-            missingList.add(new IHaveAnnouncement(m.sender(), m.round()));
+            missingList.add(new IHaveAnnouncement(message.getFrom(), message.round()));
         }
     }
 
-    // TODO in the specs, there is a round here, why?
-    private void handleGraftMessage(GraftMessage m) {
-        eagerPushPeers.add(m.sender());
-        lazyPushPeers.remove(m.sender());
-        if(receivedMessages.containsKey(m.graftId())) {
-            BroadcastMessage broadcastMessage = new BroadcastMessage(id, receivedMessages.get(m.graftId()));
-            network.send(broadcastMessage.serialize(), m.sender());
-        }
+    private void handlePruneMessage(ProtocolMessage m) {
+        if(!(m instanceof PruneMessage))
+            return;
+
+        eagerPushPeers.remove(m.getFrom());
+        lazyPushPeers.add(m.getFrom());
     }
 
-    private void handlePrune(PruneMessage m) {
-        eagerPushPeers.remove(m.sender());
-        lazyPushPeers.add(m.sender());
+    public void handlePeerDown(ProtocolNotification notification) {
+        if(!(notification instanceof PeerDown))
+            return;
+
+        Host peer = ((PeerDown) notification).peer();
+
+        eagerPushPeers.remove(peer);
+        lazyPushPeers.remove(peer);
+
+        // TODO optimize and not create new Thread???
+        new Thread(() -> {
+            for (Map.Entry<UUID, List<IHaveAnnouncement>> missingEntry : missingMessages.entrySet())
+                for (IHaveAnnouncement announcement : missingEntry.getValue())
+                    if (announcement.sender().equals(peer)) {
+                        missingEntry.getValue().remove(announcement);
+                        if (missingEntry.getValue().size() == 0)
+                            missingMessages.remove(missingEntry.getKey());
+                    }
+        }).start();
     }
 
-    private void eagerPush(BroadcastMessage m) {
-        for(InetSocketAddress peer : eagerPushPeers)
-            if(!peer.equals(m.sender()))
-                network.send(m.serialize(), peer);
-    }
+    public void handlePeerUp(ProtocolNotification notification) {
+        if(!(notification instanceof PeerUp))
+            return;
 
-    private void lazyPush(BroadcastMessage m) {
-        for(InetSocketAddress peer : lazyPushPeers)
-            if(!peer.equals(m.sender()))
-                network.send(new IHaveMessage(id, m.id(), m.round() + 1).serialize(), peer);
+        eagerPushPeers.add(((PeerUp) notification).peer());
     }
 
     private void optimize(BroadcastMessage m) {
-        List<IHaveAnnouncement> announcements = missingMessages.get(m.id());
+        List<IHaveAnnouncement> announcements = missingMessages.get(m.mId());
 
         if(announcements != null)
             for(IHaveAnnouncement announcement : announcements)
                 if(announcement.round() < m.round() && m.round() - announcement.round() >= threshold) {
-                    network.send(new GraftMessage(id, new UUID(0, 0)).serialize(), m.sender());
-                    network.send(new PruneMessage(id).serialize(), announcement.sender());
+                    ProtocolMessage graftMessage = new GraftMessage().setGraftId(m.mId());
+                    sendMessage(graftMessage, m.getFrom());
 
-                    announcements.remove(announcement);
+                    ProtocolMessage pruneMessage = new PruneMessage();
+                    sendMessage(pruneMessage, announcement.sender());
                     break;
                 }
     }
 
+    // TODO Gotta have different timers for the same IHave from multiple peers?
     private void cancelMissingTimer(UUID mId) {
-        missingTimers.put(mId, false);
+        ProtocolTimer timer = cancelTimer(mId);
+        missingMessages.remove(timer.getUuid());
     }
 
-    private void startMissingTimer(UUID mId, long time) {
-        Timer.getInstance().schedule(new TimerTask() {
-            @Override
-            public void run() {
-                fireMissingTimer(mId);
-            }
-        }, 0, time);
-
-        missingTimers.put(mId, true);
+    private void startMissingMessageTimer(UUID mId, long time) {
+        MissingMessageTimer timer = new MissingMessageTimer();
+        setupTimer(timer, time);
+        missingMessageTimers.put(timer.getUuid(), mId);
     }
 
-    private boolean haveMissingTimer(UUID mId) {
-        return missingTimers.containsKey(mId) && missingTimers.get(mId);
+    private boolean haveMissingMessageTimer(UUID mId) {
+        return missingMessageTimers.containsValue(mId);
     }
 
-    public void fireMissingTimer(UUID mId) {
-        boolean canceled = !missingTimers.remove(mId);
-        if(canceled)
+    private void handleMissingMessageTimer(ProtocolTimer timer) {
+        if(!(timer instanceof MissingMessageTimer))
             return;
 
-        startMissingTimer(mId, secondTimer);
+        UUID mId = missingMessageTimers.remove(timer.getUuid());
+        if(mId == null)
+            return;
+
+        setupTimer(new MissingMessageTimer(), secondTimer); // TODO does this work? Using same object
+
         IHaveAnnouncement announcement = missingMessages.get(mId).remove(0);
         eagerPushPeers.add(announcement.sender());
         lazyPushPeers.remove(announcement.sender());
-        network.send(new GraftMessage(id, mId).serialize(), announcement.sender());
+
+        GraftMessage message = new GraftMessage().setGraftId(mId).setRound(announcement.round() + 1);
+        sendMessage(message, announcement.sender());
+    }
+
+    @Override
+    public void init(Properties properties) {
+        this.threshold = Integer.parseInt(properties.getProperty("plumtree_threshold", "100"));
+        this.threshold = Integer.parseInt(properties.getProperty("plumtree_first_timer", "8000"));
+        this.threshold = Integer.parseInt(properties.getProperty("plumtree_second_timer", "900"));
+
+        this.missingMessages = new HashMap<>();
     }
 }

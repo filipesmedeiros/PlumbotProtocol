@@ -1,18 +1,18 @@
 package plumtree;
 
-import java.net.InetSocketAddress;
+import network.Host;
 
 public class IHaveAnnouncement {
 
-    private InetSocketAddress sender;
+    private Host sender;
     private int round;
 
-    public IHaveAnnouncement(InetSocketAddress sender, int round) {
+    public IHaveAnnouncement(Host sender, int round) {
         this.sender = sender;
         this.round = round;
     }
 
-    public InetSocketAddress sender() {
+    public Host sender() {
         return sender;
     }
 
