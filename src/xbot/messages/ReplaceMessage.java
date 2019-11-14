@@ -1,46 +1,46 @@
 package xbot.messages;
 
-import messages.MessageWithSender;
+import babel.protocol.event.ProtocolMessage;
+import io.netty.buffer.ByteBuf;
+import network.Host;
+import network.ISerializer;
 
-import java.net.InetSocketAddress;
-import java.nio.ByteBuffer;
+import java.net.UnknownHostException;
+import java.util.UUID;
 
-public class ReplaceMessage extends MessageWithSender {
+public class ReplaceMessage extends ProtocolMessage {
 
-    private InetSocketAddress initiator;
-    private InetSocketAddress old;
+    public static final short MSG_CODE = 206;
+
+    private UUID mId;
+    private Host initiator;
+    private Host old;
     private long itoc;
     private long itoo;
 
-    public ReplaceMessage(InetSocketAddress sender, InetSocketAddress initiator, InetSocketAddress old,
-                          long itoc, long itoo) {
-        super(sender);
+    public ReplaceMessage(UUID mId, Host initiator, Host old, long itoc, long itoo) {
+        super(MSG_CODE);
+        this.mId = mId;
         this.initiator = initiator;
         this.old = old;
         this.itoc = itoc;
         this.itoo = itoo;
     }
 
-    @Override
-    public int size() {
-        return baseSize() + 28;
+    public ReplaceMessage() {
+        super(MSG_CODE);
+        this.initiator = null;
+        this.old = null;
+        this.itoc = 0;
+        this.itoo = 0;
+        this.mId = UUID.randomUUID();
     }
 
-    @Override
-    public MessageType type() {
-        return MessageType.Replace;
-    }
-
-    @Override
-    public ByteBuffer serialize() {
-        return null;
-    }
-
-    public InetSocketAddress initiator() {
+    public Host initiator() {
         return initiator;
     }
 
-    public InetSocketAddress old() {
+    public Host old() {
         return old;
     }
 
@@ -51,4 +51,48 @@ public class ReplaceMessage extends MessageWithSender {
     public long itoo() {
         return itoo;
     }
+
+    public void setInitiator(Host initiator) {
+        this.initiator = initiator;
+    }
+
+    public void setOld(Host old) {
+        this.old = old;
+    }
+
+    public void setItoc(long itoc) {
+        this.itoc = itoc;
+    }
+
+    public void setItoo(long itoo) {
+        this.itoo = itoo;
+    }
+
+    public static final ISerializer<ReplaceMessage> serializer = new ISerializer<ReplaceMessage>() {
+
+        @Override
+        public void serialize(ReplaceMessage m, ByteBuf out) {
+            out.writeLong(m.mId.getMostSignificantBits());
+            out.writeLong(m.mId.getLeastSignificantBits());
+            m.initiator.serialize(out);
+            m.old.serialize(out);
+            out.writeLong(m.itoc);
+            out.writeLong(m.itoo);
+        }
+
+        @Override
+        public ReplaceMessage deserialize(ByteBuf in) throws UnknownHostException {
+            UUID mId = new UUID(in.readLong(), in.readLong());
+            Host initiator = Host.deserialize(in);
+            Host old = Host.deserialize(in);
+            long itoc = in.readLong();
+            long itoo = in.readLong();
+            return new ReplaceMessage(mId, initiator, old, itoc, itoo);
+        }
+
+        @Override
+        public int serializedSize(ReplaceMessage m) {
+            return (4 * Long.BYTES) + m.initiator.serializedSize() + m.old.serializedSize();
+        }
+    };
 }

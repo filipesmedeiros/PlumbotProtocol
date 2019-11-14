@@ -1,47 +1,46 @@
 package xbot.messages;
 
-import messages.MessageWithSender;
+import babel.protocol.event.ProtocolMessage;
+import io.netty.buffer.ByteBuf;
+import network.Host;
+import network.ISerializer;
 
-import java.net.InetSocketAddress;
-import java.nio.ByteBuffer;
+import java.net.UnknownHostException;
+import java.util.UUID;
 
-// TODO
-public class OptimizeReplyMessage extends MessageWithSender {
+public class OptimizeReplyMessage extends ProtocolMessage {
 
-    private InetSocketAddress old;
+    public static final short MSG_CODE = 205;
+
+    private UUID mId;
+    private Host old;
     private boolean answer;
     private boolean hasDisconnect;
-    private InetSocketAddress disconnect;
+    private Host disconnect;
 
-    public OptimizeReplyMessage(InetSocketAddress sender, InetSocketAddress old, boolean answer, boolean hasDisconnect,
-                                InetSocketAddress disconnect) {
-        super(sender);
+    public OptimizeReplyMessage(UUID mId, Host old, boolean answer, boolean hasDisconnect, Host disconnect) {
+        super(MSG_CODE);
+        this.mId = mId;
         this.old = old;
         this.answer = answer;
         this.hasDisconnect = hasDisconnect;
         this.disconnect = disconnect;
     }
 
-    @Override
-    public int size() {
-        return 0;
-    }
-
-    @Override
-    public MessageType type() {
-        return null;
-    }
-
-    @Override
-    public ByteBuffer serialize() {
-        return null;
+    public OptimizeReplyMessage() {
+        super(MSG_CODE);
+        this.old = null;
+        this.answer = false;
+        this.hasDisconnect = false;
+        this.disconnect = null;
+        this.mId = UUID.randomUUID();
     }
 
     public boolean answer() {
         return answer;
     }
 
-    public InetSocketAddress old() {
+    public Host old() {
         return old;
     }
 
@@ -49,7 +48,51 @@ public class OptimizeReplyMessage extends MessageWithSender {
         return hasDisconnect;
     }
 
-    public InetSocketAddress disconnect() {
+    public Host disconnect() {
         return disconnect;
     }
+
+    public void setOld(Host old) {
+        this.old = old;
+    }
+
+    public void setAnswer(boolean answer) {
+        this.answer = answer;
+    }
+
+    public void setHasDisconnect(boolean hasDisconnect) {
+        this.hasDisconnect = hasDisconnect;
+    }
+
+    public void setDisconnect(Host disconnect) {
+        this.disconnect = disconnect;
+    }
+
+    public static final ISerializer<OptimizeReplyMessage> serializer = new ISerializer<OptimizeReplyMessage>() {
+
+        @Override
+        public void serialize(OptimizeReplyMessage m, ByteBuf out) {
+            out.writeLong(m.mId.getMostSignificantBits());
+            out.writeLong(m.mId.getLeastSignificantBits());
+            m.old.serialize(out);
+            out.writeBoolean(m.answer);
+            out.writeBoolean(m.hasDisconnect);
+            m.disconnect.serialize(out);
+        }
+
+        @Override
+        public OptimizeReplyMessage deserialize(ByteBuf in) throws UnknownHostException {
+            UUID mId = new UUID(in.readLong(), in.readLong());
+            Host old = Host.deserialize(in);
+            boolean answer = in.readBoolean();
+            boolean hasDisconnect = in.readBoolean();
+            Host disconnect = Host.deserialize(in);
+            return new OptimizeReplyMessage(mId, old, answer, hasDisconnect, disconnect);
+        }
+
+        @Override
+        public int serializedSize(OptimizeReplyMessage m) {
+            return (2 * Long.BYTES) + m.old.serializedSize() + 2;
+        }
+    };
 }
