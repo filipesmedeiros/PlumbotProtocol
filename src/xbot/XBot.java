@@ -1,6 +1,10 @@
 package xbot;
 
+import babel.protocol.GenericProtocol;
 import messages.xbot.*;
+import network.Host;
+import network.INetwork;
+import xbot.oracle.notifications.CostNotification;
 
 import java.net.InetSocketAddress;
 import java.util.*;
@@ -9,64 +13,27 @@ import java.util.concurrent.Future;
 
 // TODO Drop peers (from the cost map) periodically or maybe after a certain limit
 
-public class XBot {
+public class XBot extends GenericProtocol {
 
     public static final short PROTOCOL_CODE = 200;
     public static final String PROTOCOL_NAME = "X-Bot";
 
-    private Map<InetSocketAddress, Long> peers; // with costs
-    private SortedSet<InetSocketAddress> activeView;
+    private SortedSet<CostedHost> activeView;
 
-    private Set<InetSocketAddress> passiveView;
+    private Map<Host, Long> passiveView;
 
     private Set<InetSocketAddress> waits; // TODO
 
-    private Oracle oracle; // TODO
+    private int activeViewSize;
+    private int passiveViewSize;
+    private int numUnbiasedPeers;
+    private int passiveScanLength;
+    private int arwl;
+    private int prwl;
+    private int threshold;
 
-    private final int activeViewSize;
-    private final int passiveViewSize;
-    private final int numUnbiasedPeers;
-    private final int passiveScanLength;
-    private final int arwl;
-    private final int prwl;
-    private final int threshold;
-
-    private Network network; // TODO
-
-    private TreeBroadcast treeBroadcast;
-
-    private InetSocketAddress id;
-
-    public XBot(InetSocketAddress id, Oracle oracle, int fanout, int k, int numUnbiasedPeers, int passiveScanLength,
-                int arwl, int prwl, int optimizationPeriod, int threshold) {
-        peers = new HashMap<>();
-        activeView = new TreeSet<>((peer1, peer2) -> {
-            long diff = peers.get(peer1) - peers.get(peer2);
-            return diff > 0 ? 1 : (diff == 0 ? 0 : -1);
-        });
-
-        passiveView = new HashSet<>();
-
-        waits = new HashSet<>();
-
-        this.oracle = oracle;
-
-        activeViewSize = fanout + 1;
-        passiveViewSize = activeViewSize * k;
-        this.numUnbiasedPeers = numUnbiasedPeers;
-        this.passiveScanLength = passiveScanLength;
-        this.arwl = arwl;
-        this.prwl = prwl;
-        this.threshold = threshold;
-
-        this.id = id;
-
-        Timer.getInstance().schedule(new TimerTask() {
-            @Override
-            public void run() {
-                fireOptimizationTimer();
-            }
-        }, optimizationPeriod, optimizationPeriod);
+    public XBot(INetwork net) {
+        super(PROTOCOL_NAME, PROTOCOL_CODE, net);
     }
 
     public void setTreeBroadcast(TreeBroadcast treeBroadcast) {
@@ -75,44 +42,6 @@ public class XBot {
 
     public void join(InetSocketAddress connectPeer) {
         network.send(new JoinMessage(id).serialize(), connectPeer);
-    }
-
-    @Override
-    public Collection<InetSocketAddress> getPeers() {
-        return activeView;
-    }
-
-    @Override
-    public void deliverMessage(Message m) {
-        switch(m.type()) {
-            case Join:
-                handleJoin((JoinMessage) m);
-                break;
-            case ForwardJoin:
-                handleForwardJoin((ForwardJoinMessage) m);
-                break;
-            case Optimize:
-                handleOptimize((OptimizeMessage) m);
-                break;
-            case OptimizeReply:
-                handleOptimizeReply((OptimizeReplyMessage) m);
-                break;
-            case Replace:
-                handleReplace((ReplaceMessage) m);
-                break;
-            case ReplaceReply:
-                handleReplaceReply((ReplaceReplyMessage) m);
-                break;
-            case Switch:
-                handleSwitch((SwitchMessage) m);
-                break;
-            case SwitchReply:
-                handleSwitchReply((SwitchReplyMessage) m);
-                break;
-            case Disconnect:
-                handleDisconnect((DisconnectMessage) m);
-                break;
-        }
     }
 
     private void handleJoin(JoinMessage m) {
@@ -312,5 +241,27 @@ public class XBot {
 
     private boolean isBetter(long itoc, long itoo, long ctod, long dtoo) {
         return itoc + dtoo + threshold < itoo + ctod;
+    }
+
+    @Override
+    public void init(Properties properties) {
+        activeView = new TreeSet<>();
+
+    }
+
+    private static class CostedHost implements Comparable<CostedHost> {
+
+        private Host host;
+        private long cost;
+
+        public CostedHost(Host host, long cost) {
+            this.host = host;
+            this.cost = cost;
+        }
+
+        @Override
+        public int compareTo(CostedHost o) {
+            return Math.toIntExact(cost - o.cost);
+        }
     }
 }

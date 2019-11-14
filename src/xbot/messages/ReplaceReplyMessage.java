@@ -1,4 +1,4 @@
-package messages.xbot;
+package xbot.messages;
 
 import messages.MessageWithSender;
 
@@ -6,18 +6,18 @@ import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 
 // TODO
-public class SwitchReplyMessage extends MessageWithSender {
+public class ReplaceReplyMessage extends MessageWithSender {
 
     private boolean answer;
     private InetSocketAddress initiator;
-    private InetSocketAddress candidate;
+    private InetSocketAddress old;
 
-    public SwitchReplyMessage(InetSocketAddress sender, boolean answer, InetSocketAddress initiator,
-                              InetSocketAddress candidate) {
+    public ReplaceReplyMessage(InetSocketAddress sender, boolean answer, InetSocketAddress initiator,
+                               InetSocketAddress old) {
         super(sender);
         this.answer = answer;
         this.initiator = initiator;
-        this.candidate = candidate;
+        this.old = old;
     }
 
     @Override
@@ -43,7 +43,7 @@ public class SwitchReplyMessage extends MessageWithSender {
         return initiator;
     }
 
-    public InetSocketAddress candidate() {
-        return candidate;
+    public InetSocketAddress old() {
+        return old;
     }
 }

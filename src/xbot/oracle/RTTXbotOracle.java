@@ -11,6 +11,7 @@ import xbot.oracle.messages.PingReplyMessage;
 import xbot.oracle.notifications.CostNotification;
 import xbot.oracle.requests.CostRequest;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
@@ -25,10 +26,14 @@ public class RTTXbotOracle extends GenericProtocol {
         super(PROTOCOL_NAME, PROTOCOL_CODE, net);
 
         registerRequestHandler(CostRequest.REQUEST_CODE, this::handleCostRequest);
+
+        registerMessageHandler(PingMessage.MSG_CODE, this::handlePing, PingMessage.serializer);
+        registerMessageHandler(PingReplyMessage.MSG_CODE, this::handlePingReply, PingReplyMessage.serializer);
     }
 
     @Override
     public void init(Properties properties) {
+        pings = new HashMap<>();
     }
 
     private void handleCostRequest(ProtocolRequest r) {
@@ -56,7 +61,7 @@ public class RTTXbotOracle extends GenericProtocol {
             PingReplyMessage pingReply = new PingReplyMessage().setCost(cost);
             sendMessage(pingReply, ping.getFrom());
 
-            CostNotification costNotification = new CostNotification(cost);
+            CostNotification costNotification = new CostNotification(ping.getFrom(), cost);
             triggerNotification(costNotification);
         } else {
             PingMessage pingReply = new PingMessage();
@@ -64,10 +69,16 @@ public class RTTXbotOracle extends GenericProtocol {
         }
     }
 
-    private void handlePingWithCost(ProtocolMessage m) {
+    private void handlePingReply(ProtocolMessage m) {
         if(!(m instanceof PingReplyMessage))
             return;
 
-        if(pings.containsKey())
+        PingReplyMessage pingReply = (PingReplyMessage) m;
+
+        if(!pings.containsKey(pingReply.getFrom()))
+            return;
+
+        CostNotification costNotification = new CostNotification(pingReply.getFrom(), pingReply.cost());
+        triggerNotification(costNotification);
     }
 }
