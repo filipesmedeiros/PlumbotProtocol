@@ -1,9 +1,12 @@
 package xbot;
 
+import babel.exceptions.HandlerRegistrationException;
 import babel.protocol.GenericProtocol;
-import messages.xbot.*;
+import babel.protocol.event.ProtocolMessage;
 import network.Host;
 import network.INetwork;
+import xbot.messages.ForwardJoinMessage;
+import xbot.messages.JoinMessage;
 import xbot.oracle.notifications.CostNotification;
 
 import java.net.InetSocketAddress;
@@ -32,31 +35,43 @@ public class XBot extends GenericProtocol {
     private int prwl;
     private int threshold;
 
-    public XBot(INetwork net) {
+    public XBot(INetwork net) throws HandlerRegistrationException {
         super(PROTOCOL_NAME, PROTOCOL_CODE, net);
-    }
 
-    public void setTreeBroadcast(TreeBroadcast treeBroadcast) {
-        this.treeBroadcast = treeBroadcast;
+        registerMessageHandler(JoinMessage.MSG_CODE, this::handleJoin, JoinMessage.serializer);
     }
 
     public void join(InetSocketAddress connectPeer) {
         network.send(new JoinMessage(id).serialize(), connectPeer);
     }
 
-    private void handleJoin(JoinMessage m) {
-        addPeerToActiveView(m.sender());
-        for(InetSocketAddress peer : activeView)
-            if(!peer.equals(m.sender()))
-                network.send(new ForwardJoinMessage(id, arwl, m.sender()).serialize(), peer);
+    private void handleJoin(ProtocolMessage m) {
+        if(!(m instanceof JoinMessage))
+            return;
+
+        JoinMessage message = (JoinMessage) m;
+
+        addPeerToActiveView(message.getFrom());
+        for(CostedHost peer : activeView)
+            if(!peer.host.equals(message.getFrom())) {
+                ForwardJoinMessage forwardJoinMessage = new ForwardJoinMessage();
+                forwardJoinMessage.setTtl(arwl);
+                forwardJoinMessage.setJoiningPeer(message.getFrom());
+                sendMessage(forwardJoinMessage, peer.host);
+            }
     }
 
-    private void handleForwardJoin(ForwardJoinMessage m) {
-        if(m.ttl() == 0 || activeView.size() == 0)
-            addPeerToActiveView(m.joiningPeer());
+    private void handleForwardJoin(ProtocolMessage m) {
+        if(!(m instanceof ForwardJoinMessage))
+            return;
+
+        ForwardJoinMessage message = (ForwardJoinMessage) m;
+
+        if(message.ttl() == 0 || activeView.size() == 0)
+            addPeerToActiveView(message.joiningPeer());
         else {
-            if(m.ttl() == prwl)
-                addPeerToPassiveView(m.joiningPeer());
+            if(message.ttl() == prwl)
+                addPeerToPassiveView(message.joiningPeer());
             network.send(new ForwardJoinMessage(id, m).serialize(), selectRandomPeerFromActiveView());
         }
     }
@@ -158,7 +173,7 @@ public class XBot extends GenericProtocol {
         passiveView.remove(removedPeer);
     }
 
-    private void addPeerToActiveView(InetSocketAddress peer) {
+    private void addPeerToActiveView(Host peer) {
         if(!peer.equals(id) && activeView.contains(peer)) {
             if(activeView.size() == activeViewSize)
                 dropRandomPeerFromActiveView();
@@ -171,7 +186,7 @@ public class XBot extends GenericProtocol {
         treeBroadcast.peerUp(peer);
     }
 
-    private void addPeerToPassiveView(InetSocketAddress peer) {
+    private void addPeerToPassiveView(Host peer) {
         if(!peer.equals(id) && !activeView.contains(peer) && passiveView.contains(peer)) {
             if(passiveView.size() == passiveViewSize)
                 dropRandomPeerFromPassiveView();

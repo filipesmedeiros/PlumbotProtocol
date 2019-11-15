@@ -1,48 +1,85 @@
 package xbot.messages;
 
-import messages.MessageWithSender;
+import babel.protocol.event.ProtocolMessage;
+import io.netty.buffer.ByteBuf;
+import network.Host;
+import network.ISerializer;
 
-import java.net.InetSocketAddress;
-import java.nio.ByteBuffer;
+import java.net.UnknownHostException;
+import java.util.UUID;
 
-// TODO
-public class SwitchMessage extends MessageWithSender {
+public class SwitchMessage extends ProtocolMessage {
 
-    private InetSocketAddress initiator;
-    private InetSocketAddress candidate;
+    public static final short MSG_CODE = 208;
+
+    private UUID mId;
+    private Host initiator;
+    private Host candidate;
     private long dtoo;
 
-    public SwitchMessage(InetSocketAddress sender, InetSocketAddress initiator, InetSocketAddress candidate, long dtoo) {
-        super(sender);
+    public SwitchMessage(UUID mId, Host initiator, Host candidate, long dtoo) {
+        super(MSG_CODE);
+        this.mId = mId;
         this.initiator = initiator;
         this.candidate = candidate;
         this.dtoo = dtoo;
     }
 
-    @Override
-    public int size() {
-        return 0;
+    public SwitchMessage() {
+        super(MSG_CODE);
+        this.initiator = null;
+        this.candidate = null;
+        this.dtoo = 0;
+        this.mId = UUID.randomUUID();
     }
 
-    @Override
-    public MessageType type() {
-        return null;
-    }
-
-    @Override
-    public ByteBuffer serialize() {
-        return null;
-    }
-
-    public InetSocketAddress initiator() {
+    public Host initiator() {
         return initiator;
     }
 
-    public InetSocketAddress candidate() {
+    public Host candidate() {
         return candidate;
     }
 
     public long dtoo() {
         return dtoo;
     }
+
+    public void setInitiator(Host initiator) {
+        this.initiator = initiator;
+    }
+
+    public void setCandidate(Host candidate) {
+        this.candidate = candidate;
+    }
+
+    public void setDtoo(long dtoo) {
+        this.dtoo = dtoo;
+    }
+
+    public static final ISerializer<SwitchMessage> serializer = new ISerializer<SwitchMessage>() {
+
+        @Override
+        public void serialize(SwitchMessage m, ByteBuf out) {
+            out.writeLong(m.mId.getMostSignificantBits());
+            out.writeLong(m.mId.getLeastSignificantBits());
+            m.initiator.serialize(out);
+            m.candidate.serialize(out);
+            out.writeLong(m.dtoo);
+        }
+
+        @Override
+        public SwitchMessage deserialize(ByteBuf in) throws UnknownHostException {
+            UUID mId = new UUID(in.readLong(), in.readLong());
+            Host initiator = Host.deserialize(in);
+            Host candidate = Host.deserialize(in);
+            long dtoo = in.readLong();
+            return new SwitchMessage(mId, initiator, candidate, dtoo);
+        }
+
+        @Override
+        public int serializedSize(SwitchMessage m) {
+            return (3 * Long.BYTES) + m.initiator.serializedSize() + m.candidate.serializedSize();
+        }
+    };
 }

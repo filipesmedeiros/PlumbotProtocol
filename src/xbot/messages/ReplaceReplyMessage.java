@@ -8,7 +8,6 @@ import network.ISerializer;
 import java.net.UnknownHostException;
 import java.util.UUID;
 
-// TODO
 public class ReplaceReplyMessage extends ProtocolMessage {
 
     public static final short MSG_CODE = 207;
