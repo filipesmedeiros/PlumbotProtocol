@@ -17,14 +17,16 @@ public class ReplaceMessage extends ProtocolMessage {
     private Host old;
     private long itoc;
     private long itoo;
+    private long ctod;
 
-    public ReplaceMessage(UUID mId, Host initiator, Host old, long itoc, long itoo) {
+    public ReplaceMessage(UUID mId, Host initiator, Host old, long itoc, long itoo, long ctod) {
         super(MSG_CODE);
         this.mId = mId;
         this.initiator = initiator;
         this.old = old;
         this.itoc = itoc;
         this.itoo = itoo;
+        this.ctod = ctod;
     }
 
     public ReplaceMessage() {
@@ -33,6 +35,7 @@ public class ReplaceMessage extends ProtocolMessage {
         this.old = null;
         this.itoc = 0;
         this.itoo = 0;
+        this.ctod = 0;
         this.mId = UUID.randomUUID();
     }
 
@@ -50,6 +53,10 @@ public class ReplaceMessage extends ProtocolMessage {
 
     public long itoo() {
         return itoo;
+    }
+
+    public long ctod() {
+        return ctod;
     }
 
     public ReplaceMessage setInitiator(Host initiator) {
@@ -72,6 +79,11 @@ public class ReplaceMessage extends ProtocolMessage {
         return this;
     }
 
+    public ReplaceMessage setCtod(long ctod) {
+        this.ctod = ctod;
+        return this;
+    }
+
     public static final ISerializer<ReplaceMessage> serializer = new ISerializer<ReplaceMessage>() {
 
         @Override
@@ -82,6 +94,7 @@ public class ReplaceMessage extends ProtocolMessage {
             m.old.serialize(out);
             out.writeLong(m.itoc);
             out.writeLong(m.itoo);
+            out.writeLong(m.ctod);
         }
 
         @Override
@@ -91,12 +104,13 @@ public class ReplaceMessage extends ProtocolMessage {
             Host old = Host.deserialize(in);
             long itoc = in.readLong();
             long itoo = in.readLong();
-            return new ReplaceMessage(mId, initiator, old, itoc, itoo);
+            long ctod = in.readLong();
+            return new ReplaceMessage(mId, initiator, old, itoc, itoo, ctod);
         }
 
         @Override
         public int serializedSize(ReplaceMessage m) {
-            return (4 * Long.BYTES) + m.initiator.serializedSize() + m.old.serializedSize();
+            return (5 * Long.BYTES) + m.initiator.serializedSize() + m.old.serializedSize();
         }
     };
 }

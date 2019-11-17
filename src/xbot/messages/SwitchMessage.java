@@ -45,16 +45,19 @@ public class SwitchMessage extends ProtocolMessage {
         return dtoo;
     }
 
-    public void setInitiator(Host initiator) {
+    public SwitchMessage setInitiator(Host initiator) {
         this.initiator = initiator;
+        return this;
     }
 
-    public void setCandidate(Host candidate) {
+    public SwitchMessage setCandidate(Host candidate) {
         this.candidate = candidate;
+        return this;
     }
 
-    public void setDtoo(long dtoo) {
+    public SwitchMessage setDtoo(long dtoo) {
         this.dtoo = dtoo;
+        return this;
     }
 
     public static final ISerializer<SwitchMessage> serializer = new ISerializer<SwitchMessage>() {

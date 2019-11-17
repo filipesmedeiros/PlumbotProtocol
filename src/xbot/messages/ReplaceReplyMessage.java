@@ -16,13 +16,15 @@ public class ReplaceReplyMessage extends ProtocolMessage {
     private boolean answer;
     private Host initiator;
     private Host old;
+    private long itoc;
 
-    public ReplaceReplyMessage(UUID mId, boolean answer, Host initiator, Host old) {
+    public ReplaceReplyMessage(UUID mId, boolean answer, Host initiator, Host old, long itoc) {
         super(MSG_CODE);
         this.mId = mId;
         this.answer = answer;
         this.initiator = initiator;
         this.old = old;
+        this.itoc = itoc;
     }
 
     public ReplaceReplyMessage() {
@@ -30,6 +32,7 @@ public class ReplaceReplyMessage extends ProtocolMessage {
         this.answer = false;
         this.initiator = null;
         this.old = null;
+        this.itoc = 0;
         this.mId = UUID.randomUUID();
     }
 
@@ -43,6 +46,10 @@ public class ReplaceReplyMessage extends ProtocolMessage {
 
     public Host old() {
         return old;
+    }
+
+    public long itoc() {
+        return itoc;
     }
 
     public ReplaceReplyMessage setAnswer(boolean answer) {
@@ -60,6 +67,11 @@ public class ReplaceReplyMessage extends ProtocolMessage {
         return this;
     }
 
+    public ReplaceReplyMessage setItoc(long itoc) {
+        this.itoc = itoc;
+        return this;
+    }
+
     public static final ISerializer<ReplaceReplyMessage> serializer = new ISerializer<ReplaceReplyMessage>() {
 
         @Override
@@ -69,6 +81,7 @@ public class ReplaceReplyMessage extends ProtocolMessage {
             out.writeBoolean(m.answer);
             m.initiator.serialize(out);
             m.old.serialize(out);
+            out.writeLong(m.itoc);
         }
 
         @Override
@@ -77,12 +90,13 @@ public class ReplaceReplyMessage extends ProtocolMessage {
             boolean answer = in.readBoolean();
             Host initiator = Host.deserialize(in);
             Host old = Host.deserialize(in);
-            return new ReplaceReplyMessage(mId, answer, initiator, old);
+            long itoc = in.readLong();
+            return new ReplaceReplyMessage(mId, answer, initiator, old, itoc);
         }
 
         @Override
         public int serializedSize(ReplaceReplyMessage m) {
-            return (2 * Long.BYTES) + 1 + m.initiator.serializedSize() + m.old.serializedSize();
+            return (3 * Long.BYTES) + 1 + m.initiator.serializedSize() + m.old.serializedSize();
         }
     };
 }

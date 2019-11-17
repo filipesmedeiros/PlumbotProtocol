@@ -17,14 +17,17 @@ public class OptimizeReplyMessage extends ProtocolMessage {
     private boolean answer;
     private boolean hasDisconnect;
     private Host disconnect;
+    private long itoc;
 
-    public OptimizeReplyMessage(UUID mId, Host old, boolean answer, boolean hasDisconnect, Host disconnect) {
+    public OptimizeReplyMessage(UUID mId, Host old, boolean answer, boolean hasDisconnect, Host disconnect,
+                                long itoc) {
         super(MSG_CODE);
         this.mId = mId;
         this.old = old;
         this.answer = answer;
         this.hasDisconnect = hasDisconnect;
         this.disconnect = disconnect;
+        this.itoc = itoc;
     }
 
     public OptimizeReplyMessage() {
@@ -33,6 +36,7 @@ public class OptimizeReplyMessage extends ProtocolMessage {
         this.answer = false;
         this.hasDisconnect = false;
         this.disconnect = null;
+        this.itoc = 0;
         this.mId = UUID.randomUUID();
     }
 
@@ -50,6 +54,10 @@ public class OptimizeReplyMessage extends ProtocolMessage {
 
     public Host disconnect() {
         return disconnect;
+    }
+
+    public long itoc() {
+        return itoc;
     }
 
     public OptimizeReplyMessage setOld(Host old) {
@@ -72,6 +80,11 @@ public class OptimizeReplyMessage extends ProtocolMessage {
         return this;
     }
 
+    public OptimizeReplyMessage setItoc(long itoc) {
+        this.itoc = itoc;
+        return this;
+    }
+
     public static final ISerializer<OptimizeReplyMessage> serializer = new ISerializer<OptimizeReplyMessage>() {
 
         @Override
@@ -82,6 +95,7 @@ public class OptimizeReplyMessage extends ProtocolMessage {
             out.writeBoolean(m.answer);
             out.writeBoolean(m.hasDisconnect);
             m.disconnect.serialize(out);
+            out.writeLong(m.itoc);
         }
 
         @Override
@@ -91,12 +105,13 @@ public class OptimizeReplyMessage extends ProtocolMessage {
             boolean answer = in.readBoolean();
             boolean hasDisconnect = in.readBoolean();
             Host disconnect = Host.deserialize(in);
-            return new OptimizeReplyMessage(mId, old, answer, hasDisconnect, disconnect);
+            long itoc = in.readLong();
+            return new OptimizeReplyMessage(mId, old, answer, hasDisconnect, disconnect, itoc);
         }
 
         @Override
         public int serializedSize(OptimizeReplyMessage m) {
-            return (2 * Long.BYTES) + m.old.serializedSize() + 2;
+            return (3 * Long.BYTES) + m.old.serializedSize() + 2;
         }
     };
 }

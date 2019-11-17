@@ -45,16 +45,19 @@ public class SwitchReplyMessage extends ProtocolMessage {
         return candidate;
     }
 
-    public void setAnswer(boolean answer) {
+    public SwitchReplyMessage setAnswer(boolean answer) {
         this.answer = answer;
+        return this;
     }
 
-    public void setInitiator(Host initiator) {
+    public SwitchReplyMessage setInitiator(Host initiator) {
         this.initiator = initiator;
+        return this;
     }
 
-    public void setCandidate(Host candidate) {
+    public SwitchReplyMessage setCandidate(Host candidate) {
         this.candidate = candidate;
+        return this;
     }
 
     public static final ISerializer<SwitchReplyMessage> serializer = new ISerializer<SwitchReplyMessage>() {
