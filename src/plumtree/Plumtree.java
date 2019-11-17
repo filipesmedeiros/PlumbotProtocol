@@ -6,6 +6,7 @@ import babel.exceptions.ProtocolDoesNotExist;
 import babel.notification.ProtocolNotification;
 import babel.protocol.GenericProtocol;
 import babel.protocol.event.ProtocolMessage;
+import babel.requestreply.ProtocolReply;
 import babel.requestreply.ProtocolRequest;
 import babel.timer.ProtocolTimer;
 import network.Host;
@@ -21,6 +22,7 @@ import plumtree.notifications.PeerDown;
 import plumtree.notifications.PeerUp;
 import plumtree.requests.BroadcastRequest;
 import plumtree.timers.MissingMessageTimer;
+import xbot.requests.GetPeersReply;
 
 import java.util.*;
 
@@ -42,7 +44,7 @@ public class Plumtree extends GenericProtocol {
 
     private Map<UUID, UUID> missingMessageTimers; // because I don't think different timers of the same class can exist
 
-    private int threshold;
+    private long threshold;
     private long firstTimer;
     private long secondTimer;
 
@@ -57,6 +59,8 @@ public class Plumtree extends GenericProtocol {
         registerNotificationHandler(PROTOCOL_CODE, PeerUp.NOTIFICATION_CODE, this::handlePeerUp);
 
         registerRequestHandler(BroadcastRequest.REQUEST_CODE, this::broadcast);
+
+        registerReplyHandler(GetPeersReply.REPLY_CODE, this::handleGetPeersReply);
 
         registerMessageHandler(BroadcastMessage.MSG_CODE, this::handleBroadcastMessage, BroadcastMessage.serializer);
         registerMessageHandler(GraftMessage.MSG_CODE, this::handleGraftMessage, BroadcastMessage.serializer);
@@ -247,12 +251,26 @@ public class Plumtree extends GenericProtocol {
         sendMessage(message, announcement.sender());
     }
 
+    private void handleGetPeersReply(ProtocolReply r) {
+        if(!(r instanceof GetPeersReply))
+            return;
+
+        GetPeersReply reply = (GetPeersReply) r;
+
+        eagerPushPeers.addAll(reply.peers());
+    }
+
     @Override
     public void init(Properties properties) {
-        this.threshold = Integer.parseInt(properties.getProperty("plumtree_threshold", "100"));
-        this.threshold = Integer.parseInt(properties.getProperty("plumtree_first_timer", "8000"));
-        this.threshold = Integer.parseInt(properties.getProperty("plumtree_second_timer", "900"));
+        threshold = Long.parseLong(properties.getProperty("plumtree_threshold", "100"));
+        firstTimer = Long.parseLong(properties.getProperty("plumtree_first_timer", "8000"));
+        secondTimer = Long.parseLong(properties.getProperty("plumtree_second_timer", "900"));
 
-        this.missingMessages = new HashMap<>();
+        missingMessages = new HashMap<>();
+        eagerPushPeers = new LinkedList<>();
+        lazyPushPeers = new LinkedList<>();
+        deliveredMessages = new HashMap<>();
+        missingMessages = new HashMap<>();
+        missingMessageTimers = new HashMap<>();
     }
 }
