@@ -45,16 +45,20 @@ public class OptimizeMessage extends ProtocolMessage {
         return itoo;
     }
 
-    public void setOld(Host old) {
+    public OptimizeMessage setOld(Host old) {
         this.old = old;
+        return this;
     }
 
-    public void setItoc(long itoc) {
+    public OptimizeMessage setItoc(long itoc) {
         this.itoc = itoc;
+        return this;
+
     }
 
-    public void setItoo(long itoo) {
+    public OptimizeMessage setItoo(long itoo) {
         this.itoo = itoo;
+        return this;
     }
 
     public static final ISerializer<OptimizeMessage> serializer = new ISerializer<OptimizeMessage>() {

@@ -1,18 +1,22 @@
 package xbot;
 
+import babel.exceptions.DestinationProtocolDoesNotExist;
 import babel.exceptions.HandlerRegistrationException;
+import babel.exceptions.NotificationDoesNotExistException;
+import babel.exceptions.ProtocolDoesNotExist;
+import babel.notification.ProtocolNotification;
 import babel.protocol.GenericProtocol;
 import babel.protocol.event.ProtocolMessage;
 import network.Host;
 import network.INetwork;
-import xbot.messages.ForwardJoinMessage;
-import xbot.messages.JoinMessage;
+import plumtree.notifications.PeerUp;
+import xbot.messages.*;
 import xbot.oracle.notifications.CostNotification;
+import xbot.oracle.requests.CostRequest;
 
 import java.net.InetSocketAddress;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Future;
+import java.util.function.Consumer;
 
 // TODO Drop peers (from the cost map) periodically or maybe after a certain limit
 
@@ -21,11 +25,14 @@ public class XBot extends GenericProtocol {
     public static final short PROTOCOL_CODE = 200;
     public static final String PROTOCOL_NAME = "X-Bot";
 
-    private SortedSet<CostedHost> activeView;
+    private SortedSet<CostedHost> activeView; // To order the active view by cost
+    private Map<Host, Long> activeViewPeers; // To have easy access to costs, when given a Host
+
+    private Map<Host, Consumer<CostNotification>> costsWaitingCallbacks;
 
     private Map<Host, Long> passiveView;
 
-    private Set<InetSocketAddress> waits; // TODO
+    private Set<Host> waits; // TODO
 
     private int activeViewSize;
     private int passiveViewSize;
@@ -35,10 +42,30 @@ public class XBot extends GenericProtocol {
     private int prwl;
     private int threshold;
 
-    public XBot(INetwork net) throws HandlerRegistrationException {
+    public XBot(INetwork net)
+            throws HandlerRegistrationException, NotificationDoesNotExistException, ProtocolDoesNotExist {
+
         super(PROTOCOL_NAME, PROTOCOL_CODE, net);
 
         registerMessageHandler(JoinMessage.MSG_CODE, this::handleJoin, JoinMessage.serializer);
+        registerMessageHandler(ForwardJoinMessage.MSG_CODE, this::handleForwardJoin, ForwardJoinMessage.serializer);
+
+        registerNotificationHandler(PROTOCOL_CODE, CostNotification.NOTIFICATION_CODE, this::handleCostNotification);
+    }
+
+    private void handleCostNotification(ProtocolNotification n) {
+        if(!(n instanceof CostNotification))
+            return;
+
+        CostNotification notification = (CostNotification) n;
+
+        Consumer<CostNotification> handler = costsWaitingCallbacks.get(notification.peer());
+        if(handler == null)
+            return;
+
+        handler.accept(notification);
+
+        costsWaitingCallbacks.remove(notification.peer());
     }
 
     public void join(InetSocketAddress connectPeer) {
@@ -72,18 +99,39 @@ public class XBot extends GenericProtocol {
         else {
             if(message.ttl() == prwl)
                 addPeerToPassiveView(message.joiningPeer());
-            network.send(new ForwardJoinMessage(id, m).serialize(), selectRandomPeerFromActiveView());
+            ForwardJoinMessage forwardJoinMessage = new ForwardJoinMessage()
+                    .setJoiningPeer(message.joiningPeer())
+                    .setTtl(message.ttl() - 1);
+            sendMessage(forwardJoinMessage, selectRandomPeerFromActiveView());
         }
     }
 
-    private void handleOptimize(OptimizeMessage m) {
+    // Version that assumes itoc is already in the message
+    private void handleOptimize(ProtocolMessage m) {
+        if(!(m instanceof OptimizeMessage))
+            return;
+
+        OptimizeMessage message = (OptimizeMessage) m;
+
         if(activeView.size() != activeViewSize) {
-            addPeerToActiveView(m.sender());
-            network.send(new OptimizeReplyMessage(id, m.old(), true, false, null).serialize(),
-                    m.sender());
-        } else
-            network.send(new ReplaceMessage(id, m.sender(), m.old(), m.itoc(), m.itoo()).serialize(),
-                    activeView.last());
+            addPeerToActiveView(message.getFrom());
+
+            OptimizeReplyMessage optimizeReplyMessage = new OptimizeReplyMessage()
+                    .setOld(message.old())
+                    .setAnswer(true)
+                    .setHasDisconnect(false)
+                    .setDisconnect(null);
+
+            sendMessage(optimizeReplyMessage, message.getFrom());
+        } else {
+            ReplaceMessage replaceMessage = new ReplaceMessage()
+                    .setInitiator(message.getFrom())
+                    .setOld(message.old())
+                    .setItoc(message.itoc())
+                    .setItoo(message.itoo());
+
+            sendMessage(replaceMessage, activeView.last().host);
+        }
     }
 
     private void handleOptimizeReply(OptimizeReplyMessage m) {
@@ -125,87 +173,121 @@ public class XBot extends GenericProtocol {
         network.send(new SwitchReplyMessage(id, true, m.initiator(), m.candidate()).serialize(), m.sender());
     }
 
-    private void handleSwitchReply(SwitchReplyMessage m) {
-        if(m.answer()) {
-            dropPeerFromActiveView(m.candidate());
-            addPeerToActiveView(m.sender());
+    private void handleSwitchReply(ProtocolMessage m) {
+        if(!(m instanceof SwitchReplyMessage))
+            return;
+
+        SwitchReplyMessage message = (SwitchReplyMessage) m;
+
+        if(message.answer()) {
+            dropPeerFromActiveView(message.candidate());
+            addPeerToActiveView(message.getFrom());
         }
-        network.send(new ReplaceReplyMessage(id, m.answer(), m.initiator(), m.sender()).serialize(), m.sender());
+
+        ReplaceReplyMessage replaceReplyMessage = new ReplaceReplyMessage()
+                .setAnswer(message.answer())
+                .setInitiator(message.initiator())
+                .setOld(message.getFrom());
+        sendMessage(replaceReplyMessage, message.candidate());
     }
 
-    private void handleDisconnect(DisconnectMessage m) {
-        if(m.isWait())
-            storeWait(m.sender());
-        switchPeerFromActiveToPassive(m.sender());
+    private void handleDisconnect(ProtocolMessage m) {
+        if(!(m instanceof DisconnectMessage))
+            return;
+
+        DisconnectMessage message = (DisconnectMessage) m;
+
+        if(message.isWait())
+            storeWait(message.getFrom());
+        dropPeerFromActiveView(m.getFrom());
     }
 
-    private void switchPeerFromActiveToPassive(InetSocketAddress peer) {
-        if(!peer.equals(id) && activeView.contains(peer) && !passiveView.contains(peer)) {
-            dropPeerFromActiveView(peer);
-            addPeerToPassiveView(peer);
-        }
-    }
-
-    private void switchPeerFromPassiveToActive(InetSocketAddress peer) {
-        if(!peer.equals(id) && passiveView.contains(peer) && !activeView.contains(peer)) {
+    private void switchPeerFromPassiveToActive(Host peer) {
+        if(passiveView.containsKey(peer) && !activeViewPeers.containsKey(peer)) {
             passiveView.remove(peer);
+            activeViewPeers.put(peer, -Long.MAX_VALUE);
             addPeerToActiveView(peer);
         }
     }
 
-    private void dropPeerFromActiveView(InetSocketAddress peer) {
+    private void dropPeerFromActiveView(Host peer) {
+        for(CostedHost costedPeer : activeView)
+            if(costedPeer.host.equals(peer))
+                dropPeerFromActiveView(costedPeer);
+    }
+
+    private void dropPeerFromActiveView(CostedHost peer) {
+        DisconnectMessage disconnectMessage = new DisconnectMessage()
+                .setWait(false);
+        sendMessage(disconnectMessage, peer.host);
+
+        activeViewPeers.remove(peer.host);
         activeView.remove(peer);
-        treeBroadcast.peerDown(peer);
+        addPeerToPassiveView(peer.host, peer.cost);
     }
 
     private void dropRandomPeerFromActiveView() {
-        InetSocketAddress removedPeer = selectRandomPeerFromActiveView();
-
-        network.send(new DisconnectMessage(id, false).serialize(), removedPeer);
-
-        activeView.remove(removedPeer);
-        passiveView.add(removedPeer);
+        CostedHost removedPeer = selectRandomPeerWithCostFromActiveView();
+        dropPeerFromActiveView(removedPeer);
     }
 
     private void dropRandomPeerFromPassiveView() {
-        InetSocketAddress[] array = passiveView.toArray(new InetSocketAddress[0]);
-        InetSocketAddress removedPeer = array[new Random().nextInt(array.length)];
+        Host[] array = passiveView.keySet().toArray(new Host[0]);
+        Host removedPeer = array[new Random().nextInt(array.length)];
         passiveView.remove(removedPeer);
     }
 
     private void addPeerToActiveView(Host peer) {
-        if(!peer.equals(id) && activeView.contains(peer)) {
-            if(activeView.size() == activeViewSize)
-                dropRandomPeerFromActiveView();
-            activeView.add(peer);
+        if(activeViewPeers.containsKey(peer))
+            return;
+
+        if(activeView.size() == activeViewSize) {
+            dropRandomPeerFromActiveView();
         }
 
-        if(!peers.containsKey(peer))
-            peers.put(peer, oracle.getCost(peer));
+        activeViewPeers.put(peer, -Long.MAX_VALUE);
 
-        treeBroadcast.peerUp(peer);
+        PeerUp peerUp = new PeerUp(peer);
+        triggerNotification(peerUp);
+
+        costsWaitingCallbacks.put(peer, this::finishAddPeerToActiveView);
+    }
+
+    private void finishAddPeerToActiveView(CostNotification n) {
+        if(!activeViewPeers.containsKey(n.peer()))
+            return;
+
+        activeView.add(new CostedHost(n.peer(), n.cost()));
+        activeViewPeers.put(n.peer(), n.cost());
+    }
+
+    private void addPeerToPassiveView(Host peer, long cost) {
+        if(!activeViewPeers.containsKey(peer) && !passiveView.containsKey(peer)) {
+            if(passiveView.size() >= passiveViewSize)
+                dropRandomPeerFromPassiveView();
+            passiveView.put(peer, cost);
+        }
     }
 
     private void addPeerToPassiveView(Host peer) {
-        if(!peer.equals(id) && !activeView.contains(peer) && passiveView.contains(peer)) {
-            if(passiveView.size() == passiveViewSize)
-                dropRandomPeerFromPassiveView();
-            passiveView.add(peer);
-        }
-
-        if(!peers.containsKey(peer))
-            peers.put(peer, oracle.getCost(peer));
+        addPeerToPassiveView(peer, -Long.MAX_VALUE);
     }
 
-    private InetSocketAddress selectRandomPeerFromActiveView() {
-        InetSocketAddress[] array = activeView.toArray(new InetSocketAddress[0]);
+    // TODO Optimize?
+    private Host selectRandomPeerFromActiveView() {
+        Host[] array = activeViewPeers.keySet().toArray(new Host[0]);
         return array[new Random().nextInt(array.length)];
     }
 
-    // TODO optimize this
-    private List<InetSocketAddress> selectRandomPeersFromPassiveView(int num) {
-        ArrayList<InetSocketAddress> list =
-                new ArrayList<>(Arrays.asList(activeView.toArray(new InetSocketAddress[0])));
+    // TODO Optimize?
+    private CostedHost selectRandomPeerWithCostFromActiveView() {
+        CostedHost[] array = activeView.toArray(new CostedHost[0]);
+        return array[new Random().nextInt(array.length)];
+    }
+
+    // TODO Optimize?
+    private List<Host> selectRandomPeersFromPassiveView(int num) {
+        ArrayList<Host> list = new ArrayList<>(Arrays.asList(activeViewPeers.keySet().toArray(new Host[0])));
         Random r = new Random();
         while(list.size() > num)
             list.remove(r.nextInt(list.size()));
@@ -213,26 +295,19 @@ public class XBot extends GenericProtocol {
         return list;
     }
 
-    private Future<Long> getCost(InetSocketAddress peer) {
-        if(peers.containsKey(peer))
-            return CompletableFuture.completedFuture(peers.get(peer));
-        else
-            return oracle.getCost(peer);
-    }
-
-    private void storeWait(InetSocketAddress peer) {
+    private void storeWait(Host peer) {
         waits.add(peer);
     }
 
-    private void endWait(InetSocketAddress peer) {
+    private void endWait(Host peer) {
         waits.remove(peer);
     }
 
-    // TODO
-    public void fireOptimizationTimer() {
+    // TODO why only trigger optimizations when cost is better than the old cost? Let the disconnect node decide?
+    public void optimizationTimerHandler() {
         if(activeView.size() == activeViewSize) {
-            List<InetSocketAddress> candidates = selectRandomPeersFromPassiveView(passiveScanLength);
-            Iterator<InetSocketAddress> olds = activeView.iterator();
+            List<Host> candidates = selectRandomPeersFromPassiveView(passiveScanLength);
+            Iterator<CostedHost> olds = activeView.iterator();
             int index = 0;
             while(olds.hasNext()) {
                 if(index < numUnbiasedPeers) {
@@ -243,15 +318,34 @@ public class XBot extends GenericProtocol {
             }
             olds.forEachRemaining(old -> {
                 while(candidates.size() != 0) {
-                    InetSocketAddress candidate = candidates.remove(0);
-                    if(getCost(candidate) < getCost(old)) {
-                        network.send(new OptimizeMessage(id, old, getCost(candidate), getCost(old)).serialize(),
-                                candidate);
-                        break;
-                    }
+                    Host candidate = candidates.remove(0);
+                    requestCost(candidate, costNotification -> finishOptimizationTimerHandler(costNotification, old));
                 }
             });
         }
+    }
+
+    // TODO how to break cycle here? according to spec, if we find an old thats better than cand, we stop, but with
+    // TODO async behaviour that's hard
+    private void finishOptimizationTimerHandler(CostNotification n, CostedHost old) {
+        if(n.cost() < old.cost) {
+            OptimizeMessage optimizeMessage = new OptimizeMessage()
+                    .setOld(old.host)
+                    .setItoc(n.cost())
+                    .setItoo(old.cost);
+            sendMessage(optimizeMessage, n.peer());
+        }
+    }
+
+    private void requestCost(Host peer, Consumer<CostNotification> costHandler) {
+        CostRequest costRequest = new CostRequest(peer);
+        try {
+            sendRequest(costRequest);
+        } catch (DestinationProtocolDoesNotExist dpdne) {
+            dpdne.printStackTrace();
+            System.exit(1);
+        }
+        costsWaitingCallbacks.put(peer, costHandler);
     }
 
     private boolean isBetter(long itoc, long itoo, long ctod, long dtoo) {
@@ -277,6 +371,18 @@ public class XBot extends GenericProtocol {
         @Override
         public int compareTo(CostedHost o) {
             return Math.toIntExact(cost - o.cost);
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if(obj == this)
+                return true;
+
+            if(!(obj instanceof CostedHost))
+                return false;
+
+            CostedHost other = (CostedHost) obj;
+            return this.host.equals(other.host) && this.cost == other.cost;
         }
     }
 }

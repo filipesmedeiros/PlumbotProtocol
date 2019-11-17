@@ -52,20 +52,24 @@ public class OptimizeReplyMessage extends ProtocolMessage {
         return disconnect;
     }
 
-    public void setOld(Host old) {
+    public OptimizeReplyMessage setOld(Host old) {
         this.old = old;
+        return this;
     }
 
-    public void setAnswer(boolean answer) {
+    public OptimizeReplyMessage setAnswer(boolean answer) {
         this.answer = answer;
+        return this;
     }
 
-    public void setHasDisconnect(boolean hasDisconnect) {
+    public OptimizeReplyMessage setHasDisconnect(boolean hasDisconnect) {
         this.hasDisconnect = hasDisconnect;
+        return this;
     }
 
-    public void setDisconnect(Host disconnect) {
+    public OptimizeReplyMessage setDisconnect(Host disconnect) {
         this.disconnect = disconnect;
+        return this;
     }
 
     public static final ISerializer<OptimizeReplyMessage> serializer = new ISerializer<OptimizeReplyMessage>() {

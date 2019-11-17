@@ -52,20 +52,24 @@ public class ReplaceMessage extends ProtocolMessage {
         return itoo;
     }
 
-    public void setInitiator(Host initiator) {
+    public ReplaceMessage setInitiator(Host initiator) {
         this.initiator = initiator;
+        return this;
     }
 
-    public void setOld(Host old) {
+    public ReplaceMessage setOld(Host old) {
         this.old = old;
+        return this;
     }
 
-    public void setItoc(long itoc) {
+    public ReplaceMessage setItoc(long itoc) {
         this.itoc = itoc;
+        return this;
     }
 
-    public void setItoo(long itoo) {
+    public ReplaceMessage setItoo(long itoo) {
         this.itoo = itoo;
+        return this;
     }
 
     public static final ISerializer<ReplaceMessage> serializer = new ISerializer<ReplaceMessage>() {

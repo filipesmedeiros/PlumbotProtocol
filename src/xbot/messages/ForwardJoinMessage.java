@@ -37,16 +37,18 @@ public class ForwardJoinMessage extends ProtocolMessage {
         return joiningPeer;
     }
 
-    public void setJoiningPeer(Host joiningPeer) {
+    public ForwardJoinMessage setJoiningPeer(Host joiningPeer) {
         this.joiningPeer = joiningPeer;
+        return this;
     }
 
     public int ttl() {
         return ttl;
     }
 
-    public void setTtl(int ttl) {
+    public ForwardJoinMessage setTtl(int ttl) {
         this.ttl = ttl;
+        return this;
     }
 
     public static final ISerializer<ForwardJoinMessage> serializer = new ISerializer<ForwardJoinMessage>() {

@@ -45,16 +45,19 @@ public class ReplaceReplyMessage extends ProtocolMessage {
         return old;
     }
 
-    public void setAnswer(boolean answer) {
+    public ReplaceReplyMessage setAnswer(boolean answer) {
         this.answer = answer;
+        return this;
     }
 
-    public void setInitiator(Host initiator) {
+    public ReplaceReplyMessage setInitiator(Host initiator) {
         this.initiator = initiator;
+        return this;
     }
 
-    public void setOld(Host old) {
+    public ReplaceReplyMessage setOld(Host old) {
         this.old = old;
+        return this;
     }
 
     public static final ISerializer<ReplaceReplyMessage> serializer = new ISerializer<ReplaceReplyMessage>() {
